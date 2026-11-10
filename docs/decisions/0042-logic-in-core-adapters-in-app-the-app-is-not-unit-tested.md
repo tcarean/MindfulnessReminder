@@ -38,7 +38,7 @@ Consequences.
   can be tested off a real machine" (`CLAUDE.md`, "Structure"), and each has one implementation
   in the running application: the five adapters above, and `SystemClock` and
   `RegistryAutoStartManager` (which works over `IRegistryStore`), both in Core.
-- The kit's ADR 0036 has made a library without UI the rule for every project made from the kit
+- ADR 0002 has made a library without UI the rule for every project made from the kit
   since 2026-09-24; this project had its own form of it from its first commit, and this ADR
   records that form.
 

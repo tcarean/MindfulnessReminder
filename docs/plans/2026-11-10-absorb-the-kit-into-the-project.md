@@ -404,3 +404,37 @@ The owner approved this plan on 2026-11-10.
   by the owner's merge of a task of another project, which changed no file under
   `ClaudeCodeStarterKit/`.
 - Not done here: the first CI run with the process tests, which is the next push.
+- Review, the same day, by a subagent with a clean context: nine findings and two risks, all
+  taken on this branch, the tests first where behaviour changed (8 of 17 red before the fixes,
+  each for the expected reason; the 54 tests of the classes touched green after, run with
+  `CI=true` as on GitHub).
+  - F1, which would have made the first CI run red: `ScriptRunner` passed `CI` on, so the
+    nested gate of `VerifyTests` said "run (CI)". It now removes `CI` like `CLAUDECODE`, and
+    `PSModulePath` too (the first risk: a Windows PowerShell child of a gate run under pwsh
+    would look for its modules in PowerShell 7's folders first; started without the variable,
+    5.1 builds its own, measured: user, Program Files and `$PSHOME`, and `Get-FileHash`,
+    `Get-Item`, `ConvertTo-Json` work). The clean-checkout test passes `CI` itself and expects
+    "run (CI)"; it is renamed `ACleanCheckout_LeavesTheProcessTestsOut_UnlessAllOrCI`.
+  - F2: `Test-ProcessPathsChanged` took `main` literally and, with no local `main`, compared
+    with HEAD, leaving the tests out. The main branch is now `release.branch`, the remote's
+    `origin/<branch>` counts when there is no local one, and with neither the tests run. Three
+    new `VerifyScopeTests`.
+  - F3: the gate prints the filter it passes (`test filter: ...`), and `VerifyTests`, with a
+    `testFilter` in its fixture, checks the joined filter.
+  - F4: ADR 0042 cited "The kit's ADR 0036" where it meant kit 0002: the script's qualifier
+    did not match a capital "The", and the number took the project column. It was the only
+    such citation with a number on `main`.
+  - F5: ADR 0075 also supersedes ADR 0038 in part, the rule kept in `CLAUDE.md`.
+  - F6: `install-hooks.ps1` and `release.ps1` compared two spellings of a path and refused a
+    root reached through a junction; both now ask `git rev-parse --show-prefix`. Two junction
+    tests.
+  - F7: the Stop hook took every process-test path for a folder; a file is now matched as a
+    file. One test.
+  - F8: `Every_cited_decision_exists` leaves `docs/decisions/` out, a deviation from P10 not
+    recorded until now: the records also cite other projects' records by number. Its comment
+    says so.
+  - F9: six statements that were stale (three projects, a Linux CI, the hook tests' projects,
+    `GHID.md`'s pointers, which commits run the process tests).
+  - The second risk: on a branch that changes `scripts/`, a commit of the assistant runs the
+    gate twice, about six minutes, against a command timeout of two by default. `/wrap-up`
+    (steps 1 and 11) and `/release` (step 5) now say to give 10 minutes.

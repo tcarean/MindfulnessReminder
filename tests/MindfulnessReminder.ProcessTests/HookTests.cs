@@ -29,7 +29,7 @@ namespace MindfulnessReminder.ProcessTests;
 /// code. The hooks are the real ones, copied into B, the project the session "started" in. The
 /// repository starts on a claude/ branch, the only kind the assistant may commit on (ADR 0021).
 /// Windows only: the hooks are Windows PowerShell scripts that call cmd, and the settings that
-/// run them name powershell; on the Linux CI these tests are skipped.
+/// run them name powershell; on Linux these tests are skipped.
 /// </summary>
 [Trait("Category", "Process")]
 public sealed class HookTests : IDisposable
@@ -316,6 +316,20 @@ public sealed class HookTests : IDisposable
         Green(_a);
         (exitCode, output) = RunStopGate(sessionDir: _b);
         Assert.True(exitCode == 0, output);
+    }
+
+    /// <summary>processTests.paths may name a file: an unverified edit of it does not end the turn either.</summary>
+    [WindowsFact]
+    public void StopGate_AnEditOfAFileAmongTheProcessTestPaths_NeedsAGreenVerify()
+    {
+        File.WriteAllText(Path.Combine(_a, "process.json"), ScriptRunner.ProcessJson().Replace(
+            "\"release\": { \"publish\": [] }",
+            "\"release\": { \"publish\": [] }, \"processTests\": { \"category\": \"Process\", \"paths\": [\"scripts/\", \"build.ps1\"] }",
+            StringComparison.Ordinal));
+        Edit(_a, string.Empty, "build.ps1");
+        (int exitCode, string output) = RunStopGate(sessionDir: _b);
+        Assert.Equal(2, exitCode);
+        Assert.Contains("has not run green with tests", output);
     }
 
     /// <summary>The scripts, the skills and the rules are the project's own: an edit there, verified, ends the turn like any other.</summary>

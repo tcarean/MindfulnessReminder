@@ -297,7 +297,7 @@ short, what is enforced mechanically:
   the design notes (each in the index, with its files named in its `Covers:` sentence),
   restore, `dotnet format` (check only), the build with warnings as errors, the tests. About
   25 seconds. The tests of the scripts, in `tests/MindfulnessReminder.ProcessTests/`, take about
-  three minutes more and run only when a change touches the scripts or those tests; CI, a
+  three minutes more and run only on a branch that changes the scripts or those tests; CI, a
   release and `verify.ps1 -All` always run them. The git `pre-commit` hook runs the gate on
   every commit, the `pre-merge-commit` hook on every clean merge, the Claude Code hook before
   any `git commit` of the model, `scripts/release.ps1`, and CI on GitHub

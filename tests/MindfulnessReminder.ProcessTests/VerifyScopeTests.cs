@@ -112,6 +112,49 @@ public sealed class VerifyScopeTests : IDisposable
         Assert.Equal("True", Probe());
     }
 
+    /// <summary>A clone made with -b holds no local main: the branch is compared with the remote's.</summary>
+    [Fact]
+    public void WithOnlyTheRemotesMain_TheBranchIsComparedWithIt()
+    {
+        Git("update-ref", "refs/remotes/origin/main", "main");
+        Git("switch", "-q", "-c", "claude/Task");
+        Git("branch", "-q", "-D", "main");
+        File.AppendAllText(Path.Combine(_repo, "src", "X.cs"), "// task\n");
+        Commit("Change the code");
+        Assert.Equal("False", Probe());
+
+        File.WriteAllText(Path.Combine(_repo, "scripts", "extra.ps1"), "# new\n");
+        Commit("Add a script");
+        Assert.Equal("True", Probe());
+    }
+
+    /// <summary>With no main to compare with, git cannot tell what the branch changed: the tests run.</summary>
+    [Fact]
+    public void WithNoMainAtAll_EverythingCounts()
+    {
+        Git("switch", "-q", "-c", "claude/Task");
+        Git("branch", "-q", "-D", "main");
+        Assert.Equal("True", Probe());
+    }
+
+    /// <summary>The main branch is the one process.json names as release.branch, here master.</summary>
+    [Fact]
+    public void TheMainBranch_ComesFromProcessJson()
+    {
+        Git("branch", "-m", "master");
+        File.WriteAllText(Path.Combine(_repo, "process.json"), ScriptRunner.ProcessJson().Replace(
+            "\"release\": { \"publish\": [] }",
+            "\"release\": { \"publish\": [], \"branch\": \"master\" }, \"processTests\": { \"category\": \"Process\", \"paths\": [\"scripts/\"] }",
+            StringComparison.Ordinal));
+        Commit("Release from master");
+        Assert.Equal("False", Probe());
+
+        Git("switch", "-q", "-c", "claude/Task");
+        File.WriteAllText(Path.Combine(_repo, "scripts", "extra.ps1"), "# new\n");
+        Commit("Add a script");
+        Assert.Equal("True", Probe());
+    }
+
     /// <summary>Where git cannot answer, the tests run: a guess must not leave them out.</summary>
     [Fact]
     public void OutsideAGitRepository_EverythingCounts()

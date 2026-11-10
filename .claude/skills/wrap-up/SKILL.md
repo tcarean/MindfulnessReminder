@@ -9,8 +9,9 @@ Run through every step; report what each one found. Do not skip a step because i
 does not apply.
 
 1. Run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1`. Paste the last
-   ten lines: they say whether the process tests ran. If it is red, fix it or stop and report;
-   never continue with a red gate.
+   ten lines: they say whether the process tests ran. On a branch that changes `scripts/` or
+   the process tests it takes about three minutes: give the command a 10-minute timeout. If it
+   is red, fix it or stop and report; never continue with a red gate.
 2. There is no numeric code, no validation case and no golden file (ADR 0039): say so. If the
    session added a case, run `/validate` and paste its drift table; a figure that moved is a
    finding, not something to re-measure into place (ADR 0033).
@@ -63,17 +64,20 @@ does not apply.
     0026). The main checkout is where the two lines of
     `git rev-parse --absolute-git-dir --path-format=absolute --git-common-dir` are equal. On a
     `claude/` branch in its own worktree, commit without asking (ADR 0021): one line,
-    English, at
-    most 100 characters, saying why. No body, no trailers, no `Co-Authored-By` (the summary
-    from step 3 stays in the chat; the "what" is in the diff and, when it warrants one, the
-    CHANGELOG).
+    English, at most 100 characters, saying why. No body, no trailers, no `Co-Authored-By` (the
+    summary from step 3 stays in the chat; the "what" is in the diff and, when it warrants one,
+    the CHANGELOG). On a branch that changes `scripts/` or the process tests, the commit runs
+    the gate twice, in the Claude Code hook and in `pre-commit`, about six minutes: give it a
+    10-minute timeout, or run it in the background and wait for it.
     Report the message and the short hash. On `main` or any branch not named `claude/`, do not
     commit: propose the message and leave the commit to the owner (the commit hook refuses it
     anyway). If the branch is ready to merge into `main`,
     say so, suggest `/code-review main...<branch>` first if it has not run on this work, then
     ask: does the owner want you to run the merge, or will they do it by hand? Do nothing until
     they answer. The merge is `git merge --no-ff <branch>` in the main checkout, so that the git
-    hooks see it: a fast-forward runs none (ADR 0022, 0026). If a merge you run stops on conflicts, resolve them, `git add` the files and
+    hooks see it: a fast-forward runs none (ADR 0022, 0026). A merge that brings a change to
+    `scripts/` runs the process tests in `pre-merge-commit`: give it a 10-minute timeout too. If a
+    merge you run stops on conflicts, resolve them, `git add` the files and
     conclude with `git merge --continue`, never `git commit`, which the hook refuses on `main`;
     a conflict where the two sides meant different things is a question for the owner. If the
     gate fails only on the merged result (two ADRs with the same number), `git merge --abort`,

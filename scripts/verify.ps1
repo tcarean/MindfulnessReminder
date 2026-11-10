@@ -20,7 +20,8 @@
 #                            which take minutes) run only when the change can affect them: a
 #                            path they test differs from main, CI is "true" or -All is given
 #                            (Test-ProcessPathsChanged in process-config.ps1); otherwise their
-#                            category is left out, and a line says which of the two it was
+#                            category is left out. A line says which of the two it was, and
+#                            another the filter passed to `dotnet test`, when there is one
 #   It does not touch the code. Locally, restore may update a packages.lock.json after a
 #   package change; commit it with that change. After a green run with tests it writes
 #   .verify-stamp (date and time, git-ignored), which the Claude Code Stop hook reads.
@@ -106,7 +107,10 @@ try {
             Write-Host ('process tests: ' + $why)
         }
         $testArgs = @()
-        if ($filters.Count -gt 0) { $testArgs = @('--filter', ($filters -join '&')) }
+        if ($filters.Count -gt 0) {
+            $testArgs = @('--filter', ($filters -join '&'))
+            Write-Host ('test filter: ' + ($filters -join '&'))
+        }
         Invoke-Step 'test'           { dotnet test $sln -c $Configuration --no-build --nologo -v q @testArgs }
         # Success stamp, read by the Claude Code Stop hook ("did verify run after the last edit?").
         # Only a run with tests writes it: -SkipTests is the edit loop, not the gate.

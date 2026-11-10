@@ -21,15 +21,21 @@ namespace MindfulnessReminder.ProcessTests;
 
 /// <summary>
 /// Runs a PowerShell script or git the way the tests of scripts/ need it: from a given folder,
-/// with the output captured, and with every GIT_* variable and CLAUDECODE removed first; a hook
-/// also gets its standard input and extra environment variables. The tests also run inside the
-/// real pre-commit hook, and an inherited GIT_DIR would point git at the real repository instead
-/// of the throwaway one a test builds. CLAUDECODE is set when Claude Code runs the suite and not
-/// when the owner does, and the git hooks read it (ADR 0026): a test that wants it
-/// passes it explicitly, so the results do not depend on who runs the suite.
+/// with the output captured, and with every GIT_* variable, CLAUDECODE, CI and PSModulePath
+/// removed first; a hook also gets its standard input and extra environment variables. The
+/// tests also run inside the real pre-commit hook, and an inherited GIT_DIR would point git at
+/// the real repository instead of the throwaway one a test builds. CLAUDECODE is set when Claude
+/// Code runs the suite and not when the owner does, and the git hooks read it (ADR 0026); CI is
+/// set when the suite runs in CI, and verify.ps1 reads it (ADR 0075): a test that wants either
+/// passes it explicitly, so the results do not depend on who runs the suite. PSModulePath is
+/// PowerShell 7's when the gate runs under pwsh, as in CI, and a Windows PowerShell child would
+/// look for its modules there first; without it, Windows PowerShell builds its own.
 /// </summary>
 internal static class ScriptRunner
 {
+    /// <summary>Variables a child never inherits, whatever their case (see the class comment).</summary>
+    private static readonly HashSet<string> Removed = new(StringComparer.OrdinalIgnoreCase) { "CLAUDECODE", "CI", "PSModulePath" };
+
     /// <summary>The shell the scripts are written for: Windows PowerShell 5.1 where it exists, pwsh elsewhere.</summary>
     public static string Shell => OperatingSystem.IsWindows() ? "powershell" : "pwsh";
 
@@ -85,7 +91,7 @@ internal static class ScriptRunner
             start.ArgumentList.Add(arg);
         }
 
-        foreach (string name in start.Environment.Keys.Where(k => k.StartsWith("GIT_", StringComparison.OrdinalIgnoreCase) || k.Equals("CLAUDECODE", StringComparison.OrdinalIgnoreCase)).ToList())
+        foreach (string name in start.Environment.Keys.Where(k => k.StartsWith("GIT_", StringComparison.OrdinalIgnoreCase) || Removed.Contains(k)).ToList())
         {
             start.Environment.Remove(name);
         }
@@ -131,6 +137,16 @@ internal static class ScriptRunner
         }
 
         Directory.Delete(path, recursive: true);
+    }
+
+    /// <summary>Makes <paramref name="link"/> a directory junction to <paramref name="target"/> (Windows; no privilege needed). Remove it with Directory.Delete(link), which leaves the target alone.</summary>
+    public static void MakeJunction(string link, string target)
+    {
+        (int exitCode, string output) = Run(Path.GetTempPath(), gitDir: null, "cmd", "/c", "mklink", "/J", link, target);
+        if (exitCode != 0)
+        {
+            throw new InvalidOperationException("mklink /J failed: " + output);
+        }
     }
 
     /// <summary>Copies a folder with its subfolders.</summary>

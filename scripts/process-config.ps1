@@ -129,11 +129,13 @@ function Find-Project([string]$Path, [string]$Marker = 'process.json') {
 }
 
 # Whether the process tests can be affected by the change in $ProjectDir: true when a path of
-# processTests.paths differs from where the branch left main, committed on the branch, staged,
-# modified or untracked; on main itself, or where there is no main, the base is HEAD, so only
+# processTests.paths differs from where the branch left the main branch (release.branch,
+# "main" by default; the remote's, origin/<branch>, when there is no local one), committed on
+# the branch, staged, modified or untracked. On the main branch itself the base is HEAD, so only
 # what is not committed yet counts (during a merge, the index holds what the merge brings).
-# True too when git cannot answer (no git, no repository, no commit): the tests run rather
-# than a guess leaving them out. False when the project names no process tests.
+# True too when git cannot answer (no git, no repository, no commit, no main branch to compare
+# with): the tests run rather than a guess leaving them out. False when the project names no
+# process tests.
 function Test-ProcessPathsChanged($Config, [string]$ProjectDir) {
     $paths = @($Config.processTests.paths)
     if (-not $Config.processTests.category -or $paths.Count -eq 0) { return $false }
@@ -143,10 +145,15 @@ function Test-ProcessPathsChanged($Config, [string]$ProjectDir) {
     $ErrorActionPreference = 'Continue'
     $head = (git -C $ProjectDir rev-parse --verify --quiet HEAD 2>$null)
     if ($LASTEXITCODE -ne 0 -or -not $head) { return $true }
+    $mainBranch = if ($Config.release.branch) { $Config.release.branch } else { 'main' }
     $base = $head
-    if ((git -C $ProjectDir branch --show-current 2>$null) -ne 'main') {
-        $mergeBase = (git -C $ProjectDir merge-base HEAD main 2>$null)
-        if ($LASTEXITCODE -eq 0 -and $mergeBase) { $base = $mergeBase }
+    if ((git -C $ProjectDir branch --show-current 2>$null) -ne $mainBranch) {
+        $base = $null
+        foreach ($ref in @($mainBranch, "origin/$mainBranch")) {
+            $mergeBase = (git -C $ProjectDir merge-base HEAD $ref 2>$null)
+            if ($LASTEXITCODE -eq 0 -and $mergeBase) { $base = $mergeBase; break }
+        }
+        if (-not $base) { return $true }
     }
     $changed = @(git -C $ProjectDir diff --name-only $base -- @paths 2>$null)
     if ($LASTEXITCODE -ne 0) { return $true }
@@ -156,7 +163,8 @@ function Test-ProcessPathsChanged($Config, [string]$ProjectDir) {
 }
 
 # The PowerShell running this script (powershell.exe 5.1 or pwsh), to start another script
-# with: "powershell" does not exist on Linux, where CI runs the scripts under pwsh.
+# with: a gate started under pwsh, as CI starts it, stays under pwsh, and "powershell" does not
+# exist where only pwsh is installed.
 function Get-ScriptShell {
     return (Get-Process -Id $PID).Path
 }

@@ -15,8 +15,7 @@
 #   3. For each project found, once: runs scripts/verify.ps1 (the gate). Whether the commit
 #      needs a CHANGELOG line is a judgment, not checked here (ADR 0023).
 #   Here the project is the root of the repository, found as "."; the walk also finds a
-#   project in a subfolder, which is how the tests of this hook build several in one
-#   throwaway repository.
+#   project in a subfolder, as in the throwaway repository the tests of this hook build.
 #
 # WHO CALLS IT
 #   git itself, on every git commit, yours or Claude's, because core.hooksPath points at this

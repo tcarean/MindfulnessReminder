@@ -253,6 +253,24 @@ public sealed class ReleaseTests : IDisposable
         Assert.False(File.Exists(Path.Combine(sub, "ran.txt")), "verify ran");
     }
 
+    /// <summary>git answers with the real path; a release started through a junction is still at the root.</summary>
+    [WindowsFact]
+    public void AProjectReachedThroughAJunction_IsTheRoot()
+    {
+        string link = _repo + "-link";
+        ScriptRunner.MakeJunction(link, _project);
+        try
+        {
+            (int exitCode, string output) = ScriptRunner.RunScript(link, Path.Combine(link, "scripts", "release.ps1"), "-Version", "2.3.0", "-WhatIf");
+            Assert.True(exitCode == 0, output);
+            Assert.Contains("tag v2.3.0", output);
+        }
+        finally
+        {
+            Directory.Delete(link);
+        }
+    }
+
     /// <summary>The refusal lists the paths as git status prints them: " M" is a change not staged, kept with its space.</summary>
     [Fact]
     public void ADirtyTree_IsRefused_WithThePathsAsGitPrintsThem()

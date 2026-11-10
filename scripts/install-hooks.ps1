@@ -27,10 +27,11 @@ try {
     # The root of the git repository this folder belongs to.
     $gitRoot = (git rev-parse --show-toplevel 2>$null)
     if ($LASTEXITCODE -ne 0 -or -not $gitRoot) { throw 'Not inside a git repository. Run git init first.' }
-    $gitRoot = [System.IO.Path]::GetFullPath($gitRoot).TrimEnd('\', '/')
-    $here = [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
-    if ($gitRoot -ne $here) {
-        throw ("The project must be the root of its repository: it is {0}, and the repository's root is {1}. Nothing was changed." -f $here, $gitRoot)
+    # git says where this folder is inside the repository: nothing at its root. Comparing two
+    # paths instead would take the same folder, reached through a junction, for another.
+    $prefix = (git rev-parse --show-prefix 2>$null)
+    if ($prefix) {
+        throw ("The project must be the root of its repository: it is the folder {0} of the repository at {1}. Nothing was changed." -f $prefix.TrimEnd('/'), $gitRoot)
     }
 
     git config core.hooksPath scripts/hooks

@@ -27,11 +27,12 @@ you propose one.
    ask whether to run `/validate` first; a release is the moment a stale figure gets noticed.
 4. **Dry run.** `scripts/release.ps1 -Version X.Y.Z -WhatIf` and paste its output: tag name,
    Unreleased content and what would change. The tag is `vX.Y.Z` (ADR 0074).
-5. **Run it.** `scripts/release.ps1 -Version X.Y.Z`. It runs verify with every test (`-All`),
-   edits `Directory.Build.props` and `CHANGELOG.md`, publishes each entry of `release.publish`
-   to a staging folder and merges it into `artifacts/X.Y.Z/<output>/` with a hash check: here
-   the application, framework-dependent, into `artifacts/X.Y.Z/` itself (`dotnet publish -c
-   Release` of `src/MindfulnessReminder.App`, no runtime, ADR 0036). It writes
+5. **Run it.** `scripts/release.ps1 -Version X.Y.Z`, with a 10-minute timeout: it runs verify
+   with every test (`-All`, about three minutes), edits `Directory.Build.props` and
+   `CHANGELOG.md`, publishes each entry of `release.publish` to a staging folder and merges
+   it into `artifacts/X.Y.Z/<output>/` with a hash check: here the application,
+   framework-dependent, into `artifacts/X.Y.Z/` itself (`dotnet publish -c Release` of
+   `src/MindfulnessReminder.App`, no runtime, ADR 0036). It writes
    `artifacts/X.Y.Z/release.json` (the version, the commit, and this project's version, commit,
    unreleased flag and whether its folder was clean) and, when `process.json` sets `release.zip`,
    the zip in `artifacts/` with its `.sha256` beside it (ADR 0071). Paste the last

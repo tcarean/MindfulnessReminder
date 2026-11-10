@@ -147,8 +147,10 @@ public class RepoInvariantTests
 
     /// <summary>
     /// Every decision a living file cites, "ADR NNNN" alone, in a list or a range, broken across
-    /// lines or not, is a record in docs/decisions/. The records and the plans are history and
-    /// keep the numbers of their date, and so do the released sections of CHANGELOG.md.
+    /// lines or not, is a record in docs/decisions/. The records themselves are left out: they
+    /// also cite other projects' records by number ("FlatCheck ADR 0045", "its ADR 0001"), and
+    /// their own citations were renumbered and compared one by one with ADR 0075. The plans and
+    /// the released sections of CHANGELOG.md keep the numbers of their date.
     /// </summary>
     [Fact]
     public void Every_cited_decision_exists()

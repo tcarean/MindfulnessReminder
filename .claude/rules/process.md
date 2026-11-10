@@ -23,8 +23,8 @@ in the decision records each rule names.
   line of a golden `CLAUDE.md` names as carrying confirmed figures, is a finding: say so and
   stop; the owner decides (ADR 0033).
 - **Gate.** No commit unless `scripts/verify.ps1` is green. Never `--no-verify`. Never skip a
-  failing test. The tests of the scripts, `Category=Process`, run in the gate when the change
-  touches what they test, and always in CI, at a release and with `-All` (ADR 0075).
+  failing test. The tests of the scripts, `Category=Process`, run in the gate on a branch that
+  changes what they test, and always in CI, at a release and with `-All` (ADR 0075).
 - **Packages.** No new NuGet package without asking. Every package in
   `Directory.Packages.props` has a "why".
 - **Measured numbers.** Numbers are measured, not guessed. A validation claim comes with the

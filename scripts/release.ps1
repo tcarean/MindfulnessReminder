@@ -312,11 +312,12 @@ try {
     if ($gitDir -ne $commonDir) {
         throw "A release is cut on $releaseBranch, in the main checkout; this is a linked worktree ($root)."
     }
-    # The tag vX.Y.Z names a version of the whole repository, so the project is its root.
-    $here = Get-ProjectRoot
-    $gitRoot = [System.IO.Path]::GetFullPath((git rev-parse --show-toplevel)).TrimEnd('\', '/')
-    if ($gitRoot -ne $here) {
-        throw "A release is cut from a project that is the root of its repository; this project is $here, the repository's root is $gitRoot."
+    # The tag vX.Y.Z names a version of the whole repository, so the project is its root. git
+    # says where this folder is inside the repository, nothing at its root: comparing two paths
+    # instead would take the same folder, reached through a junction, for another.
+    $prefix = (git rev-parse --show-prefix)
+    if ($prefix) {
+        throw ("A release is cut from a project that is the root of its repository; this project is the folder {0} of the repository at {1}." -f $prefix.TrimEnd('/'), (git rev-parse --show-toplevel))
     }
     $branch = (git branch --show-current 2>$null)
     if ($branch -ne $releaseBranch) {

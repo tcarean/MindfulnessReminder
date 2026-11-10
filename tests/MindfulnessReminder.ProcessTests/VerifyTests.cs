@@ -35,10 +35,12 @@ public sealed class VerifyTests : IDisposable
     public VerifyTests()
     {
         ScriptRunner.CopyTree(Path.Combine(Repo.Root, "scripts"), Path.Combine(_project, "scripts"));
-        File.WriteAllText(Path.Combine(_project, "process.json"), ScriptRunner.ProcessJson().Replace(
-            "\"release\": { \"publish\": [] }",
-            "\"release\": { \"publish\": [] }, \"processTests\": { \"category\": \"Process\", \"paths\": [\"scripts/\"] }",
-            StringComparison.Ordinal));
+        File.WriteAllText(Path.Combine(_project, "process.json"), ScriptRunner.ProcessJson()
+            .Replace("\"solution\": \"X.sln\",", "\"solution\": \"X.sln\", \"testFilter\": \"Category!=Validation\",", StringComparison.Ordinal)
+            .Replace(
+                "\"release\": { \"publish\": [] }",
+                "\"release\": { \"publish\": [] }, \"processTests\": { \"category\": \"Process\", \"paths\": [\"scripts/\"] }",
+                StringComparison.Ordinal));
         Directory.CreateDirectory(Path.Combine(_project, "tests", "testdata"));
         File.WriteAllText(Path.Combine(_project, "tests", "testdata", "manifest.json"), "{ \"files\": [] }\n");
 
@@ -86,13 +88,19 @@ public sealed class VerifyTests : IDisposable
 
         Assert.True(File.Exists(Path.Combine(_project, ".verify-stamp")), "verify wrote no stamp");
 
-        // %TEMP% is in no repository: git cannot tell what changed, so the process tests run.
+        // %TEMP% is in no repository: git cannot tell what changed, so the process tests run, and
+        // the filter is the project's own alone.
         Assert.Contains("process tests: run", output);
+        Assert.Contains("test filter: (Category!=Validation)\n", output.ReplaceLineEndings("\n"));
     }
 
-    /// <summary>On main with nothing changed under scripts/, the process tests are left out, and the output says so; -All runs them.</summary>
+    /// <summary>
+    /// On main with nothing changed under scripts/, the process tests are left out, joined to the
+    /// project's own filter, and the output says so; -All runs them, and so does CI. The suite
+    /// itself may run in CI: ScriptRunner removes CI, and the run in CI passes it on purpose.
+    /// </summary>
     [Fact]
-    public void ACleanCheckout_LeavesTheProcessTestsOut_UnlessAll()
+    public void ACleanCheckout_LeavesTheProcessTestsOut_UnlessAllOrCI()
     {
         Git("init", "-q", "-b", "main");
         Git("add", "-A");
@@ -101,10 +109,17 @@ public sealed class VerifyTests : IDisposable
         (int exitCode, string output) = ScriptRunner.RunScript(_project, Path.Combine(_project, "scripts", "verify.ps1"));
         Assert.True(exitCode == 0, output);
         Assert.Contains("process tests: left out", output);
+        Assert.Contains("test filter: (Category!=Validation)&Category!=Process", output);
 
         (exitCode, output) = ScriptRunner.RunScript(_project, Path.Combine(_project, "scripts", "verify.ps1"), "-All");
         Assert.True(exitCode == 0, output);
         Assert.Contains("process tests: run (-All)", output);
+        Assert.Contains("test filter: (Category!=Validation)\n", output.ReplaceLineEndings("\n"));
+
+        (exitCode, output) = ScriptRunner.RunWith(_project, new Dictionary<string, string> { ["CI"] = "true" },
+            ScriptRunner.Shell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", Path.Combine(_project, "scripts", "verify.ps1"));
+        Assert.True(exitCode == 0, output);
+        Assert.Contains("process tests: run (CI)", output);
     }
 
     public void Dispose()

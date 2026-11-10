@@ -2,7 +2,7 @@
 
 Date: 2026-11-10
 Status: accepted 2026-11-10
-Supersedes: 0004; 0006; 0011 in part (the guide and the test of its paths); 0012 in part (Romanian for what only people read); 0015; 0016; 0017 in part (the name kit.json, the kit key, sync.ps1, a project never editing scripts/, the tests of the scripts in the kit only); 0018 in part (the skills and the agent mirrored by sync.ps1 and guarded by the Stop hook, the project steps in docs/skills.md); 0024 in part (a kit ADR as a reference); 0025; 0027 in part (the absolute core.hooksPath of the main checkout's .githooks/); 0028 in part (the synced rules file under .claude/rules/kit/, the process keys compared by sync.ps1, the shared-folder list); 0035 in part (the kit's files synced and never edited here); 0071 in part (an entry in another project, a component); 0074 in part (the kit key, step 0 skipped, sync.ps1, the closed copy in docs/decisions/kit/, citing the kit's ADRs, GHID.md, the tests of the scripts left in the kit)
+Supersedes: 0004; 0006; 0011 in part (the guide and the test of its paths); 0012 in part (Romanian for what only people read); 0015; 0016; 0017 in part (the name kit.json, the kit key, sync.ps1, a project never editing scripts/, the tests of the scripts in the kit only); 0018 in part (the skills and the agent mirrored by sync.ps1 and guarded by the Stop hook, the project steps in docs/skills.md); 0024 in part (a kit ADR as a reference); 0025; 0027 in part (the absolute core.hooksPath of the main checkout's .githooks/); 0028 in part (the synced rules file under .claude/rules/kit/, the process keys compared by sync.ps1, the shared-folder list); 0035 in part (the kit's files synced and never edited here); 0038 in part (the project rule in CLAUDE.md); 0071 in part (an entry in another project, a component); 0074 in part (the kit key, step 0 skipped, sync.ps1, the closed copy in docs/decisions/kit/, citing the kit's ADRs, GHID.md, the tests of the scripts left in the kit)
 
 ## Context
 
@@ -65,10 +65,12 @@ of the scripts to be brought from `photo`, which is not modified. The plan is
   `RepoInvariantTests.Every_cited_decision_exists` checks that every number a living file
   cites is a record.
 - **The process rules and the skills are this project's.** `.claude/rules/process.md` holds
-  the process rules, with no kit and no project to tell apart, and the rules of `CLAUDE.md`
-  that only varied a kit rule are gone. `docs/skills.md` is folded into the six skills and
-  deleted. `GHID.md` is deleted from this repository; it stays in `photo`, and no file here
-  points to it. Everything in the repository is in English.
+  the process rules, with no kit and no project to tell apart. The rules of `CLAUDE.md` that
+  only varied a kit rule are gone, and its rule "All text is in English", which extended one,
+  is now the process rule "Languages". `docs/skills.md` is folded into the six skills and
+  deleted. `GHID.md` is deleted from this repository; it stays in `photo`, and no living file
+  points to it (the older records that name it are history). Everything in the repository is
+  in English.
 
 ## Alternatives rejected
 
@@ -93,8 +95,10 @@ of the scripts to be brought from `photo`, which is not modified. The plan is
 
 - A later version of the kit can no longer be copied over these files: they differ, and the
   numbers changed. The kit in `photo` is a source of ideas, not of files.
-- A commit that touches `scripts/` or the process tests runs them, which takes minutes; any
-  other commit keeps the gate's earlier time. CI and a release always run them.
+- Every commit of a branch that changes `scripts/` or the process tests runs them, which takes
+  minutes, and a commit of the assistant runs the gate twice, in its hook and in `pre-commit`;
+  a branch that changes neither keeps the gate's earlier time. CI and a release always run
+  them.
 - The first CI run with the process tests is the next push; until then they have run on this
   machine only.
 - Commit messages, plans and released CHANGELOG entries written before 2026-11-10 cite the old

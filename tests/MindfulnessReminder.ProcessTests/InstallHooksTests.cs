@@ -60,6 +60,25 @@ public sealed class InstallHooksTests : IDisposable
         Assert.Equal(string.Empty, GitOutput("config", "--get", "core.hooksPath"));
     }
 
+    /// <summary>git answers with the real path; the script, started through a junction, must not take that for another folder.</summary>
+    [WindowsFact]
+    public void ThroughAJunction_TheRootIsStillTheRoot()
+    {
+        CopyScripts(_repo);
+        string link = _repo + "-link";
+        ScriptRunner.MakeJunction(link, _repo);
+        try
+        {
+            (int exitCode, string output) = Install(link);
+            Assert.True(exitCode == 0, output);
+            Assert.Equal("scripts/hooks", GitOutput("config", "--get", "core.hooksPath"));
+        }
+        finally
+        {
+            Directory.Delete(link);
+        }
+    }
+
     public void Dispose()
     {
         ScriptRunner.DeleteTree(_repo);

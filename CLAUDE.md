@@ -10,9 +10,10 @@ and `Screen`, both from the WindowsDesktop shared framework (ADR 0041).
 ## Commands
 
 - Gate (what pre-commit, pre-merge-commit, the Claude commit hook and CI run):
-  `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1`. About 25 s;
-  when the change touches `scripts/` or `tests/MindfulnessReminder.ProcessTests/`, the process
-  tests run too and it takes about three minutes (ADR 0075). `-All` runs them whatever changed.
+  `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1`. About 25 s; on a
+  branch that changes `scripts/` or `tests/MindfulnessReminder.ProcessTests/`, the process tests
+  run too, at every commit, and it takes about three minutes (ADR 0075). `-All` runs them
+  whatever changed.
 - Fast loop, no tests: `... scripts/verify.ps1 -SkipTests`
 - Build: `dotnet build MindfulnessReminder.sln -c Release --nologo` (Windows only: WPF). The
   SDK is 9.0.318 or a later 9.0.3xx, pinned in `global.json`; the projects target .NET 8

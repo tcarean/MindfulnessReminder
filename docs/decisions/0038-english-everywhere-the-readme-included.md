@@ -1,7 +1,7 @@
 # 0038. English everywhere, the README included: the project's rule "All text is in English" extends the kit's rule "Languages"
 
 Date: 2026-10-09
-Status: accepted 2026-10-09
+Status: accepted 2026-10-09; the project rule in CLAUDE.md superseded by 0075
 
 ## Context
 

@@ -61,13 +61,20 @@ function Get-ProjectProblems([string]$projectDir, [string[]]$edited) {
     $srcDirs = @($config.codeFolders | ForEach-Object { Get-ConfigFolderPath $projectDir $_ })
     $testDirs = @($config.testFolders | ForEach-Object { Get-ConfigFolderPath $projectDir $_ })
     $srcFiles = @($config.codeFiles | ForEach-Object { Join-Path $projectDir ($_ -replace '/', '\') })
-    $processDirs = @($config.processTests.paths | ForEach-Object { Get-ConfigFolderPath $projectDir $_ })
+    # A process-test path is a folder when it ends with a slash or is one on disk, else a file.
+    $processDirs = @()
+    $processFiles = @()
+    foreach ($p in $config.processTests.paths) {
+        $full = Join-Path $projectDir ($p -replace '/', '\')
+        if ($p.EndsWith('/') -or (Test-Path -LiteralPath $full -PathType Container)) { $processDirs += Get-ConfigFolderPath $projectDir $p }
+        else { $processFiles += $full }
+    }
 
     $problems = @()
 
     # Code edits: those under a code folder, a test folder or a process-test path, or named as
     # a code file.
-    $codeEdits = @($edited | Where-Object { (Test-Under $_ $srcDirs) -or (Test-Under $_ $testDirs) -or (Test-Under $_ $processDirs) -or ($srcFiles -contains $_) })
+    $codeEdits = @($edited | Where-Object { (Test-Under $_ $srcDirs) -or (Test-Under $_ $testDirs) -or (Test-Under $_ $processDirs) -or ($srcFiles -contains $_) -or ($processFiles -contains $_) })
     if ($codeEdits.Count -gt 0) {
         # verify ran green, with tests, after the last code edit: compare the stamp's time
         # with the newest modification time among the edited files that still exist.
