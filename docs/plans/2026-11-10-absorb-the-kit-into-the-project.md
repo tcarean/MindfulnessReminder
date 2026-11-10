@@ -463,6 +463,7 @@ The owner approved this plan on 2026-11-10.
   branch at 9e6089c and clean, no branch but `main` and this one, no stash, `.git/config` as
   before, and GitHub holding only `main` at 1330a04.
 - Measured at the second review's commit: `Passed: 321` and `Passed: 112` (two new tests; the
-  third extended `AProjectReachedThroughAJunction_IsTheRoot`), `== OK in 290s`, the slowest
-  run of the branch (the others 155 to 195 s). The CHANGELOG's count, first written as 113
-  before that run, says 112.
+  third extended `AProjectReachedThroughAJunction_IsTheRoot`), `== OK in 290s`; the next
+  commit's gate took 371 s, the process tests 5 m 14 s, while the earlier runs of the branch
+  took 155 to 195 s. No process of the tests was left running; the machine was slower. The
+  CHANGELOG's count, first written as 113 before that run, says 112.
