@@ -287,7 +287,7 @@ public sealed class HookTests : IDisposable
         Assert.True(exitCode == 0, output);
     }
 
-    /// <summary>A CHANGELOG line is a judgment, not a gate (the kit's ADR 0023): uncommitted code with a clean CHANGELOG passes.</summary>
+    /// <summary>A CHANGELOG line is a judgment, not a gate (ADR 0023): uncommitted code with a clean CHANGELOG passes.</summary>
     [WindowsFact]
     public void StopGate_UncommittedCodeWithCleanChangelog_Passes()
     {

@@ -22,7 +22,7 @@ namespace MindfulnessReminder.ProcessTests;
 
 /// <summary>
 /// scripts/check-decisions.ps1 is the "decisions" step of verify.ps1: it checks the header lines
-/// of every ADR and that both sides of a supersession agree (the kit's ADR 0024). These tests
+/// of every ADR and that both sides of a supersession agree (ADR 0024). These tests
 /// build a throwaway "repository" holding a project with the real script, and write the ADRs
 /// each case needs.
 /// </summary>

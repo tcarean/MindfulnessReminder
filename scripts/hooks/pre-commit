@@ -5,7 +5,7 @@
 #
 # WHAT IT DOES
 #   0. Refuses, before anything else, a commit a Claude Code session makes on a claude/
-#      branch in the main checkout (the kit's ADR 0026); the owner's commits, from shells
+#      branch in the main checkout (ADR 0026); the owner's commits, from shells
 #      that do not set CLAUDECODE, are not refused. git runs no pre-commit for a
 #      fast-forward merge, a cherry-pick, a revert, git am or a rebase's commits.
 #   1. Lists the files staged for the commit.
@@ -13,7 +13,7 @@
 #      that folder is the project the file belongs to. A file with no such folder above it
 #      (for example in a project that has not adopted the kit) is not checked.
 #   3. For each project found, once: runs scripts/verify.ps1 (the gate). Whether the commit
-#      needs a CHANGELOG line is a judgment, not checked here (the kit's ADR 0023).
+#      needs a CHANGELOG line is a judgment, not checked here (ADR 0023).
 #   Works in both layouts: a standalone repository (the project is the git root, found as
 #   ".") and a monorepo (several project folders under one git root).
 #
@@ -35,7 +35,7 @@
 root="$(git rev-parse --show-toplevel)" || exit 1
 cd "$root" || exit 1
 
-# Step 0 (the kit's ADR 0026): a Claude Code session (CLAUDECODE set in its shells) never commits
+# Step 0 (ADR 0026): a Claude Code session (CLAUDECODE set in its shells) never commits
 # on a claude/ branch in the main checkout, which stays on main for the owner; its task branch
 # lives in a worktree of its own. The main worktree is the one whose git folder is the common
 # one. Absolute forms on purpose: git may export a relative GIT_DIR to hooks. Needs git 2.31+.
@@ -48,7 +48,7 @@ if [ -n "${CLAUDECODE:-}" ]; then
       if [ "$gitdir" = "$common" ]; then
         name="${branch#claude/}"
         {
-          echo "pre-commit: refused (the kit's ADR 0026). CLAUDECODE is set and $branch is checked out"
+          echo "pre-commit: refused (ADR 0026). CLAUDECODE is set and $branch is checked out"
           echo "in the main checkout, $root, which stays on main: a Claude Code session commits only in"
           echo "a worktree of its own. git's gate did not run here (the Claude commit gate may already"
           echo "have run verify). To move the work, from the project folder, one command at a time; the"

@@ -1,5 +1,9 @@
 # 2026-10-09 Adopt the ClaudeCodeStarterKit process
 
+> Note, 2026-11-10: the decision numbers in this plan are those of its date, when the kit's
+> records and the project's were two series. ADR 0075 numbered them into one; its last
+> section maps each old number to the present one.
+
 Status: **approved** by the owner on 2026-10-09 ("Aprob planul, trei commit-uri, publish
 framework-dependent"), with two instructions, both of which confirm the body below:
 

@@ -8,8 +8,8 @@
 #   dot-sourced by the scripts (". (Join-Path $PSScriptRoot 'process-config.ps1')") and gives them
 #   Read-ProcessConfig, which reads <project folder>/process.json and returns its values with the paths
 #   already normalised (forward slashes, one trailing slash on folders), Find-Project,
-#   which finds the project a file or folder belongs to (the Claude Code hooks use it, the
-#   kit's ADR 0020), Get-ScriptShell, the PowerShell to start another script with, and
+#   which finds the project a file or folder belongs to (the Claude Code hooks use it,
+#   ADR 0020), Get-ScriptShell, the PowerShell to start another script with, and
 #   Test-ProcessPathsChanged, whether a change touches what the process tests test.
 #   A missing process.json, or a missing required key, is an error with the key named: a project
 #   that has scripts/ must say what it is; nothing is guessed from the folder layout.
@@ -29,13 +29,13 @@
 #                         output is a subfolder of artifacts/<version>/ ("" is that folder
 #                         itself), args are extra `dotnet publish` arguments. project may be
 #                         in a sibling project (`../X/...`), which is then a component:
-#                         bundled from its clean checkout and listed in release.json (the
-#                         kit's ADR 0036)
+#                         bundled from its clean checkout and listed in release.json
+#                         (ADR 0071)
 #     release.zip         optional; the file name of the zip of artifacts/<version>/, written
 #                         to artifacts/ with a .sha256 beside it; `{version}` is replaced;
 #                         absent or empty: no zip
 #     release.branch      optional; the branch a release is cut on ("main" when absent;
-#                         release.ps1 refuses any other, the kit's ADR 0029)
+#                         release.ps1 refuses any other, ADR 0029)
 #     audit.alsoRead      optional; files or folders, besides docs/ and the test data README
 #                         and manifest, that the docs-auditor agent may read: expected outputs,
 #                         notices. Never code.

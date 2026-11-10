@@ -121,7 +121,7 @@ public partial class App : WpfApplication
         }
 
         // Only the tray copy is worth bringing back: Windows starts it again, with --restarted,
-        // after a crash or a hang once it has run for a minute (R-100, ADR 0036).
+        // after a crash or a hang once it has run for a minute (R-100, ADR 0072).
         var registration = ApplicationRestart.ShouldRegister(e.Args) ? RestartRegistration.Register() : 0;
 
         // The log exists from here on: --preview and --detect returned above and write nothing
@@ -515,7 +515,7 @@ public partial class App : WpfApplication
 
         // Not Shutdown(): WPF's shutdown path loads assemblies, and on 2026-10-26 it was the
         // second failure after the first, inside this very handler. A fail-fast needs nothing,
-        // and a clean exit would not be a crash to Windows, so nothing would restart (ADR 0036).
+        // and a clean exit would not be a crash to Windows, so nothing would restart (ADR 0072).
         Environment.FailFast(text, exception);
     }
 

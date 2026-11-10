@@ -23,7 +23,7 @@ namespace MindfulnessReminder.Core;
 /// The text of the crash dialog (R-076, R-101): what a screenshot of it has to say for the
 /// cause to be found. The dialog that only showed <see cref="Exception.Message"/> said nothing
 /// on 2026-10-26, when the runtime's own resources were gone and the message was empty
-/// (ADR 0036).
+/// (ADR 0072).
 /// </summary>
 public static class CrashReport
 {

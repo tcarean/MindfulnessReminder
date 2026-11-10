@@ -8,7 +8,7 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
 
 ### Internal
 
-- The project is the root of its own repository (ADR 0038): the kit's scripts, git hooks,
+- The project is the root of its own repository (ADR 0074): the kit's scripts, git hooks,
   skills, rules, decision records (`docs/decisions/kit/`) and guide (`GHID.md`) live in it,
   `process.json`'s `kit` is `"."`, the git hooks are installed from `scripts/hooks/`, CI runs the
   gate on GitHub, and a release is tagged `vX.Y.Z`.

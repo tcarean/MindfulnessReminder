@@ -1,6 +1,6 @@
 # Settings storage
 
-> Moved unchanged on 2026-10-09 (ADR 0001) from `CLAUDE.md`, "Settings storage". Where a paragraph
+> Moved unchanged on 2026-10-09 (ADR 0035) from `CLAUDE.md`, "Settings storage". Where a paragraph
 > became a decision record, its number is given after it. **Covers:**
 > `src/MindfulnessReminder.Core/RegistrySettingsStore.cs`,
 > `src/MindfulnessReminder.Core/IRegistryStore.cs`,
@@ -40,7 +40,7 @@ The dialog is the exception: it refuses to save an out-of-range number and says 
 there is a user standing there to tell. Clamping silently is for the registry, where there
 is not.
 
-See ADR 0027.
+See ADR 0061.
 
 Silently towards the user, not towards the log: `Load` writes one line with every setting it
 ended up with, the names of the values that were missing or unreadable and fell back, and each
@@ -48,4 +48,4 @@ number the clamp changed (`<name> <read> -> <kept>`); a key the account may not 
 the same line. `Save` writes the settings it wrote. The three `Read*` helpers add a value's name
 to the list of fallbacks as they fall back; the clamps are found by comparing the two numbers
 before and after `Normalize`. `StartupRegistrar`, which shares the key, writes a line when it
-registers the Run entry, when it repairs its path, and when the registry refuses (ADR 0037).
+registers the Run entry, when it repairs its path, and when the registry refuses (ADR 0073).

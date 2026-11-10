@@ -1,5 +1,5 @@
 # LF in the repository and on disk, on every platform, whatever core.autocrlf says: every
-# clone, worktree and CI run holds the same bytes (matches .editorconfig; the kit's ADR 0014).
+# clone, worktree and CI run holds the same bytes (matches .editorconfig; ADR 0014).
 * text=auto eol=lf
 *.sh text eol=lf
 scripts/hooks/pre-commit text eol=lf

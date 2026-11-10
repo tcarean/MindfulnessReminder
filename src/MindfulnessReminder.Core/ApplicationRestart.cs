@@ -19,7 +19,7 @@ namespace MindfulnessReminder.Core;
 
 /// <summary>
 /// What the application tells Windows about restarting it, and how a start reads what Windows
-/// told it back (R-100, R-102; ADR 0036). The call itself, <c>RegisterApplicationRestart</c>,
+/// told it back (R-100, R-102; ADR 0072). The call itself, <c>RegisterApplicationRestart</c>,
 /// is App's; the values and the two decisions are here, where they can be tested.
 /// </summary>
 public static class ApplicationRestart

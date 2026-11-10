@@ -1,5 +1,9 @@
 # Absorb the kit into the project
 
+> Note, 2026-11-10: the decision numbers in this plan are those before the renumbering it
+> carries out, when the kit's records and the project's were two series. ADR 0075 maps
+> each old number to the present one.
+
 Saved, once approved, as `docs/plans/2026-11-10-absorb-the-kit-into-the-project.md`.
 Branch `claude/Absorb-the-kit-into-the-project`, worktree
 `.claude/worktrees/Absorb-the-kit-into-the-project`.
@@ -340,3 +344,27 @@ The owner approved this plan on 2026-11-10.
   `KitJson`, the five function names, 12 paths under `.claude/rules/kit/`). The check found
   one line left, in the released 1.4.0 section of `CHANGELOG.md`, which stays. `git mv` left
   `.claude/rules/kit/` empty on disk; it was removed.
+- Stage 5, the records ADR 0075 supersedes, after reading each: kit 0002 (now 0002) is not
+  among them: it is the rule this project's ADR 0042 (was 0008) records in its own form, and
+  it still holds. Three are added: 0012 in part (Romanian for what only people read, now that
+  `GHID.md` goes), 0024 in part (a kit ADR as a reference) and 0035 in part (was project 0001:
+  the kit's files "synced and never edited here", false since ADR 0074 and not recorded then).
+- Stage 5, the script, rehearsed first on a copy in the scratchpad. The rehearsal found two
+  mistakes before the worktree was touched: the tests ported from the kit cite the kit's
+  records with bare numbers (written inside the kit), four of them in `HookTests` and
+  `GitHookTests`, which the first version took for project numbers; and
+  `ACitationOfAKitAdr_IsNotAReference` holds "the kit's ADR 0007" as data, which must not be
+  rewritten. The script then treated `tests/MindfulnessReminder.ProcessTests/` as kit context
+  and protected that string. A "the kit's" broken across two lines left "(" at the end of a
+  line; the parenthesis now moves down with the citation. The run: 74 records moved (git sees
+  74 renames), 97 files changed; 185 kit and 313 project citations, 27 Status and 25
+  Supersedes numbers, 74 titles, 18 foreign citations kept (FlatCheck, AstroDarkroom, "its",
+  "their", all numbers of other projects), 11 qualifiers broken across lines. The citations
+  counted per file are the same before and after, 519 and 517, the difference being the two of
+  the deleted `docs/decisions/kit/README.md`. In `src/` and the tests, every changed line
+  differs only in its numbers or its "the kit's". The comment of the new invariant test, whose
+  examples ("ADR 0012", "ADRs 0017, 0018 and 0028") the script renumbered too, now reads
+  "ADR 0046", "ADRs 0051, 0052 and 0062". `Every_cited_decision_exists` was green before and
+  after, and failed on a planted "ADR 0999" and "ADRs 0012, 0998 and 0014" in a probe file
+  that was then deleted. `check-decisions.ps1`: `ok 75 decisions`. All seven plans, this one
+  included, got the dated note under their title.

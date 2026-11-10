@@ -1,7 +1,7 @@
 # Project additions to the kit's skills
 
-The skills under `.claude/skills/` came from the kit and hold nothing about this project (the
-kit's ADR 0018; ADR 0038). What Mindfulness Reminder needs on top of them is here, one section per
+The skills under `.claude/skills/` came from the kit and hold nothing about this project
+(ADR 0018; ADR 0074). What Mindfulness Reminder needs on top of them is here, one section per
 skill; each skill reads this file before its first step, and each section says at which step it
 applies. Values (the solution, the folders, the publish list, what the auditor may also read)
 are in `process.json`, not here.
@@ -24,7 +24,7 @@ are in `process.json`, not here.
   only in a full tray start, and a full start of a worktree build repairs the auto-start entry
   to that build (R-006): do not start one; list the change for the owner to look at in their
   own copy after the merge.
-- At step 6: there is no numeric code and no validation case (ADR 0005); skip, unless the
+- At step 6: there is no numeric code and no validation case (ADR 0039); skip, unless the
   feature measures something on a machine, in which case the first case and `ValidationTests`
   are written then.
 - At step 8: `README.md` is English and is the user documentation; its "Behaviour" list, the
@@ -43,15 +43,15 @@ are in `process.json`, not here.
 ## /validate
 
 - At step 1: there is no large file and no case; `docs/validation.json` has `"cases": []`
-  (ADR 0005). Say so and stop after step 1; steps 2 to 5 have nothing to run. When the first
+  (ADR 0039). Say so and stop after step 1; steps 2 to 5 have nothing to run. When the first
   case is added, this section is rewritten.
 
 ## /release
 
 - At step 3: no cases; skip.
 - At step 5: the application is published framework-dependent into `artifacts/X.Y.Z/` itself
-  (`dotnet publish -c Release` of `src/MindfulnessReminder.App`, no runtime, ADR 0002); the tag
-  is `vX.Y.Z` (ADR 0038). The README's "Deployment note" says where the owner
+  (`dotnet publish -c Release` of `src/MindfulnessReminder.App`, no runtime, ADR 0036); the tag
+  is `vX.Y.Z` (ADR 0074). The README's "Deployment note" says where the owner
   publishes for their own machine (`%LOCALAPPDATA%\MindfulnessReminder`); a release does not go
   there.
 - At step 7: the README's "Build and run" section names the build and test commands and the

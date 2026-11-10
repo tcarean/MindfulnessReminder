@@ -7,7 +7,7 @@ description: Cut a release - pick the version from the CHANGELOG, run scripts/re
 
 The script does the mechanical part; you do the judgement and the asking. A release is cut on
 `main`, in the main checkout, in a session the owner opened in the project folder there; commits
-and tags on `main` are the owner's (the kit's ADRs 0021 and 0029): nothing here commits, tags or
+and tags on `main` are the owner's (ADRs 0021 and 0029): nothing here commits, tags or
 pushes. The owner chooses the version number (the kit's rule "Version and year are the
 owner's"); you propose one. Before step 1, read
 `docs/skills.md` if it exists: its `## /release` section adds project-specific steps and says
@@ -37,7 +37,7 @@ where they go.
    staging folder and merges it into `artifacts/X.Y.Z/<output>/` with a hash check, writes
    `artifacts/X.Y.Z/release.json` (the version, the commit, each component's version, commit,
    unreleased flag and whether its folder was clean) and, when `process.json` sets `release.zip`,
-   the zip in `artifacts/` with its `.sha256` beside it (the kit's ADR 0036). Paste the last
+   the zip in `artifacts/` with its `.sha256` beside it (ADR 0071). Paste the last
    lines. If it fails, report and stop; it changes nothing before verify passes. A collision
    (two entries publishing different bytes at one path) stops it after the version files
    changed: paste the collision lines and stop; the owner decides, usually an `output` subfolder
@@ -46,7 +46,7 @@ where they go.
 6. **Check, propose, then ask.** `git rev-parse HEAD` must still be the hash of step 1, and
    `git status --porcelain -- .` must list only `CHANGELOG.md` and, unless the owner had already
    set the version, `Directory.Build.props`; each component's folder must still be clean (a
-   publish that rewrote its lock files is the kit's ADR 0034). If HEAD moved or anything else
+   publish that rewrote its lock files is ADR 0034). If HEAD moved or anything else
    changed, stop and report: another session or hand worked on `main` meanwhile. Otherwise show
    `git diff --stat`, then propose, on separate lines, the commit limited to the two files,
    `git commit -m "Release X.Y.Z" -- Directory.Build.props CHANGELOG.md`, and the tag command

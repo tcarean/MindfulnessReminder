@@ -24,7 +24,7 @@ namespace MindfulnessReminder.ProcessTests;
 
 /// <summary>
 /// scripts/release.ps1 refuses, before it changes anything, a release off main and a version
-/// the owner did not leave room for (the kit's ADR 0029): the floor is the newest released
+/// the owner did not leave room for (ADR 0029): the floor is the newest released
 /// CHANGELOG heading, and a version the owner already set in &lt;Version&gt; is released as it
 /// is. These tests build a throwaway repository whose root is the project, Proj, with the real
 /// release.ps1 and process-config.ps1 and a stub verify.ps1 that records that it ran; the owner has

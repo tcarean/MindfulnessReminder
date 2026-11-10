@@ -1,6 +1,6 @@
 # The dark theme
 
-> Moved unchanged on 2026-10-09 (ADR 0001) from `CLAUDE.md`, "The dark theme". Where a paragraph
+> Moved unchanged on 2026-10-09 (ADR 0035) from `CLAUDE.md`, "The dark theme". Where a paragraph
 > became a decision record, its number is given after it. **Covers:**
 > `src/MindfulnessReminder.App/Theme/DarkTheme.xaml`,
 > `src/MindfulnessReminder.App/ImmersiveDarkMode.cs`,
@@ -26,7 +26,7 @@ was the second to take it, and taking it cost one `MergedDictionaries` block. A 
 window follows the same pattern; **do not promote the dictionary to the application** on the
 grounds that it is now in two places.
 
-See ADR 0030.
+See ADR 0064.
 
 **Three surfaces, three mechanisms, and nothing shared between them:**
 
@@ -41,7 +41,7 @@ The menu is Windows Forms, so no WPF resource reaches it and the palette is repe
 Do not "fix" it by moving the palette into Core: a palette is presentation, and Core holds
 rules.
 
-See ADR 0030.
+See ADR 0064.
 
 Rules that are easy to break:
 
@@ -65,7 +65,7 @@ Rules that are easy to break:
   build 18985 and 19 on 17763..18984; `Apply` asks for 20, falls back to 19, and then gives
   up. The worst outcome is a light caption, which is not worth a dialog.
 
-See ADR 0031.
+See ADR 0065.
 
 **About is a window, not a `MessageBox`.** A Win32 dialog cannot be themed, and a white About
 box opening out of a dark tray menu reads as a different program. It shows
@@ -87,4 +87,4 @@ The remaining `MessageBox` dialogs — the crash report and the `--detect` timel
 light. Both are terminal, in the sense that the app is either dying or exiting straight
 after, so neither is worth a window.
 
-See ADR 0032 for About, its opening, the icon and the two dialogs that stay `MessageBox`.
+See ADR 0066 for About, its opening, the icon and the two dialogs that stay `MessageBox`.

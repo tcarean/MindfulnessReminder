@@ -1,5 +1,9 @@
 # Add a small decision log
 
+> Note, 2026-11-10: the decision numbers in this plan are those of its date, when the kit's
+> records and the project's were two series. ADR 0075 numbered them into one; its last
+> section maps each old number to the present one.
+
 ## Context
 
 The 2026-10-26 crash was diagnosed entirely from outside the application (Event Viewer, a WER

@@ -4,7 +4,7 @@
 # WHAT IT DOES
 #   Reads every .md in docs/decisions/. Each is named NNNN-slug.md, lowercase words joined by
 #   hyphens; 0000-template.md is skipped, and no other file may use 0000. Then it checks the
-#   first lines of each ADR, as the kit's ADR 0024 fixes them (letter case counts):
+#   first lines of each ADR, as ADR 0024 fixes them (letter case counts):
 #     1  # NNNN. <title>              NNNN is the number in the file name
 #     2  (blank)
 #     3  Date: YYYY-MM-DD

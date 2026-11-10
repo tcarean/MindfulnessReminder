@@ -5,7 +5,7 @@ every workstation unlock, and at a configurable interval while the user works --
 user is on a call or in a full-screen application, in which case it waits. The two reminders
 have a switch and a message each, and both say "Ground yourself" until changed. .NET 8,
 **zero external dependencies**: WPF for the windows, Windows Forms for the tray icon, its menu
-and `Screen`, both from the WindowsDesktop shared framework (ADR 0007).
+and `Screen`, both from the WindowsDesktop shared framework (ADR 0041).
 
 ## Commands
 
@@ -31,7 +31,7 @@ and `Screen`, both from the WindowsDesktop shared framework (ADR 0007).
   `scripts/release.ps1 -Version X.Y.Z [-WhatIf]`
 - Git hooks, once in every clone (sets `core.hooksPath` to `scripts/hooks`):
   `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-hooks.ps1`
-- There are no validation figures: `docs/validation.json` lists no case (ADR 0005), so
+- There are no validation figures: `docs/validation.json` lists no case (ADR 0039), so
   `/validate` has nothing to run.
 
 ## Layout
@@ -43,17 +43,17 @@ and `Screen`, both from the WindowsDesktop shared framework (ADR 0007).
 - `src/MindfulnessReminder.App/` - `net8.0-windows`, `WinExe`, the binary is
   `MindfulnessReminder.exe`: the three windows, the tray icon, the dark theme, and one Windows
   API per file behind a Core interface. Nothing here decides anything; none of it is
-  unit-tested (ADR 0008).
+  unit-tested (ADR 0042).
 - `tests/MindfulnessReminder.Tests/` - `net8.0`, references **Core only**: every rule on
   fakes, `RepoInvariantTests`, `LicenseHeaderTests`, `VersionTests`. `tests/testdata/` holds
   an empty manifest: there is no test data.
 - `Directory.Build.props` - `<Version>` and `<Copyright>`, the single place for both (ADR
-  0011), and the strictness every project builds with (ADR 0003).
+  0045), and the strictness every project builds with (ADR 0037).
 - `process.json` - what the scripts, skills and agent need to know about this project; its `kit`
   is `"."`. `docs/skills.md` - this project's additions to the skills. `scripts/` (the three
   git hooks in `scripts/hooks/` included), `.claude/skills/`, `.claude/agents/`,
   `.claude/rules/` and the process keys of `.claude/settings.json` came from the kit and
-  are this repository's own (ADR 0038; the rule "The kit's files are this repository's").
+  are this repository's own (ADR 0074; the rule "The kit's files are this repository's").
 - `docs/requirements.md` - the behaviour, with IDs. `docs/decisions/` - ADRs;
   `docs/decisions/kit/` - the kit's, a closed copy: "the kit's ADR NNNN" is `NNNN-*.md` there.
   `docs/validation.md` + `.json` - no figures, and why. `docs/design/` - the explanations, per
@@ -64,64 +64,64 @@ and `Screen`, both from the WindowsDesktop shared framework (ADR 0007).
   people, not loaded).
 - The project is the root of its own repository since 2026-11-10. Until then it was a folder of
   the `photo` monorepo, beside the kit, `ClaudeCodeStarterKit`; its history up to that day is
-  in that repository. "The kit folder" in a kit file is this folder (ADR 0038).
+  in that repository. "The kit folder" in a kit file is this folder (ADR 0074).
   `.github/workflows/ci.yml` runs the gate on every push to `main` and every pull request.
 
 ## Rules
 
 The process rules every project made from the kit follows are in `.claude/rules/process.md`,
-loaded with this file (the kit's ADR 0028). These are Mindfulness Reminder's own; one that
+loaded with this file (ADR 0028). These are Mindfulness Reminder's own; one that
 extends or varies a kit rule names it.
 
 - **All text is in English** (extends the kit's rule "Languages"): UI strings, comments,
   documentation, and the README too. `GHID.md`, the kit's guide, is the one Romanian file (ADR
-  0004, ADR 0038).
+  0038, ADR 0074).
 - **The kit's files are this repository's** (varies the kit's rule "Shared folders"). There is
   no kit beside this project and no other project to keep in step: `scripts/`,
   `.claude/skills/`, `.claude/agents/`, `.claude/rules/` and the process keys of
   `.claude/settings.json` are edited here, with an ADR when the change is a decision.
-  `scripts/sync.ps1` has nothing to copy and step 0 of the gate is skipped (ADR 0038).
+  `scripts/sync.ps1` has nothing to copy and step 0 of the gate is skipped (ADR 0074).
 - **A kit decision is cited, never edited** (varies the kit's rule "Decisions").
   `docs/decisions/kit/` is closed: a process decision made here is a project ADR with the next
   number in `docs/decisions/`, and its text names the kit ADR it replaces. No ADR header cites
   "the kit's ADR NNNN": `scripts/check-decisions.ps1` refuses it where `kit` is `"."` (ADR
-  0038).
+  0074).
 - **Zero external dependencies** (extends the kit's rule "Packages"). `NotifyIcon` and
   everything else come from the shared framework; WPF having no numeric spinner is not a
-  reason to add a package, the settings dialog hand-validates a `TextBox` (ADR 0007).
+  reason to add a package, the settings dialog hand-validates a `TextBox` (ADR 0041).
 - **Logic in Core, adapters in App.** If a new rule cannot be tested because it sits in the
   App project, it is in the wrong project; the test project deliberately does not reference
-  App, so the build enforces it (ADR 0008).
+  App, so the build enforces it (ADR 0042).
 - **Licence headers.** Every `.cs` and `.xaml` file starts with the GPL notice, new files
   included; `LicenseHeaderTests` fails otherwise. XML comments cannot contain `--`, so the
-  em-dash of C# comments is reworded in XAML (ADR 0009).
+  em-dash of C# comments is reworded in XAML (ADR 0043).
 - **One timer, one deadline, on the wall clock.** The timer ticks every second and
   `IntervalSchedule` compares a deadline with `IClock.UtcNow`; never a timer armed for the
   interval, never a count of ticks. A lock suspends the schedule and an unlock restarts it in
-  full, before the debounce and the already-showing check (ADR 0012 to ADR 0014).
+  full, before the debounce and the already-showing check (ADR 0046 to ADR 0048).
 - **Read the device, not the window title.** A call is the `ConsentStore` capture record;
   full screen is `SHQueryUserNotificationState` mapped in Core, and `QUNS_NOT_PRESENT` must
-  not suppress. Do not reintroduce a table of window titles (ADR 0016, ADR 0017).
+  not suppress. Do not reintroduce a table of window titles (ADR 0050, ADR 0051).
 - **A periodic reminder is postponed, an unlock reminder is skipped**, and there is no cap on
-  how long one is held back; the tooltip carries the reason (ADR 0018).
+  how long one is held back; the tooltip carries the reason (ADR 0052).
 - **The activity monitor is never read on the one-second tick**: when a reminder is due, once
-  per retry, and every 10 s idle so the tooltip is current (ADR 0019).
+  per retry, and every 10 s idle so the tooltip is current (ADR 0053).
 - **The coordinator picks the text, the presenter draws it.** `BringToFront` takes nothing;
   messages are normalized like numbers are clamped, and the dialog refuses a blank one only
-  for a reminder that is on (ADR 0022, ADR 0023).
+  for a reminder that is on (ADR 0056, ADR 0057).
 - **The reminder window is light and swallows Enter.** `BreakWindow` takes no dark theme, its
   Close button is not `IsDefault`, and Enter is handled in `OnPreviewKeyDown`; Settings and
-  About are modeless, never `ShowDialog` (ADR 0026, ADR 0030).
+  About are modeless, never `ShowDialog` (ADR 0060, ADR 0064).
 - **The dark theme is merged per window, never into `Application.Resources`.** Every template
   carries its own disabled trigger; the palette is repeated in `DarkMenuRenderer` and never
-  moves into Core (ADR 0030, ADR 0031).
+  moves into Core (ADR 0064, ADR 0065).
 - **Settings are strings, read forgivingly.** Eight string values under
   `HKCU\Software\MindfulnessReminder`, clamped or defaulted on reading, never rejected; the
-  Settings dialog is the one place that refuses (ADR 0027).
+  Settings dialog is the one place that refuses (ADR 0061).
 - **The tray tooltip fits 63 characters.** `TrayTooltip` is the pure function that proves it
-  (ADR 0025).
+  (ADR 0059).
 - **User documentation lives in `README.md`, and only there.** It is the single source for it;
-  `docs/` explains what the code does and why, for whoever maintains it (ADR 0034).
+  `docs/` explains what the code does and why, for whoever maintains it (ADR 0068).
 
 ## Workflow
 
@@ -131,9 +131,9 @@ The kit's workflow in `.claude/rules/process.md` applies. Mindfulness Reminder a
   `src/MindfulnessReminder.App/` is looked at with `--preview` (the reminder window only) or
   `--detect` (the activity monitor only); anything else of the App runs only in a full tray
   start, which from a worktree build repairs the auto-start entry to that build (R-006), so it
-  is listed for the owner to look at in their own copy after the merge (ADR 0008).
+  is listed for the owner to look at in their own copy after the merge (ADR 0042).
 - A release is tagged `vX.Y.Z`, the name `scripts/release.ps1` prints; it publishes the
-  application framework-dependent into `artifacts/X.Y.Z/` (ADR 0002, ADR 0038).
+  application framework-dependent into `artifacts/X.Y.Z/` (ADR 0036, ADR 0074).
 - The main checkout of the kit's rule "Worktrees" is the clone itself, the folder that holds
   `.git/`; a session is started there.
 
@@ -143,16 +143,16 @@ The kit's workflow in `.claude/rules/process.md` applies. Mindfulness Reminder a
 edit:
 
 - `IntervalSchedule.cs`, `ReminderCoordinator.cs` or the tick: `docs/design/periodic-reminder.md`
-  and ADR 0012 to ADR 0014.
+  and ADR 0046 to ADR 0048.
 - `HandleTick`, `SuppressionPolicy`, `WindowsActivityMonitor`, `--detect`:
-  `docs/design/pausing.md` and ADR 0016 to ADR 0020.
+  `docs/design/pausing.md` and ADR 0050 to ADR 0054.
 - `ReminderSettings`, `HandleUnlock`, the messages: `docs/design/two-reminders.md` and ADR
-  0021 to ADR 0024.
-- Any XAML, a new window: `docs/design/dark-theme.md` and `docs/design/windows.md`, ADR 0026,
-  ADR 0030 to ADR 0032.
-- A new setting: `docs/design/settings-storage.md` and ADR 0027.
+  0055 to ADR 0058.
+- Any XAML, a new window: `docs/design/dark-theme.md` and `docs/design/windows.md`, ADR 0060,
+  ADR 0064 to ADR 0066.
+- A new setting: `docs/design/settings-storage.md` and ADR 0061.
 - `Version.cs`, `LicenseInfo.cs`, `LicenseHeaderTests`: `docs/design/versioning-and-licence.md`,
-  ADR 0009 to ADR 0011.
+  ADR 0043 to ADR 0045.
 - A file you have not opened before: `docs/design/code-map.md`.
 
 ## Style
@@ -160,7 +160,7 @@ edit:
 - `.editorconfig` holds whitespace rules and `IDE0005`; `dotnet format` enforces them, and so
   does the build, which writes the XML documentation file for that reason (CS1591 muted).
   Warnings are errors, `EnforceCodeStyleInBuild` and `Nullable` are on, in
-  `Directory.Build.props` (ADR 0003). The kit's code-style rules and the analyzers are not
+  `Directory.Build.props` (ADR 0037). The kit's code-style rules and the analyzers are not
   enabled: 374 analyzer findings on 2026-10-09, 352 of them the underscores in test names; a
   style pass is a task of its own.
 - Test names are sentences with underscores, `R###_` first.

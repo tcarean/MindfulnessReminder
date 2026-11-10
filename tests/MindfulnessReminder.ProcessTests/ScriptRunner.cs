@@ -25,7 +25,7 @@ namespace MindfulnessReminder.ProcessTests;
 /// also gets its standard input and extra environment variables. The tests also run inside the
 /// real pre-commit hook, and an inherited GIT_DIR would point git at the real repository instead
 /// of the throwaway one a test builds. CLAUDECODE is set when Claude Code runs the suite and not
-/// when the owner does, and the git hooks read it (the kit's ADR 0026): a test that wants it
+/// when the owner does, and the git hooks read it (ADR 0026): a test that wants it
 /// passes it explicitly, so the results do not depend on who runs the suite.
 /// </summary>
 internal static class ScriptRunner

@@ -21,7 +21,7 @@ adds project-specific steps and says where they go.
    A line the task did not mean to change, or any changed line of a golden the project's
    `CLAUDE.md` names as carrying confirmed figures, is a finding: say so and stop before step 11
    commits; the owner decides, and an approved change to such a golden is recorded where that
-   `CLAUDE.md` says (the kit's ADR 0033).
+   `CLAUDE.md` says (ADR 0033).
 3. `git diff` the whole change. Read it back. Write a three-sentence plain-language summary:
    what changed for the user, what changed inside, what did not change that someone might expect.
    Every type and method the diff adds or edits in the code has its documentation comment, with
@@ -31,7 +31,7 @@ adds project-specific steps and says where they go.
    changed or removed, a fix, a figure that moved, a refactor worth knowing about) has a line
    under `[Unreleased]`, in the right subsection (Added, Changed, Fixed, Removed; Internal). A
    review follow-up, a test-only change, a comment or doc fix gets none; nothing checks this at
-   commit, so it is decided here (the kit's ADR 0023). Say which way you decided.
+   commit, so it is decided here (ADR 0023). Say which way you decided.
 5. `docs/requirements.md`: statuses match reality. A requirement touched by this task that is
    still `draft` is a question for the user, not something to leave. A new `R###_` test moves
    its requirement to `implemented`.
@@ -39,7 +39,7 @@ adds project-specific steps and says where they go.
    has an ADR, including a choice settled in chat that happened to match convention. If unsure,
    list the candidates and ask. An ADR still `proposed` while code built on it is about to be
    committed is a question for the owner: accept it, or change the code. An ADR already merged
-   into `main` changes three ways only (the kit's ADR 0024): a typo, an unclear phrase or a
+   into `main` changes three ways only (ADR 0024): a typo, an unclear phrase or a
    renamed path is fixed in place; a wrong figure, or a reason that no longer holds while the
    decision stands, gets a dated `(Corrected|Restated YYYY-MM-DD: ...)` note next to it, or
    right after `## Decision` when the text is inside it; anything that changes what is done is
@@ -48,7 +48,7 @@ adds project-specific steps and says where they go.
    `git diff main...HEAD -- docs/decisions/` and say which of these each edit to an ADR
    already on `main` is. In a project, a decision the kit made
    is cited as "the kit's ADR NNNN", never written again as a project ADR; a project ADR
-   records a deviation or a value of its own (the kit's ADR 0025).
+   records a deviation or a value of its own (ADR 0025).
 7. `docs/plans/`: if a plan was followed, note at its end what deviated and why.
 8. `docs/validation.md`: if figures were re-measured, the date and the output are recorded.
 9. `README.md` is the user documentation: if the change is user-visible (a mode, an option, a
@@ -56,9 +56,9 @@ adds project-specific steps and says where they go.
    `.claude/rules/`, `process.json`, `docs/skills.md`, `.claude/settings.json` or `monorepo/`, quote
    what `README.md` and, in the kit, `GHID.md` say about the touched piece and fix what no
    longer holds, in this task; `RepoInvariantTests` only catches paths that no longer exist, not
-   explanations that no longer hold (the kit's ADR 0011). `scripts/`, `.claude/skills/`,
+   explanations that no longer hold (ADR 0011). `scripts/`, `.claude/skills/`,
    `.claude/agents/`, `.claude/rules/` and the process keys of `.claude/settings.json`
-   belong to the kit (the kit's ADRs 0017, 0018 and 0028): in the kit, a change there ends with
+   belong to the kit (ADRs 0017, 0018 and 0028): in the kit, a change there ends with
    `scripts/sync.ps1` and one commit per project; in a project, such a change is made in the kit
    instead, and an edit here is refused by verify and, in the folders, by the Stop hook. When a
    new kit ADR supersedes part of what a project ADR says, look for it in each project's
@@ -73,10 +73,10 @@ adds project-specific steps and says where they go.
     names its files as paths, and a row in `docs/design/README.md`. The gate checks the index and
     the paths, not the text.
 11. If the commit's folder is the main checkout on a `claude/` branch, move the work to the
-    branch's own worktree first: the git hook refuses a session's commit there (the kit's ADR
+    branch's own worktree first: the git hook refuses a session's commit there (ADR
     0026). The main checkout is where the two lines of
     `git rev-parse --absolute-git-dir --path-format=absolute --git-common-dir` are equal. On a
-    `claude/` branch in its own worktree, commit without asking (the kit's ADR 0021): one line,
+    `claude/` branch in its own worktree, commit without asking (ADR 0021): one line,
     English, at
     most 100 characters, saying why. No body, no trailers, no `Co-Authored-By` (the summary
     from step 3 stays in the chat; the "what" is in the diff and, when it warrants one, the
@@ -87,7 +87,7 @@ adds project-specific steps and says where they go.
     say so, suggest `/code-review main...<branch>` first if it has not run on this work, then
     ask: does the owner want you to run the merge, or will they do it by hand? Do nothing until
     they answer. The merge is `git merge --no-ff <branch>` in the main checkout, so that the git
-    hooks see it: a fast-forward runs none (the kit's ADR 0022, 0026). If a merge you run stops on conflicts, resolve them, `git add` the files and
+    hooks see it: a fast-forward runs none (ADR 0022, 0026). If a merge you run stops on conflicts, resolve them, `git add` the files and
     conclude with `git merge --continue`, never `git commit`, which the hook refuses on `main`;
     a conflict where the two sides meant different things is a question for the owner. If the
     gate fails only on the merged result (two ADRs with the same number), `git merge --abort`,

@@ -6,13 +6,13 @@
 #   the list of files this session edited and groups them by project: the nearest folder above
 #   each file that holds process.json (Find-Project in process-config.ps1), so an edit in a worktree
 #   is judged by that worktree's copy of the project, not by the folder the session started in
-#   (the kit's ADR 0020). A file in no project is not judged. Each project is judged on its
+#   (ADR 0020). A file in no project is not judged. Each project is judged on its
 #   own files, with its own process.json: when code was edited (process.json's codeFolders, codeFiles,
 #   testFolders, or the paths of processTests, the scripts whose tests the gate runs when they
 #   change), the turn may end only when scripts/verify.ps1 ran green with tests after
 #   the last such edit: .verify-stamp, which only such a run writes (-SkipTests does not), is
 #   newer than the newest edited file. Whether the change needs a CHANGELOG line is a
-#   judgment, not checked here (the kit's ADR 0023).
+#   judgment, not checked here (ADR 0023).
 #   If not, it answers exit 2 with the reasons under each project's full path, and Claude Code sends Claude back to work
 #   (the message points to /wrap-up). It never runs verify itself, so it takes under a
 #   second. When Claude is already continuing because of this hook (stop_hook_active), it

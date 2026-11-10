@@ -1,6 +1,6 @@
 <Project>
-  <!-- Central Package Management: every package version lives here, once (ADR 0003). The rule
-       "Zero external dependencies" (CLAUDE.md, ADR 0007): Core and the application reference
+  <!-- Central Package Management: every package version lives here, once (ADR 0037). The rule
+       "Zero external dependencies" (CLAUDE.md, ADR 0041): Core and the application reference
        no package at all; the test project has the three below and nothing else. No new package
        without asking (the kit's rule "Packages"), and every package gets a "why" here. -->
   <ItemGroup>

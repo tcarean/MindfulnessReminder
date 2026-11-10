@@ -1,6 +1,6 @@
 # Two reminders, two switches, two messages
 
-> Moved unchanged on 2026-10-09 (ADR 0001) from `CLAUDE.md`, "Two reminders, two switches, two
+> Moved unchanged on 2026-10-09 (ADR 0035) from `CLAUDE.md`, "Two reminders, two switches, two
 > messages". Where a paragraph became a decision record, its number is given after it. **Covers:**
 > `src/MindfulnessReminder.Core/ReminderSettings.cs`,
 > `src/MindfulnessReminder.Core/ReminderCoordinator.cs`,
@@ -32,13 +32,13 @@ the debounce, the activity read and the window. With the switch off none of it r
 particular the registry is not walked to decide whether a reminder that is not going to
 appear would have been held back.
 
-See ADR 0021 for this paragraph and the two above it.
+See ADR 0055 for this paragraph and the two above it.
 
 Every way out of `HandleUnlock` leaves a line in the decision log, after the `Workstation
 unlocked` line itself: skipped because the switch is off, raised because a window is open,
 skipped within the debounce (with how long ago the last one was shown), skipped for a pause
 (with the reason), or shown (with the message). So an unlock that showed nothing can be
-explained from the file (ADR 0037).
+explained from the file (ADR 0073).
 
 **The coordinator picks the text, the presenter draws it.** `IReminderPresenter.Show` takes
 the message, because the coordinator is the one thing that knows which reminder this is.
@@ -46,7 +46,7 @@ the message, because the coordinator is the one thing that knows which reminder 
 keeps the text it opened with rather than having it swapped under the user's eyes when the
 other reminder falls due over it.
 
-See ADR 0022.
+See ADR 0056.
 
 **Messages are normalized like numbers are clamped.** `NormalizeMessage` turns line breaks
 and tabs into spaces, trims, reads nothing at all as `DefaultMessage`, and cuts at
@@ -55,7 +55,7 @@ message with `IsMessageAcceptable` instead, but only for a reminder that is swit
 the same rule the numbers follow, for the same reason. The `TextBox` `MaxLength` reads the
 constant through `x:Static`, so the box and the clamp cannot drift apart.
 
-See ADR 0023.
+See ADR 0057.
 
 **The window stays a fixed size, and the text scales down to fit.** 50 characters can wrap
 to three lines at 30 px, one more than fits above the Close button; a `Viewbox` with
@@ -65,9 +65,9 @@ placing it after layout rather than in `OnSourceInitialized`. The `TextBlock` in
 `Viewbox` has an explicit `Width`; without it a `Viewbox` measures its child with unlimited
 space and nothing wraps.
 
-See ADR 0024.
+See ADR 0058.
 
 `--preview "some text"` shows a message without saving it, through the same normalization
 the saved one gets. It is the way to see what a candidate message looks like at the cap.
 
-See ADR 0023.
+See ADR 0057.

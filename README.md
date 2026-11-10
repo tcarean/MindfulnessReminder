@@ -312,7 +312,7 @@ piece. In short, what is enforced mechanically:
 
 - **The commit message** is one line, in English, of at most 100 characters.
 - **`scripts/`, `.claude/skills/`, `.claude/agents/` and `.claude/rules/` came from the
-  kit** and have been this repository's own since 2026-11-10 (ADR 0038); what is specific to
+  kit** and have been this repository's own since 2026-11-10 (ADR 0074); what is specific to
   the project as values is in `process.json`, the steps it adds to the skills are in
   `docs/skills.md`.
 - **The behaviour is in `docs/requirements.md`**, with `R-NNN` IDs carried in the test names;

@@ -48,7 +48,7 @@
 #   exit 1  red: prints "FAILED: <step>" after that step's own error output
 #
 # Kept compatible with Windows PowerShell 5.1 on purpose: pwsh is not on every machine
-# (the kit's ADR 0003).
+# (ADR 0003).
 [CmdletBinding()]
 param(
     [switch]$SkipTests,

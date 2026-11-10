@@ -26,8 +26,8 @@ namespace MindfulnessReminder.ProcessTests;
 /// at all. These tests build a throwaway repository whose core.hooksPath is a copy of the kit's
 /// scripts/hooks/, holding one project, A, with a stub verify.ps1 that records that it ran and
 /// exits with a chosen code. Windows only: the hooks call powershell.exe. pre-commit also
-/// refuses a Claude Code session's commit on a claude/ branch in the main checkout (the kit's
-/// ADR 0026); a test plays that session by passing CLAUDECODE, which ScriptRunner removes
+/// refuses a Claude Code session's commit on a claude/ branch in the main checkout
+/// (ADR 0026); a test plays that session by passing CLAUDECODE, which ScriptRunner removes
 /// otherwise.
 /// </summary>
 [Trait("Category", "Process")]
@@ -65,7 +65,7 @@ public sealed class GitHookTests : IDisposable
         Git("add", ".");
         GitWithoutHooks("commit", "-q", "-m", "Main");
         File.Delete(Path.Combine(_a, "ran.txt"));
-        // Absolute, as in a monorepo (the kit's ADR 0016): a relative path would resolve against a
+        // Absolute, as in a monorepo (ADR 0016): a relative path would resolve against a
         // linked worktree's own root, where hooks/ is ignored, and no hook would run there.
         Git("config", "core.hooksPath", Path.Combine(_repo, "hooks").Replace('\\', '/'));
     }
@@ -91,7 +91,7 @@ public sealed class GitHookTests : IDisposable
         Assert.True(File.Exists(Path.Combine(_repo, ".git", "MERGE_HEAD")), "git merge --abort needs the merge still in progress");
     }
 
-    /// <summary>commit-msg takes one line of at most 100 characters (the kit's ADR 0023).</summary>
+    /// <summary>commit-msg takes one line of at most 100 characters (ADR 0023).</summary>
     [WindowsTheory]
     [InlineData(100, true)]
     [InlineData(101, false)]
@@ -115,7 +115,7 @@ public sealed class GitHookTests : IDisposable
         string before = GitOutput("rev-parse", "HEAD");
         (int exitCode, string output) = ScriptRunner.RunWith(_repo, ClaudeSession, "git", "commit", "-q", "-m", "Work");
         Assert.NotEqual(0, exitCode);
-        Assert.Contains("the kit's ADR 0026", output);
+        Assert.Contains("ADR 0026", output);
         Assert.Empty(Ran(_repo));
         Assert.Equal(before, GitOutput("rev-parse", "HEAD"));
     }
@@ -147,7 +147,7 @@ public sealed class GitHookTests : IDisposable
         Git("switch", "-q", "claude/Task");
         (int exitCode, string output) = ScriptRunner.RunWith(_repo, ClaudeSession, "git", "merge", "--no-ff", "main", "-m", "Merge main");
         Assert.NotEqual(0, exitCode);
-        Assert.Contains("the kit's ADR 0026", output);
+        Assert.Contains("ADR 0026", output);
         Assert.Empty(Ran(_repo));
         Assert.True(File.Exists(Path.Combine(_repo, ".git", "MERGE_HEAD")), "git merge --abort needs the merge still in progress");
     }

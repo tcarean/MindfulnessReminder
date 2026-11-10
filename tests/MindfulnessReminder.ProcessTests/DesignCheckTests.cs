@@ -23,8 +23,8 @@ namespace MindfulnessReminder.ProcessTests;
 /// <summary>
 /// scripts/check-design.ps1 is the "design notes" step of verify.ps1: every note in docs/design/
 /// is named in the index and has a Covers sentence whose paths name files or folders that git
-/// has; with -Since it lists the notes that cover a code or test file a branch changed (the
-/// kit's ADR 0031). These tests build a throwaway git repository holding one project, Proj, in a
+/// has; with -Since it lists the notes that cover a code or test file a branch changed
+/// (ADR 0031). These tests build a throwaway git repository holding one project, Proj, in a
 /// subfolder, with the real script and process-config.ps1, its code under src/ and its tests under
 /// tests/ (process.json), and write the notes each case needs.
 /// </summary>

@@ -2,7 +2,7 @@
 # release.ps1 - the mechanical part of a release: checks, version number, CHANGELOG, build.
 #
 # WHAT IT DOES
-#   1. Checks, and stops without changing anything if one fails (the kit's ADR 0029):
+#   1. Checks, and stops without changing anything if one fails (ADR 0029):
 #        - the checkout is the main checkout (not a linked worktree) and is on main, or on
 #          the branch process.json names as release.branch: a release is cut there, where the
 #          owner commits and tags; a task branch, a detached HEAD or a worktree is refused;
@@ -47,7 +47,7 @@
 # WHO CALLS IT
 #   - Claude, in the /release skill, in a session the owner opened in the project folder of
 #     the main checkout: first with -WhatIf, then for real; the skill then proposes the commit
-#     and the tag, which the owner runs (the kit's ADRs 0010, 0021 and 0029)
+#     and the tag, which the owner runs (ADRs 0010, 0021 and 0029)
 #   - you, by hand:
 #       powershell -NoProfile -ExecutionPolicy Bypass -File scripts/release.ps1 -Version 0.2.0
 #
@@ -284,7 +284,7 @@ try {
     $new = [version]$Version
     if ($PublishOnly -and $NoPublish) { throw '-PublishOnly and -NoPublish exclude each other.' }
 
-    # -PublishOnly: step 5 alone, no checks, no version files (the kit's ADR 0036).
+    # -PublishOnly: step 5 alone, no checks, no version files (ADR 0071).
     if ($PublishOnly) {
         Write-Host ("== publish only {0}: no checks, Directory.Build.props and CHANGELOG.md untouched" -f $Version) -ForegroundColor Cyan
         # -WhatIf previews here: step 5 runs dotnet publish and a child script, which a
@@ -302,9 +302,9 @@ try {
     }
 
     # --- preconditions -----------------------------------------------------------------
-    # A release is cut on main (or process.json's release.branch), in the main checkout (the kit's
-    # ADR 0029). An empty name is a detached HEAD. The main checkout is the worktree whose git
-    # folder is the common one, the test the git pre-commit hook makes (the kit's ADR 0026);
+    # A release is cut on main (or process.json's release.branch), in the main checkout
+    # (ADR 0029). An empty name is a detached HEAD. The main checkout is the worktree whose git
+    # folder is the common one, the test the git pre-commit hook makes (ADR 0026);
     # absolute forms, since git may report either side relative to a subfolder.
     $releaseBranch = $config.release.branch
     $gitDir = [System.IO.Path]::GetFullPath((git rev-parse --absolute-git-dir)).TrimEnd('\', '/')

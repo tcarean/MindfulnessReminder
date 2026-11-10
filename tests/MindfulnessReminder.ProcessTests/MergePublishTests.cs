@@ -21,7 +21,7 @@ namespace MindfulnessReminder.ProcessTests;
 
 /// <summary>
 /// scripts/merge-publish.ps1 puts one published folder into another and refuses to overwrite a
-/// file with other bytes (the kit's ADR 0036): release.ps1 merges every publish of a bundle
+/// file with other bytes (ADR 0071): release.ps1 merges every publish of a bundle
 /// through it, so two runtimes or two versions of a library never overwrite each other unseen.
 /// </summary>
 [Trait("Category", "Process")]
