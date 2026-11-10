@@ -18,7 +18,7 @@ it superseded. The behaviour the notes describe is also stated, with IDs, in
 ADR were written from the same paragraph, the three still say it in their own words; cutting the
 notes down to what neither a row nor an ADR says is a task of its own.
 
-**Every note is maintained** (the kit's rule "Design notes"): it says above its first section,
+**Every note is maintained** (the rule "Design notes"): it says above its first section,
 in a **Covers:** sentence, which files it describes, and a change to those files means the note
 is updated in the same task, or deleted with the decision it explains. `scripts/check-design.ps1`
 checks this index and the Covers paths at every commit; `scripts/check-design.ps1 -Since main`,
@@ -28,7 +28,7 @@ stop.
 
 | Area | Note | Read before editing |
 | --- | --- | --- |
-| Every file of the three projects, one line each, and the line between Core and App | `code-map.md` | a file you have not opened before; ADR 0041 and ADR 0042 first |
+| Every file of the four projects, one line each, and the line between Core and App | `code-map.md` | a file you have not opened before; ADR 0041 and ADR 0042 first |
 | The periodic reminder: one timer ticking every second, a deadline on the wall clock, the lock that suspends it and the unlock that restarts it, the clock that moves backwards | `periodic-reminder.md` | `IntervalSchedule.cs`, the tick in `ReminderCoordinator.cs`, `DispatcherPeriodicTimer.cs`; ADR 0046 to ADR 0048 first |
 | Holding a reminder back: the capture record for a call, `SHQueryUserNotificationState` for full screen, postponed against skipped, when the monitor is read, `--detect` | `pausing.md` | `SuppressionPolicy.cs`, `ForegroundState.cs`, `WindowsActivityMonitor.cs`, `DetectionLog.cs`, the activity reads in `ReminderCoordinator.cs`; ADR 0050 to ADR 0054 first |
 | The two reminders, their switches and messages: the unlock gate, who picks the text, normalization, the fixed window, `--preview` | `two-reminders.md` | `ReminderSettings.cs`, `HandleUnlock`, `IReminderPresenter.cs`, `BreakWindow.xaml`; ADR 0055 to ADR 0058 first |

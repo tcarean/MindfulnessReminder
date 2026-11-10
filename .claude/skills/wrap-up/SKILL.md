@@ -6,26 +6,18 @@ description: Close a task - run the gate, update CHANGELOG, requirements, decisi
 # Wrap up
 
 Run through every step; report what each one found. Do not skip a step because it "probably"
-does not apply. Before step 1, read `docs/skills.md` if it exists: its `## /wrap-up` section
-adds project-specific steps and says where they go.
+does not apply.
 
 1. Run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1`. Paste the last
-   ten lines. If it is red, fix it or stop and report; never continue with a red gate.
-2. If the session touched numeric code (CLAUDE.md says which files) and `docs/validation.json`
-   has cases, run `/validate` and paste its drift table. A figure that moved is a finding, not
-   something to re-measure into place. Golden files, where the project has them, are checked
-   whatever the session touched. Paste which of them the task changed: `git diff --stat
-   $(git merge-base main HEAD)` and `git status --short`, both limited to the golden folder
-   `CLAUDE.md` names. Read each listed file line by line and report each change with the change
-   the task meant to make, once for a change repeated across files, or say that none changed.
-   A line the task did not mean to change, or any changed line of a golden the project's
-   `CLAUDE.md` names as carrying confirmed figures, is a finding: say so and stop before step 11
-   commits; the owner decides, and an approved change to such a golden is recorded where that
-   `CLAUDE.md` says (ADR 0033).
+   ten lines: they say whether the process tests ran. If it is red, fix it or stop and report;
+   never continue with a red gate.
+2. There is no numeric code, no validation case and no golden file (ADR 0039): say so. If the
+   session added a case, run `/validate` and paste its drift table; a figure that moved is a
+   finding, not something to re-measure into place (ADR 0033).
 3. `git diff` the whole change. Read it back. Write a three-sentence plain-language summary:
    what changed for the user, what changed inside, what did not change that someone might expect.
    Every type and method the diff adds or edits in the code has its documentation comment, with
-   a tag for each parameter and for the return; add what is missing (the kit's rule
+   a tag for each parameter and for the return; add what is missing (the rule
    "Documentation comments").
 4. `CHANGELOG.md`: a change a reader of the version history cares about (behaviour added,
    changed or removed, a fix, a figure that moved, a refactor worth knowing about) has a line
@@ -46,29 +38,23 @@ adds project-specific steps and says where they go.
    a new ADR that supersedes it, in part or whole, and the old one changes only its Status.
    The Status and Supersedes lines may always be completed so both sides agree. Look at
    `git diff main...HEAD -- docs/decisions/` and say which of these each edit to an ADR
-   already on `main` is. In a project, a decision the kit made
-   is cited as "the kit's ADR NNNN", never written again as a project ADR; a project ADR
-   records a deviation or a value of its own (ADR 0025).
+   already on `main` is. A new ADR takes the next number of the one sequence (ADR 0075).
 7. `docs/plans/`: if a plan was followed, note at its end what deviated and why.
 8. `docs/validation.md`: if figures were re-measured, the date and the output are recorded.
 9. `README.md` is the user documentation: if the change is user-visible (a mode, an option, a
-   verdict, a tab), the text there describes it. If the change touched `CLAUDE.md`,
-   `.claude/rules/`, `process.json`, `docs/skills.md`, `.claude/settings.json` or `monorepo/`, quote
-   what `README.md` and, in the kit, `GHID.md` say about the touched piece and fix what no
-   longer holds, in this task; `RepoInvariantTests` only catches paths that no longer exist, not
-   explanations that no longer hold (ADR 0011). `scripts/`, `.claude/skills/`,
-   `.claude/agents/`, `.claude/rules/` and the process keys of `.claude/settings.json`
-   belong to the kit (ADRs 0017, 0018 and 0028): in the kit, a change there ends with
-   `scripts/sync.ps1` and one commit per project; in a project, such a change is made in the kit
-   instead, and an edit here is refused by verify and, in the folders, by the Stop hook. When a
-   new kit ADR supersedes part of what a project ADR says, look for it in each project's
-   `docs/decisions/` and add `; <part> superseded by the kit's ADR NNNN` to that ADR's Status on
-   the task branch, in the project's sync commit when there is one.
+   window, a switch), the text there describes it. If the change touched `CLAUDE.md`,
+   `.claude/rules/`, `process.json`, `.claude/settings.json`, `scripts/`, `.claude/skills/` or
+   `.claude/agents/`, quote what `README.md` says about the touched piece and fix what no
+   longer holds, in this task (ADR 0011). A change to the reminder window is looked at with
+   `--preview`, one to the activity monitor with `--detect`, before the commit. Any other change
+   under `src/MindfulnessReminder.App/` is listed in the wrap-up report for the owner to look at
+   in their own copy after the merge: a full tray start of the worktree's build would repair
+   the auto-start entry to it (R-006).
 10. `docs/design/`: in the project folder of the task's worktree, not the main checkout, run
     `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-design.ps1 -Since main`.
     It lists the notes whose `Covers:` sentences name a code or test file this branch changed
     (the folders and files `process.json` lists). Read each one against the change and update or
-    delete what no longer holds, in this task (the kit's rule "Design notes"). Code whose
+    delete what no longer holds, in this task (the rule "Design notes"). Code whose
     workings a reader needs and that no note covers gets a note with a `Covers:` sentence that
     names its files as paths, and a row in `docs/design/README.md`. The gate checks the index and
     the paths, not the text.

@@ -23,7 +23,7 @@ namespace MindfulnessReminder.ProcessTests;
 /// The git hooks gate every way a commit enters the history, merges included (ADR 0022). A merge
 /// that completes without conflicts runs neither pre-commit nor the Claude commit hook, only
 /// pre-merge-commit; before that hook existed, a clean merge into main was recorded with no gate
-/// at all. These tests build a throwaway repository whose core.hooksPath is a copy of the kit's
+/// at all. These tests build a throwaway repository whose core.hooksPath is a copy of the real
 /// scripts/hooks/, holding one project, A, with a stub verify.ps1 that records that it ran and
 /// exits with a chosen code. Windows only: the hooks call powershell.exe. pre-commit also
 /// refuses a Claude Code session's commit on a claude/ branch in the main checkout
@@ -65,8 +65,8 @@ public sealed class GitHookTests : IDisposable
         Git("add", ".");
         GitWithoutHooks("commit", "-q", "-m", "Main");
         File.Delete(Path.Combine(_a, "ran.txt"));
-        // Absolute, as in a monorepo (ADR 0016): a relative path would resolve against a
-        // linked worktree's own root, where hooks/ is ignored, and no hook would run there.
+        // Absolute: a relative path would resolve against a linked worktree's own root, where
+        // hooks/ is ignored, and no hook would run there.
         Git("config", "core.hooksPath", Path.Combine(_repo, "hooks").Replace('\\', '/'));
     }
 

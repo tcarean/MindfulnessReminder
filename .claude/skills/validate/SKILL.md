@@ -8,8 +8,9 @@ description: Re-measure the acceptance figures in docs/validation.json against t
 The figures in `docs/validation.json` are the project's memory of "how well it works". This skill
 re-measures them; it never edits them silently. The validation tests carry the trait
 `Category=Validation`; where they read large files they are kept out of the gate by `process.json`'s
-`testFilter`. Before step 1, read `docs/skills.md` if it exists: its `## /validate` section adds
-project-specific steps and says where they go.
+`testFilter`. This project has none: `docs/validation.json` has `"cases": []` and there is no
+large file (ADR 0039). Say so and stop after step 1; steps 2 to 5 have nothing to run. When the
+first case is added, this paragraph is rewritten.
 
 1. Run `scripts/check-testdata.ps1`. List which large files are present and which are absent
    (the folder is `<testData.folder>/large/` or the one named by the environment variable

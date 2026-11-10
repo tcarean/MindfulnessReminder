@@ -11,17 +11,17 @@
 #   1. Lists the files staged for the commit.
 #   2. For each file, walks up its folders to the nearest one that has scripts/verify.ps1:
 #      that folder is the project the file belongs to. A file with no such folder above it
-#      (for example in a project that has not adopted the kit) is not checked.
+#      is not checked.
 #   3. For each project found, once: runs scripts/verify.ps1 (the gate). Whether the commit
 #      needs a CHANGELOG line is a judgment, not checked here (ADR 0023).
-#   Works in both layouts: a standalone repository (the project is the git root, found as
-#   ".") and a monorepo (several project folders under one git root).
+#   Here the project is the root of the repository, found as "."; the walk also finds a
+#   project in a subfolder, which is how the tests of this hook build several in one
+#   throwaway repository.
 #
 # WHO CALLS IT
 #   git itself, on every git commit, yours or Claude's, because core.hooksPath points at this
-#   file's folder (set by scripts/install-hooks.ps1). In a monorepo git runs the copy in
-#   <git root>/.githooks/: edit this file, then run the kit's install-hooks.ps1 to refresh
-#   the copy. git commit --no-verify skips it; CLAUDE.md forbids that.
+#   file's folder (set by scripts/install-hooks.ps1); in a worktree, git runs that worktree's
+#   copy. git commit --no-verify skips it; the rule "Gate" forbids that.
 #
 # RESULT
 #   exit 0  every touched project is green; git records the commit

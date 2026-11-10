@@ -25,7 +25,7 @@ namespace MindfulnessReminder.Tests;
 /// <summary>
 /// Tests about the repository itself: things a rule asks for and a test can enforce instead
 /// (ADR 0035). Cheap, and never forgotten in a long session. The requirement-to-test link is
-/// read from the compiled test methods, by their names, as the kit's own tests read it.
+/// read from the compiled test methods, by their names.
 /// Version and copyright plumbing is in <see cref="VersionTests"/>, the licence notice in
 /// <see cref="LicenseHeaderTests"/>.
 /// </summary>
@@ -46,7 +46,7 @@ public class RepoInvariantTests
     private static string RepoDir([CallerFilePath] string thisFile = "")
         => Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(thisFile)))!;
 
-    /// <summary>The kit's rule "Requirements first" made checkable: an implemented requirement has at least one test named after it.</summary>
+    /// <summary>The rule "Requirements first" made checkable: an implemented requirement has at least one test named after it.</summary>
     [Fact]
     public void Every_implemented_requirement_has_a_test_carrying_its_id()
     {
@@ -106,7 +106,7 @@ public class RepoInvariantTests
     }
 
     /// <summary>
-    /// The design notes and their index exist. The kit's check-design.ps1 checks the index and the
+    /// The design notes and their index exist. scripts/check-design.ps1 checks the index and the
     /// Covers paths but passes a project without docs/design/; this one has notes, and CLAUDE.md
     /// sends every session to them.
     /// </summary>
@@ -120,7 +120,7 @@ public class RepoInvariantTests
     }
 
     /// <summary>
-    /// docs/validation.json lists no case on purpose (ADR 0039), and the kit's skills read it. This
+    /// docs/validation.json lists no case on purpose (ADR 0039), and the skills read it. This
     /// keeps the file well formed, and its case IDs unique, for the day the first case arrives.
     /// </summary>
     [Fact]

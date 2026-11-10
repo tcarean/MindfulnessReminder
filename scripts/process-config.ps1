@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# process-config.ps1 - reads process.json, the one file that makes the shared scripts fit a project.
+# process-config.ps1 - reads process.json, the one file that tells the scripts about the project.
 #
 # WHAT IT DOES
-#   Every script in scripts/ is the same in the kit and in every project made from it; what
-#   differs per project (the solution name, where the code and the tests are, what a release
-#   publishes) lives in process.json at the project root, never in a script. This file is
+#   What the scripts need to know about the project (the solution name, where the code and the
+#   tests are, what a release publishes) lives in process.json at the project root, never in a
+#   script (the rule "Process files"). This file is
 #   dot-sourced by the scripts (". (Join-Path $PSScriptRoot 'process-config.ps1')") and gives them
 #   Read-ProcessConfig, which reads <project folder>/process.json and returns its values with the paths
 #   already normalised (forward slashes, one trailing slash on folders), Find-Project,
@@ -14,7 +14,7 @@
 #   A missing process.json, or a missing required key, is an error with the key named: a project
 #   that has scripts/ must say what it is; nothing is guessed from the folder layout.
 #
-#   Keys (the kit's own process.json is the example to copy):
+#   Keys:
 #     solution            the .sln file verify.ps1 restores, formats, builds and tests
 #     testFilter          optional; a `dotnet test --filter` expression the gate applies
 #                         ("" runs everything)
@@ -27,10 +27,9 @@
 #     mutate.testProject  the test project folder Stryker runs from (its stryker-config.json)
 #     release.publish     what release.ps1 publishes: a list of { project, output, args };
 #                         output is a subfolder of artifacts/<version>/ ("" is that folder
-#                         itself), args are extra `dotnet publish` arguments. project may be
-#                         in a sibling project (`../X/...`), which is then a component:
-#                         bundled from its clean checkout and listed in release.json
-#                         (ADR 0071)
+#                         itself), args are extra `dotnet publish` arguments. project is a
+#                         project file inside this project's folder; release.ps1 refuses one
+#                         outside it (ADR 0071, ADR 0075)
 #     release.zip         optional; the file name of the zip of artifacts/<version>/, written
 #                         to artifacts/ with a .sha256 beside it; `{version}` is replaced;
 #                         absent or empty: no zip
@@ -57,7 +56,7 @@
 function Read-ProcessConfig([string]$ProjectDir) {
     $path = Join-Path $ProjectDir 'process.json'
     if (-not (Test-Path -LiteralPath $path)) {
-        throw "process.json not found in $ProjectDir. The shared scripts need it; copy the kit's and set the values for this project."
+        throw "process.json not found in $ProjectDir. The scripts need it: it names the solution, the code and test folders and the release."
     }
     $cfg = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
 

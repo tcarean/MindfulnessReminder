@@ -238,6 +238,7 @@ path of the executable and the text of a crash, and lives in your own profile fo
     src/MindfulnessReminder.Core   net8.0, no UI dependencies -- auto-start rules, unlock and interval policy, when to pause, placement math
     src/MindfulnessReminder.App    net8.0-windows, WinExe -- tray icon, reminder/settings/about windows, the dark theme, Windows adapters (registry, session, timer, microphone and full-screen readings)
     tests/MindfulnessReminder.Tests xunit
+    tests/MindfulnessReminder.ProcessTests xunit -- the tests of scripts/, the gate and the git hooks
 
 ## Build and run
 
@@ -247,7 +248,8 @@ dotnet test -c Release
 ```
 
 Both need the .NET SDK 9.0.318 or a later 9.0.3xx, which `global.json` pins; the projects
-themselves target .NET 8.
+themselves target .NET 8. `dotnet test` runs every test, the tests of the scripts included,
+which take about three minutes; `--filter "Category!=Process"` leaves those out.
 
 The full gate, the one the `pre-commit` hook runs, is `scripts/verify.ps1` (see
 "Development" below).
@@ -285,20 +287,21 @@ dotnet publish src\MindfulnessReminder.App -c Release -o %LOCALAPPDATA%\Mindfuln
 
 ## Development: the gate, the documentation and Claude Code
 
-Since 2026-10-09 the project follows the process of `ClaudeCodeStarterKit`, the owner's starter
-kit for .NET projects developed with Claude Code. Since 2026-11-10 it has a repository of its
-own and carries the kit's files itself: the scripts and the git hooks in `scripts/`, the
-skills, the agent and the process rules under `.claude/`, the kit's decision records in
-`docs/decisions/kit/`, and its guide, `GHID.md` (in Romanian), with the reasoning behind each
-piece. In short, what is enforced mechanically:
+The process the project is developed by came from `ClaudeCodeStarterKit`, the owner's starter
+kit for .NET projects developed with Claude Code, adopted on 2026-10-09 and absorbed into this
+repository on 2026-11-10 (ADR 0075). Its scripts and git hooks are in `scripts/`, its skills,
+agent and rules under `.claude/`, its decisions in `docs/decisions/` with the project's own. In
+short, what is enforced mechanically:
 
 - **`scripts/verify.ps1` is the gate**: the test data manifest, the decision records' headers,
   the design notes (each in the index, with its files named in its `Covers:` sentence),
-  restore, `dotnet format` (check only), the build with warnings as errors, all the tests.
-  About 20 seconds. The git `pre-commit` hook runs it on every commit, the `pre-merge-commit`
-  hook on every clean merge, the Claude Code hook before any `git commit` of the model,
-  `scripts/release.ps1`, and CI on GitHub (`.github/workflows/ci.yml`). Without it green no
-  commit goes in.
+  restore, `dotnet format` (check only), the build with warnings as errors, the tests. About
+  25 seconds. The tests of the scripts, in `tests/MindfulnessReminder.ProcessTests/`, take about
+  three minutes more and run only when a change touches the scripts or those tests; CI, a
+  release and `verify.ps1 -All` always run them. The git `pre-commit` hook runs the gate on
+  every commit, the `pre-merge-commit` hook on every clean merge, the Claude Code hook before
+  any `git commit` of the model, `scripts/release.ps1`, and CI on GitHub
+  (`.github/workflows/ci.yml`). Without it green no commit goes in.
 
   ```
   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1
@@ -311,25 +314,25 @@ piece. In short, what is enforced mechanically:
   ```
 
 - **The commit message** is one line, in English, of at most 100 characters.
-- **`scripts/`, `.claude/skills/`, `.claude/agents/` and `.claude/rules/` came from the
-  kit** and have been this repository's own since 2026-11-10 (ADR 0074); what is specific to
-  the project as values is in `process.json`, the steps it adds to the skills are in
-  `docs/skills.md`.
+- **`scripts/`, `.claude/skills/`, `.claude/agents/` and `.claude/rules/` are the process**,
+  changed like code, a script with its test first; what the scripts need to know about the
+  project is in `process.json`.
 - **The behaviour is in `docs/requirements.md`**, with `R-NNN` IDs carried in the test names;
   `RepoInvariantTests` requires every `implemented` requirement to have a test with its ID, and
   the reverse. The old `CLAUDE.md` was split on 2026-10-09 into requirements, decisions and
   design notes; nothing was lost, it was moved.
 - **The decisions are in `docs/decisions/`**, one record per decision, with the alternatives
-  rejected; those taken before 2026-10-09 (the periodic reminder's timer and deadline, reading
-  the device instead of window titles, the dark theme merged per window, among others) were
-  written down after the fact. The "Design decisions" table above is the short form of the same
-  choices.
+  rejected, numbered in one sequence by date: 0001 to 0034 and 0069 and 0071 are the process's
+  first decisions, the others the project's. Those taken before 2026-10-09 (the periodic
+  reminder's timer and deadline, reading the device instead of window titles, the dark theme
+  merged per window, among others) were written down after the fact. The "Design decisions"
+  table above is the short form of the same choices.
 - **There are no validation figures**: the application has no numeric output and no input
   data, and `docs/validation.json` lists no case; `docs/validation.md` says what would become
   one.
 - **The explanations behind the code** are in `docs/design/`, with the index in
-  `docs/design/README.md`; `CLAUDE.md` holds only the project's rules, and the process rules are
-  the kit's, in `.claude/rules/process.md`.
+  `docs/design/README.md`; `CLAUDE.md` holds the project's own rules, and the process rules are
+  in `.claude/rules/process.md`.
 - **The version** is bumped by the owner, in `Directory.Build.props`. A release is made on
   `main`, with `scripts/release.ps1 -Version X.Y.Z`, which runs the gate, closes the CHANGELOG
   section and publishes the application, framework-dependent, into `artifacts/X.Y.Z/`. The

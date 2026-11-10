@@ -7,7 +7,7 @@
 #   tests catch is "killed"; one they miss "survives" and points at a missing or weak test.
 #   This script fetches Stryker if it is not there yet (a local tool, pinned in
 #   .config/dotnet-tools.json), runs it from the test project process.json names
-#   (mutate.testProject, in the kit tests/Starter.Tests/) with the stryker-config.json there,
+#   (mutate.testProject, here tests/MindfulnessReminder.Tests/) with the stryker-config.json there,
 #   then prints the score and every survivor as file:line with the change that was made.
 #   It changes no source file. The full report goes to
 #   <test project>/StrykerOutput/<timestamp>/reports/mutation-report.html (and .json).

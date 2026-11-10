@@ -8,10 +8,18 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
 
 ### Internal
 
-- The project is the root of its own repository (ADR 0074): the kit's scripts, git hooks,
-  skills, rules, decision records (`docs/decisions/kit/`) and guide (`GHID.md`) live in it,
-  `process.json`'s `kit` is `"."`, the git hooks are installed from `scripts/hooks/`, CI runs the
+- The project is the root of its own repository (ADR 0074), and the process it came with is
+  its own (ADR 0075): the scripts, git hooks, skills, agent and rules are edited here like
+  code; `scripts/sync.ps1` and the gate's comparison with a kit are gone; `kit.json` is
+  `process.json` and `.claude/rules/kit/process.md` is `.claude/rules/process.md`; the kit's
+  decision records and the project's are one sequence numbered by date, 0001 to 0075 (ADR
+  0075 maps the old numbers); `docs/skills.md` is folded into the skills, and `GHID.md` is no
+  longer in this repository. The git hooks are installed from `scripts/hooks/`, CI runs the
   gate on GitHub, and a release is tagged `vX.Y.Z`.
+- The scripts have tests: `tests/MindfulnessReminder.ProcessTests/`, 104 tests brought from the
+  kit and written here, `Category=Process`. The gate runs them when a change touches the
+  scripts or those tests (about three minutes instead of about 25 s), and CI, a release and
+  `verify.ps1 -All` always do.
 
 ## [1.5.0] - 2026-10-26
 

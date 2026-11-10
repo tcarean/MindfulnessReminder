@@ -11,8 +11,7 @@
 # WHO CALLS IT
 #   git itself, on every git commit, yours or Claude's, after the pre-commit hook passed.
 #   git passes the path of a file that holds the message as $1. Installed with pre-commit
-#   by scripts/install-hooks.ps1; in a monorepo git runs the copy in <git root>/.githooks/,
-#   so after editing this file run the kit's install-hooks.ps1 to refresh the copy.
+#   by scripts/install-hooks.ps1, which points git at this folder.
 #
 # RESULT
 #   exit 0  message accepted; git records the commit

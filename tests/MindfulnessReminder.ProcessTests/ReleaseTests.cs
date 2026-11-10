@@ -342,8 +342,8 @@ public sealed class ReleaseTests : IDisposable
     }
 
     /// <summary>
-    /// Outside a git repository, as a project just copied from the kit is before its first commit,
-    /// git's error does not stop the publish: release.json has empty commits and says not clean.
+    /// Outside a git repository, as a project is before its first commit, git's error does not
+    /// stop the publish: release.json has empty commits and says not clean.
     /// </summary>
     [Fact]
     public void PublishOnly_OutsideAGitRepository_WritesEmptyCommits()

@@ -9,12 +9,15 @@ and `Screen`, both from the WindowsDesktop shared framework (ADR 0041).
 
 ## Commands
 
-- Gate (what pre-commit, pre-merge-commit, the Claude commit hook and CI run, about 20 s):
-  `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1`
+- Gate (what pre-commit, pre-merge-commit, the Claude commit hook and CI run):
+  `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1`. About 25 s;
+  when the change touches `scripts/` or `tests/MindfulnessReminder.ProcessTests/`, the process
+  tests run too and it takes about three minutes (ADR 0075). `-All` runs them whatever changed.
 - Fast loop, no tests: `... scripts/verify.ps1 -SkipTests`
 - Build: `dotnet build MindfulnessReminder.sln -c Release --nologo` (Windows only: WPF). The
   SDK is 9.0.318 or a later 9.0.3xx, pinned in `global.json`; the projects target .NET 8
-- Test: `dotnet test MindfulnessReminder.sln -c Release --nologo`
+- Test: `dotnet test MindfulnessReminder.sln -c Release --nologo` (every test; without the
+  process tests: `--filter "Category!=Process"`)
 - One test: `dotnet test MindfulnessReminder.sln --filter "FullyQualifiedName~R024"`
 - Format: `dotnet format MindfulnessReminder.sln` (check only: `--verify-no-changes`)
 - See the reminder without locking the machine:
@@ -27,8 +30,8 @@ and `Screen`, both from the WindowsDesktop shared framework (ADR 0041).
 - Design notes a branch touched (the index and Covers paths are a gate step):
   `scripts/check-design.ps1 -Since main`
 - Mutation score of Core (minutes, not in the gate): `scripts/mutate.ps1 [-Mutate "**/IntervalSchedule.cs"]`
-- Release (verify, version in `Directory.Build.props`, CHANGELOG, publish; no commit, no tag):
-  `scripts/release.ps1 -Version X.Y.Z [-WhatIf]`
+- Release (verify with every test, version in `Directory.Build.props`, CHANGELOG, publish; no
+  commit, no tag): `scripts/release.ps1 -Version X.Y.Z [-WhatIf]`
 - Git hooks, once in every clone (sets `core.hooksPath` to `scripts/hooks`):
   `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-hooks.ps1`
 - There are no validation figures: `docs/validation.json` lists no case (ADR 0039), so
@@ -47,46 +50,30 @@ and `Screen`, both from the WindowsDesktop shared framework (ADR 0041).
 - `tests/MindfulnessReminder.Tests/` - `net8.0`, references **Core only**: every rule on
   fakes, `RepoInvariantTests`, `LicenseHeaderTests`, `VersionTests`. `tests/testdata/` holds
   an empty manifest: there is no test data.
+- `tests/MindfulnessReminder.ProcessTests/` - `net8.0`, references no project: the tests of
+  `scripts/`, which run the real scripts and git in throwaway folders under `%TEMP%`; every
+  class carries `Category=Process` (ADR 0075).
 - `Directory.Build.props` - `<Version>` and `<Copyright>`, the single place for both (ADR
   0045), and the strictness every project builds with (ADR 0037).
-- `process.json` - what the scripts, skills and agent need to know about this project; its `kit`
-  is `"."`. `docs/skills.md` - this project's additions to the skills. `scripts/` (the three
-  git hooks in `scripts/hooks/` included), `.claude/skills/`, `.claude/agents/`,
-  `.claude/rules/` and the process keys of `.claude/settings.json` came from the kit and
-  are this repository's own (ADR 0074; the rule "The kit's files are this repository's").
-- `docs/requirements.md` - the behaviour, with IDs. `docs/decisions/` - ADRs;
-  `docs/decisions/kit/` - the kit's, a closed copy: "the kit's ADR NNNN" is `NNNN-*.md` there.
-  `docs/validation.md` + `.json` - no figures, and why. `docs/design/` - the explanations, per
-  area, read on demand. `docs/plans/` - approved plans. `README.md` - the user documentation,
-  English.
-- The process rules are the kit's, in `.claude/rules/process.md`; this project's own are in
-  this file. The reasons behind the process are in `GHID.md`, the kit's guide, in Romanian (for
-  people, not loaded).
-- The project is the root of its own repository since 2026-11-10. Until then it was a folder of
-  the `photo` monorepo, beside the kit, `ClaudeCodeStarterKit`; its history up to that day is
-  in that repository. "The kit folder" in a kit file is this folder (ADR 0074).
-  `.github/workflows/ci.yml` runs the gate on every push to `main` and every pull request.
+- `process.json` - what the scripts, skills and agent need to know about this project: the
+  solution, the code and test folders, the release, the process tests
+  (`scripts/process-config.ps1` describes every key).
+- The process: `scripts/` (the git hooks in `scripts/hooks/` included), `.claude/skills/`,
+  `.claude/agents/`, `.claude/rules/process.md` (the process rules, loaded with this file) and
+  the process keys of `.claude/settings.json` (the rule "Process files").
+- `docs/requirements.md` - the behaviour, with IDs. `docs/decisions/` - the decision records,
+  one sequence numbered by date (ADR 0075). `docs/validation.md` + `.json` - no figures, and
+  why. `docs/design/` - the explanations, per area, read on demand. `docs/plans/` - approved
+  plans. `README.md` - the user documentation.
+- The project is the root of its own repository (ADR 0074). `.github/workflows/ci.yml` runs
+  the gate, every test included, on every push to `main` and every pull request.
 
 ## Rules
 
-The process rules every project made from the kit follows are in `.claude/rules/process.md`,
-loaded with this file (ADR 0028). These are Mindfulness Reminder's own; one that
-extends or varies a kit rule names it.
+The process rules are in `.claude/rules/process.md`, loaded with this file. These are
+Mindfulness Reminder's own; one that extends a process rule names it.
 
-- **All text is in English** (extends the kit's rule "Languages"): UI strings, comments,
-  documentation, and the README too. `GHID.md`, the kit's guide, is the one Romanian file (ADR
-  0038, ADR 0074).
-- **The kit's files are this repository's** (varies the kit's rule "Shared folders"). There is
-  no kit beside this project and no other project to keep in step: `scripts/`,
-  `.claude/skills/`, `.claude/agents/`, `.claude/rules/` and the process keys of
-  `.claude/settings.json` are edited here, with an ADR when the change is a decision.
-  `scripts/sync.ps1` has nothing to copy and step 0 of the gate is skipped (ADR 0074).
-- **A kit decision is cited, never edited** (varies the kit's rule "Decisions").
-  `docs/decisions/kit/` is closed: a process decision made here is a project ADR with the next
-  number in `docs/decisions/`, and its text names the kit ADR it replaces. No ADR header cites
-  "the kit's ADR NNNN": `scripts/check-decisions.ps1` refuses it where `kit` is `"."` (ADR
-  0074).
-- **Zero external dependencies** (extends the kit's rule "Packages"). `NotifyIcon` and
+- **Zero external dependencies** (extends the rule "Packages"). `NotifyIcon` and
   everything else come from the shared framework; WPF having no numeric spinner is not a
   reason to add a package, the settings dialog hand-validates a `TextBox` (ADR 0041).
 - **Logic in Core, adapters in App.** If a new rule cannot be tested because it sits in the
@@ -125,7 +112,7 @@ extends or varies a kit rule names it.
 
 ## Workflow
 
-The kit's workflow in `.claude/rules/process.md` applies. Mindfulness Reminder adds:
+The workflow in `.claude/rules/process.md` applies. Mindfulness Reminder adds:
 
 - `/wrap-up` checks `README.md`, the user documentation. A change under
   `src/MindfulnessReminder.App/` is looked at with `--preview` (the reminder window only) or
@@ -134,8 +121,6 @@ The kit's workflow in `.claude/rules/process.md` applies. Mindfulness Reminder a
   is listed for the owner to look at in their own copy after the merge (ADR 0042).
 - A release is tagged `vX.Y.Z`, the name `scripts/release.ps1` prints; it publishes the
   application framework-dependent into `artifacts/X.Y.Z/` (ADR 0036, ADR 0074).
-- The main checkout of the kit's rule "Worktrees" is the clone itself, the folder that holds
-  `.git/`; a session is started there.
 
 ## Read before touching
 
@@ -153,6 +138,8 @@ edit:
 - A new setting: `docs/design/settings-storage.md` and ADR 0061.
 - `Version.cs`, `LicenseInfo.cs`, `LicenseHeaderTests`: `docs/design/versioning-and-licence.md`,
   ADR 0043 to ADR 0045.
+- A script or a hook: its header, which says what it does and who calls it, and its tests in
+  `tests/MindfulnessReminder.ProcessTests/` (ADR 0075).
 - A file you have not opened before: `docs/design/code-map.md`.
 
 ## Style
@@ -160,8 +147,8 @@ edit:
 - `.editorconfig` holds whitespace rules and `IDE0005`; `dotnet format` enforces them, and so
   does the build, which writes the XML documentation file for that reason (CS1591 muted).
   Warnings are errors, `EnforceCodeStyleInBuild` and `Nullable` are on, in
-  `Directory.Build.props` (ADR 0037). The kit's code-style rules and the analyzers are not
-  enabled: 374 analyzer findings on 2026-10-09, 352 of them the underscores in test names; a
-  style pass is a task of its own.
+  `Directory.Build.props` (ADR 0037). The code-style rules beyond whitespace (braces, `var`)
+  and the analyzers are not enabled: 374 analyzer findings on 2026-10-09, 352 of them the
+  underscores in test names; a style pass is a task of its own.
 - Test names are sentences with underscores, `R###_` first.
 - Fix, do not suppress, unless the suppression carries a comment with the reason.

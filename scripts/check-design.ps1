@@ -2,8 +2,8 @@
 # check-design.ps1 - checks the design notes in docs/design/: their index and their Covers paths.
 #
 # WHAT IT DOES
-#   A design note says how the project's code works and how its parts fit (the kit's rule
-#   "Design notes", ADR 0031). Every .md in docs/design/ except README.md is a note.
+#   A design note says how the project's code works and how its parts fit (the rule "Design
+#   notes", ADR 0031). Every .md in docs/design/ except README.md is a note.
 #   The script checks, letter case included:
 #     - the index: every note is named in docs/design/README.md as `name.md`, and every
 #       `name.md` in a row of a table there (a line that starts with "|") is a note, unless it

@@ -1,7 +1,7 @@
 # Validation
 
-In the projects made from the kit this file is the memory of "how well it works, measured on
-what": every case lives in `validation.json`, read by `ValidationTests`, and is explained here.
+In a project with measurable output this file is the memory of "how well it works, measured
+on what": every case lives in `validation.json`, read by `ValidationTests`, and is explained here.
 Mindfulness Reminder has no such case (ADR 0039). The application shows a window, keeps a
 deadline on the wall clock and reads two registry keys; it has no numeric output and no input
 data to measure on. The numbers it carries are constants in the code, which the tests use by name:
@@ -28,7 +28,7 @@ a design choice with a number:
 Either would need a `ValidationTests` class with the trait `Category=Validation`, a case in
 `validation.json` with a `tolerance`, `process.json`'s `testFilter` set to `Category!=Validation`,
 and a dated line under History. Until then there is nothing to re-measure, and this file says
-so rather than pretending otherwise (the kit's rule "Measured numbers").
+so rather than pretending otherwise (the rule "Measured numbers").
 
 ## History
 

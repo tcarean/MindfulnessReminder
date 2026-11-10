@@ -23,7 +23,7 @@ See ADR 0045.
 themselves. **Never bump it on your own initiative** — not as part of a change, not "while
 you're in there". If a change seems to warrant a bump, say so and let them decide.
 
-Since 2026-10-09 this is the kit's rule "Version and year are the owner's" (ADR 0029).
+Since 2026-10-09 this is the process rule "Version and year are the owner's" (ADR 0029).
 
 Bumping breaks nothing: there are no golden files here, and `VersionTests` asserts the shape
 of the version and the plumbing behind it, never a particular number.
@@ -46,4 +46,4 @@ See ADR 0043 for the notice and ADR 0044 for the other three.
 The year and the author are the user's call, exactly like the version. Don't roll the year
 forward on your own initiative.
 
-Since 2026-10-09 this is the kit's rule "Version and year are the owner's".
+Since 2026-10-09 this is the process rule "Version and year are the owner's".

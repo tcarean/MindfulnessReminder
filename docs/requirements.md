@@ -2,7 +2,7 @@
 
 The source of truth for behaviour. Code follows this file, not the reverse. A behaviour change is
 first an edit here (status `draft`), then a test, then code (status `implemented`), and the design
-note of its area changes in the same task (the kit's rules "Requirements first" and "Design
+note of its area changes in the same task (the rules "Requirements first" and "Design
 notes"). Until 2026-10-09 the behaviour was described by the code, its comments, `CLAUDE.md` and
 the user documentation; that day `CLAUDE.md` was split into this file, `docs/decisions/` and
 `docs/design/` (ADR 0035).
@@ -23,7 +23,7 @@ Rules for entries:
   value, this file the meaning.
 - There are no validation figures (ADR 0039). Every number below is a constant in the code; the
   tests use most of them by name, not by value, so a changed value keeps them green, and the row
-  that states it changes first (the kit's rule "Requirements first").
+  that states it changes first (the rule "Requirements first").
 
 The user documentation of the same behaviour is `README.md`; the explanations behind each row are
 in `docs/design/` and `docs/decisions/`.

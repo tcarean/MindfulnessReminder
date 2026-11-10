@@ -368,3 +368,25 @@ The owner approved this plan on 2026-11-10.
   after, and failed on a planted "ADR 0999" and "ADRs 0012, 0998 and 0014" in a probe file
   that was then deleted. `check-decisions.ps1`: `ok 75 decisions`. All seven plans, this one
   included, got the dated note under their title.
+- Stage 5 measured at its commit: `ok 75 decisions`, `Passed: 321` and `Passed: 104`,
+  `== OK in 159s`.
+- Stage 6: the gate times in `CLAUDE.md` and `README.md` were measured on a clone of the branch
+  renamed to `main`, clean, so nothing under the process-test paths differed: `process tests:
+  left out`, `Passed: 321`, `== OK in 25s` and, run again, `22s`; with the process tests, 159
+  to 175 s at the commits of stages 3 to 5. The six sections of `docs/skills.md` went into
+  their skills at the steps they named (`/docs-health` and `/mutate` in their opening and step
+  1, `/validate` in its opening), and the file was deleted. `.claude/rules/process.md` opens
+  without the kit; "Shared folders" became "Process files"; "Languages" says English
+  everywhere and replaces `CLAUDE.md`'s "All text is in English"; `CLAUDE.md`'s "The kit's files
+  are this repository's" and "A kit decision is cited, never edited" are gone, and its line on
+  the main checkout moved into the rule "Worktrees". The auditor's 200-line count leaves out
+  `.claude/rules/process.md`, as it left out the kit's rules file. `docs/design/code-map.md`
+  lists the process test project, file by file, and names it in its Covers sentence; the
+  README's "Layout" and "Build and run" name it too. `GHID.md` was deleted. The `[Unreleased]`
+  CHANGELOG line of ADR 0074 now says the end state, with a second line for the process tests.
+  The check, `git grep -i -e kit -e monorepo -e GHID -e photo -e Starter -e skills.md -e sync.ps1`
+  outside `docs/decisions/` and `docs/plans/`, prints the released sections of
+  `CHANGELOG.md`, the README's sentence on where the process came from, and two tests that keep
+  an old form on purpose: `ACitationOfAKitAdr_IsNotAReference` (its data is "the kit's ADR
+  0007", which the check must refuse) and `AGreenRun_RunsEveryStep_ComparesWithNoKit_...`
+  (it asserts that no "kit files" line comes back).

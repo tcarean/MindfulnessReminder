@@ -1,12 +1,11 @@
-# The kit's process rules
+# Process rules
 
-This file is the kit's (`ClaudeCodeStarterKit`): the same bytes in the kit and in every project
-made from it, copied by `scripts/sync.ps1` and checked by step 0 of `scripts/verify.ps1`
-(ADR 0028). Claude Code loads it at the start of every session, beside `CLAUDE.md`. Every
-project follows these rules. Its `CLAUDE.md` holds its own rules and any deviation, and a
-project rule that extends or varies one of these says which, by name. A rule is cited by its
-name in quotes, never by a number: the kit's rule "Gate". The reasons behind these rules are in
-`GHID.md` in the kit folder, for people; not needed in a session.
+Claude Code loads this file at the start of every session, beside `CLAUDE.md`. These are the
+rules of the process the project is worked by: how a change is specified, tested, gated,
+recorded and committed. `CLAUDE.md` holds what is particular to Mindfulness Reminder, its
+commands, its layout and the rules of its code; a rule there that extends one of these names
+it. A rule is cited by its name in quotes, never by a number: the rule "Gate". The reasons are
+in the decision records each rule names.
 
 ## Rules
 
@@ -21,10 +20,11 @@ name in quotes, never by a number: the kit's rule "Gate". The reasons behind the
   intended change of that output: read its whole diff, tie every changed line to the change the
   task meant to make, and report the lines and their causes at wrap-up, without waiting for the
   owner. A line the task did not mean to change, even one whose cause is known, or any changed
-  line of a golden the project's `CLAUDE.md` names as carrying confirmed figures, is a finding:
-  say so and stop; the owner decides (ADR 0033).
+  line of a golden `CLAUDE.md` names as carrying confirmed figures, is a finding: say so and
+  stop; the owner decides (ADR 0033).
 - **Gate.** No commit unless `scripts/verify.ps1` is green. Never `--no-verify`. Never skip a
-  failing test.
+  failing test. The tests of the scripts, `Category=Process`, run in the gate when the change
+  touches what they test, and always in CI, at a release and with `-All` (ADR 0075).
 - **Packages.** No new NuGet package without asking. Every package in
   `Directory.Packages.props` has a "why".
 - **Measured numbers.** Numbers are measured, not guessed. A validation claim comes with the
@@ -45,10 +45,9 @@ name in quotes, never by a number: the kit's rule "Gate". The reasons behind the
   a process change worth knowing about). A review follow-up, a test-only change, a comment or
   doc fix gets none. Judgment, not a gate: nothing checks it at commit (ADR 0023).
 - **Decisions.** A decision with a "why" goes in `docs/decisions/`, in the same task, not in
-  chat. A choice settled in chat is a decision even when it matches convention. In a project, a
-  decision the kit made is cited as "the kit's ADR NNNN" and not written again; a project ADR
-  records a deviation or a value of its own (ADR 0025). An ADR merged into `main`
-  changes only in the three ways ADR 0024 lists.
+  chat. A choice settled in chat is a decision even when it matches convention. The records are
+  one sequence, numbered by date, each cited by its number alone (ADR 0075). An ADR merged into
+  `main` changes only in the three ways ADR 0024 lists.
 - **Documentation comments.** Every type and every method in the code (the folders and files
   `process.json` lists as code; tests are exempt), constructors and operators included, private
   ones too, has an XML documentation comment in English: a `<summary>`, a `<param>` for each
@@ -61,9 +60,9 @@ name in quotes, never by a number: the kit's rule "Gate". The reasons behind the
   Code written before this rule gets its comments in a task of its own; until then a change
   documents every type and method it adds or edits. Judgment, not a gate: nothing checks it
   (ADR 0069).
-- **Design notes.** Any file may name the project's code (the folders and files `process.json` lists
-  as code and tests) and say what a test or a check enforces. How that code works and how its
-  parts fit go only in the design note of its area: a note in `docs/design/` whose `Covers:`
+- **Design notes.** Any file may name the project's code (the folders and files `process.json`
+  lists as code and tests) and say what a test or a check enforces. How that code works and how
+  its parts fit go only in the design note of its area: a note in `docs/design/` whose `Covers:`
   sentence, above its first section, names the files it describes, and which is updated or
   deleted in the same task as that code. A note repeats neither `CLAUDE.md` nor an ADR; one
   note may map the whole project (ADR 0031).
@@ -76,33 +75,29 @@ name in quotes, never by a number: the kit's rule "Gate". The reasons behind the
   there (ADR 0021). It never merges, pushes or rebases on its own: it proposes the
   merge and asks; the owner decides each time whether the assistant runs it or does it by
   hand. An approval covers that one command.
-- **Languages.** English in everything the model reads or writes: code, comments, docs, tests,
-  commits. Romanian only in `GHID.md` and the READMEs, which are for people. Translate when
-  moving content across that line; never leave a file in two languages (ADR 0012).
-- **Shared folders.** `scripts/`, `.claude/skills/`, `.claude/agents/` and `.claude/rules/`
-  are the kit's, and so are the process keys of `.claude/settings.json`: `hooks`, the `ask` and
-  `deny` lists, the `allow` entries for git, `attribution`, and `disableAllHooks` and
-  `permissions.defaultMode`, which stay unset (ADRs 0017, 0018 and 0028). They are the
-  same in the kit and in every project made from it, except `rename.ps1`, `install-hooks.ps1`
-  and the three git hooks, which stay in the kit. A bug or a feature there is fixed in the kit,
-  then `scripts/sync.ps1` copies it to every project, one commit each on the task's branch.
-  Never edit them in a project; what differs per project goes in `process.json` (values),
-  `docs/skills.md` (skill steps), `CLAUDE.md` (rules) and the other `allow` entries.
-  `verify.ps1` is red on any drift, and the Stop hook refuses a turn that edited the folders
-  outside the kit.
+- **Languages.** Everything is in English: code, comments, UI strings, documentation, tests,
+  commits, and the README too (ADR 0012, ADR 0038, ADR 0075). Never leave a file in two
+  languages.
+- **Process files.** `scripts/` (the git hooks in `scripts/hooks/` included), `.claude/skills/`,
+  `.claude/agents/`, `.claude/rules/` and the process keys of `.claude/settings.json` (`hooks`,
+  the `ask` and `deny` lists, the `allow` entries for git, `attribution`, and `disableAllHooks`
+  and `permissions.defaultMode`, which stay unset) are the process. They are changed like code:
+  a change to a script starts with its test in `tests/MindfulnessReminder.ProcessTests/`, a
+  change that is a decision gets an ADR, and what a script needs to know about the project is
+  a value in `process.json`, never a literal in the script (ADR 0017, ADR 0028, ADR 0075).
 
 ## Workflow
 
 - **Plan first.** Non-trivial task: plan mode first. The approved plan is saved to
   `docs/plans/YYYY-MM-DD-slug.md`.
 - **One task per session.** Finish with `/wrap-up` (verify, CHANGELOG, docs, commit, merge
-  proposal). A Stop hook refuses to end a turn that edited code (the folders `process.json` names)
-  until verify ran green after the last edit; when it fires, run `/wrap-up`.
+  proposal). A Stop hook refuses to end a turn that edited code (the folders `process.json`
+  names, the paths of its process tests included) until verify ran green after the last edit;
+  when it fires, run `/wrap-up`.
 - **Skills.** New feature: `/new-feature`. Re-measure figures: `/validate`. Check docs
   completeness: `/docs-health`. Test strength of numeric code: `/mutate` (survivors become
   proposed tests, never config changes). Cut a version: `/release` (from `main` in the main
-  checkout, clean tree; proposes the commit and the tag, the owner runs them). A project's own
-  steps for a skill are in its `docs/skills.md`.
+  checkout, clean tree; proposes the commit and the tag, the owner runs them).
 - **Branches.** Branch per task, named `claude/` plus the task in English: an imperative phrase,
   words joined by hyphens, first letter capital
   (`claude/Document-the-console-extension-contract-and-goldens`). Small commits. Merging into
@@ -110,10 +105,10 @@ name in quotes, never by a number: the kit's rule "Gate". The reasons behind the
   the assistant deletes the branch with `git branch -d`, and uses `-D` only when the owner asks
   (ADR 0013).
 - **Worktrees.** A task branch lives in its own worktree, never in the main checkout, which
-  stays on `main`: the owner merges there, and other sessions share it (ADR 0013);
-  the git pre-commit hook refuses a session's commit on a `claude/` branch there (ADR
-  0026). A worktree the assistant makes is named after its branch without `claude/`, so the
-  owner finds it to review before the merge:
-  `git worktree add .claude/worktrees/<Task-name> -b claude/<Task-name> main` (ADR
-  0019).
+  stays on `main`: the owner merges there, and other sessions share it (ADR 0013). The main
+  checkout is the clone itself, the folder that holds `.git/`; a session is started there. The
+  git pre-commit hook refuses a session's commit on a `claude/` branch in the main checkout
+  (ADR 0026). A worktree the assistant makes is named after its branch without `claude/`, so
+  the owner finds it to review before the merge:
+  `git worktree add .claude/worktrees/<Task-name> -b claude/<Task-name> main` (ADR 0019).
 - **Read the diff.** Read the whole diff back before committing; summarise it in plain language.

@@ -7,14 +7,15 @@ description: Run mutation testing (Stryker.NET) on the core library, or one file
 
 Mutation testing measures the tests, not the code: Stryker changes the core in small plausible
 ways (a `+` to a `-`, a `<` to a `<=`, a constant, a condition), one mutant at a time, and runs
-the tests. A mutant that survives is a line no test really checks. Before step 1, read
-`docs/skills.md` if it exists: its `## /mutate` section adds project-specific steps and says
-where they go.
+the tests. A mutant that survives is a line no test really checks.
 
-1. Ask which file or area, unless the user named one. A whole-core run is fine on a small test
-   suite; on a large one always pass a file filter, because Stryker runs the whole suite once
-   per mutant: `scripts/mutate.ps1 -Mutate "**/Stats.cs"`. Stryker runs from the test project
-   `process.json` names under `mutate.testProject`.
+1. Ask which file or area, unless the user named one. Core is small (23 source files; 222
+   tests on 2026-10-09), so a whole-core run is reasonable;
+   `scripts/mutate.ps1 -Mutate "**/IntervalSchedule.cs"` is the shape for one file, since
+   Stryker runs the whole suite once per mutant. Stryker runs from the test project
+   `process.json` names under `mutate.testProject`, `tests/MindfulnessReminder.Tests/`, never
+   from the process tests. No run has been measured yet; write the first one's time and score
+   here, in this step.
 2. Run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/mutate.ps1 [-Mutate ...]`.
    Paste the summary line (total, killed, survived, no coverage, score) and the survivors list.
 3. For each survivor, say in one line what behaviour it changes and whether that behaviour is a
