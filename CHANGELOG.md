@@ -16,7 +16,7 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
   0075 maps the old numbers); `docs/skills.md` is folded into the skills, and `GHID.md` is no
   longer in this repository. The git hooks are installed from `scripts/hooks/`, CI runs the
   gate on GitHub, and a release is tagged `vX.Y.Z`.
-- The scripts have tests: `tests/MindfulnessReminder.ProcessTests/`, 104 tests brought from the
+- The scripts have tests: `tests/MindfulnessReminder.ProcessTests/`, 110 tests brought from the
   kit and written here, `Category=Process`. The gate runs them when a change touches the
   scripts or those tests (about three minutes instead of about 25 s), and CI, a release and
   `verify.ps1 -All` always do.
