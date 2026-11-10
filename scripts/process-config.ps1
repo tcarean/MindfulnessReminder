@@ -1,20 +1,20 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# kit-config.ps1 - reads kit.json, the one file that makes the shared scripts fit a project.
+# process-config.ps1 - reads process.json, the one file that makes the shared scripts fit a project.
 #
 # WHAT IT DOES
 #   Every script in scripts/ is the same in the kit and in every project made from it; what
 #   differs per project (the solution name, where the code and the tests are, what a release
-#   publishes) lives in kit.json at the project root, never in a script. This file is
-#   dot-sourced by the scripts (". (Join-Path $PSScriptRoot 'kit-config.ps1')") and gives them
-#   Read-KitConfig, which reads <project folder>/kit.json and returns its values with the paths
-#   already normalised (forward slashes, one trailing slash on folders), Find-KitProject,
+#   publishes) lives in process.json at the project root, never in a script. This file is
+#   dot-sourced by the scripts (". (Join-Path $PSScriptRoot 'process-config.ps1')") and gives them
+#   Read-ProcessConfig, which reads <project folder>/process.json and returns its values with the paths
+#   already normalised (forward slashes, one trailing slash on folders), Find-Project,
 #   which finds the project a file or folder belongs to (the Claude Code hooks use it, the
-#   kit's ADR 0020), Get-KitShell, the PowerShell to start another script with, and
+#   kit's ADR 0020), Get-ScriptShell, the PowerShell to start another script with, and
 #   Test-ProcessPathsChanged, whether a change touches what the process tests test.
-#   A missing kit.json, or a missing required key, is an error with the key named: a project
+#   A missing process.json, or a missing required key, is an error with the key named: a project
 #   that has scripts/ must say what it is; nothing is guessed from the folder layout.
 #
-#   Keys (the kit's own kit.json is the example to copy):
+#   Keys (the kit's own process.json is the example to copy):
 #     solution            the .sln file verify.ps1 restores, formats, builds and tests
 #     testFilter          optional; a `dotnet test --filter` expression the gate applies
 #                         ("" runs everything)
@@ -50,25 +50,25 @@
 #   Every script in scripts/ and scripts/hooks/ that needs a project value. Nobody runs it.
 #
 # RESULT
-#   Read-KitConfig returns the object; it throws when kit.json or a required key is missing.
-#   Find-KitProject returns a full path, or $null.
+#   Read-ProcessConfig returns the object; it throws when process.json or a required key is missing.
+#   Find-Project returns a full path, or $null.
 
-# Reads and checks kit.json in $ProjectDir. Throws with the file or key named.
-function Read-KitConfig([string]$ProjectDir) {
-    $path = Join-Path $ProjectDir 'kit.json'
+# Reads and checks process.json in $ProjectDir. Throws with the file or key named.
+function Read-ProcessConfig([string]$ProjectDir) {
+    $path = Join-Path $ProjectDir 'process.json'
     if (-not (Test-Path -LiteralPath $path)) {
-        throw "kit.json not found in $ProjectDir. The shared scripts need it; copy the kit's and set the values for this project."
+        throw "process.json not found in $ProjectDir. The shared scripts need it; copy the kit's and set the values for this project."
     }
     $cfg = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
 
     # A required key that is absent is a mistake, not a default: say which one.
     foreach ($key in @('solution', 'codeFolders', 'testFolders', 'testData', 'mutate', 'release')) {
-        if ($null -eq $cfg.PSObject.Properties[$key]) { throw "kit.json: missing key '$key'." }
+        if ($null -eq $cfg.PSObject.Properties[$key]) { throw "process.json: missing key '$key'." }
     }
-    if (-not $cfg.testData.folder) { throw "kit.json: missing key 'testData.folder'." }
-    if (-not $cfg.testData.largeEnv) { throw "kit.json: missing key 'testData.largeEnv'." }
-    if (-not $cfg.mutate.testProject) { throw "kit.json: missing key 'mutate.testProject'." }
-    if ($null -eq $cfg.release.PSObject.Properties['publish']) { throw "kit.json: missing key 'release.publish'." }
+    if (-not $cfg.testData.folder) { throw "process.json: missing key 'testData.folder'." }
+    if (-not $cfg.testData.largeEnv) { throw "process.json: missing key 'testData.largeEnv'." }
+    if (-not $cfg.mutate.testProject) { throw "process.json: missing key 'mutate.testProject'." }
+    if ($null -eq $cfg.release.PSObject.Properties['publish']) { throw "process.json: missing key 'release.publish'." }
 
     # Optional keys get their empty value, so a script never tests for their presence.
     if ($null -eq $cfg.PSObject.Properties['testFilter']) { $cfg | Add-Member -NotePropertyName testFilter -NotePropertyValue '' }
@@ -83,11 +83,11 @@ function Read-KitConfig([string]$ProjectDir) {
 
     # Folders: forward slashes and exactly one trailing slash, whatever the file says. @( )
     # keeps a one-element list a list; ConvertFrom-Json would hand a single string back.
-    $cfg.codeFolders = @($cfg.codeFolders | ForEach-Object { ConvertTo-KitFolder $_ })
-    $cfg.testFolders = @($cfg.testFolders | ForEach-Object { ConvertTo-KitFolder $_ })
+    $cfg.codeFolders = @($cfg.codeFolders | ForEach-Object { ConvertTo-ConfigFolder $_ })
+    $cfg.testFolders = @($cfg.testFolders | ForEach-Object { ConvertTo-ConfigFolder $_ })
     $cfg.codeFiles = @($cfg.codeFiles | ForEach-Object { $_.Replace('\', '/') })
-    $cfg.testData.folder = ConvertTo-KitFolder $cfg.testData.folder
-    $cfg.mutate.testProject = ConvertTo-KitFolder $cfg.mutate.testProject
+    $cfg.testData.folder = ConvertTo-ConfigFolder $cfg.testData.folder
+    $cfg.mutate.testProject = ConvertTo-ConfigFolder $cfg.mutate.testProject
     $cfg.release.publish = @($cfg.release.publish)
     if (-not $cfg.release.PSObject.Properties['branch'] -or -not $cfg.release.branch) {
         if ($cfg.release.PSObject.Properties['branch']) { $cfg.release.PSObject.Properties.Remove('branch') }
@@ -98,7 +98,7 @@ function Read-KitConfig([string]$ProjectDir) {
         $cfg.release | Add-Member -NotePropertyName zip -NotePropertyValue ''
     }
     foreach ($p in $cfg.release.publish) {
-        if (-not $p.project) { throw "kit.json: every release.publish entry needs 'project'." }
+        if (-not $p.project) { throw "process.json: every release.publish entry needs 'project'." }
         if ($null -eq $p.PSObject.Properties['output']) { $p | Add-Member -NotePropertyName output -NotePropertyValue '' }
         if ($null -eq $p.PSObject.Properties['args']) { $p | Add-Member -NotePropertyName args -NotePropertyValue @() }
         $p.args = @($p.args)
@@ -107,17 +107,17 @@ function Read-KitConfig([string]$ProjectDir) {
 }
 
 # "src\" or "src" or "src/" -> "src/".
-function ConvertTo-KitFolder([string]$Folder) {
+function ConvertTo-ConfigFolder([string]$Folder) {
     return $Folder.Replace('\', '/').TrimEnd('/') + '/'
 }
 
 # The project $Path (a file or a folder, existing or not) belongs to: the nearest folder at or
-# above it that holds $Marker (kit.json unless told otherwise; the commit gate asks for
+# above it that holds $Marker (process.json unless told otherwise; the commit gate asks for
 # scripts\verify.ps1, the git pre-commit hook's rule), as a full path without a trailing
 # separator; $null when there is none. The walk stops at the top of the repository or worktree
 # the path is in (a folder holding .git), as pre-commit does, so a path in a worktree made under
 # a project's .claude/worktrees/ is never taken for a path of that project.
-function Find-KitProject([string]$Path, [string]$Marker = 'kit.json') {
+function Find-Project([string]$Path, [string]$Marker = 'process.json') {
     if (-not $Path) { return $null }
     $dir = [System.IO.Path]::GetFullPath($Path)
     if (-not (Test-Path -LiteralPath $dir -PathType Container)) { $dir = [System.IO.Path]::GetDirectoryName($dir) }
@@ -158,11 +158,11 @@ function Test-ProcessPathsChanged($Config, [string]$ProjectDir) {
 
 # The PowerShell running this script (powershell.exe 5.1 or pwsh), to start another script
 # with: "powershell" does not exist on Linux, where CI runs the scripts under pwsh.
-function Get-KitShell {
+function Get-ScriptShell {
     return (Get-Process -Id $PID).Path
 }
 
-# Full path of a project folder from a kit.json value ("src/" -> <project>\src\).
-function Get-KitFolderPath([string]$ProjectDir, [string]$Folder) {
+# Full path of a project folder from a process.json value ("src/" -> <project>\src\).
+function Get-ConfigFolderPath([string]$ProjectDir, [string]$Folder) {
     return (Join-Path $ProjectDir ($Folder.Replace('/', '\'))).TrimEnd('\') + '\'
 }

@@ -1,6 +1,6 @@
 ---
 name: release
-description: Cut a release - pick the version from the CHANGELOG, run scripts/release.ps1 (verify, version bump in Directory.Build.props, CHANGELOG section, publish what kit.json lists), then propose the commit and the tag, which the owner runs on main. Use when the user says /release or asks to release, tag or publish a version.
+description: Cut a release - pick the version from the CHANGELOG, run scripts/release.ps1 (verify, version bump in Directory.Build.props, CHANGELOG section, publish what process.json lists), then propose the commit and the tag, which the owner runs on main. Use when the user says /release or asks to release, tag or publish a version.
 ---
 
 # Release
@@ -36,12 +36,12 @@ where they go.
    `Directory.Build.props` and `CHANGELOG.md`, publishes each entry of `release.publish` to a
    staging folder and merges it into `artifacts/X.Y.Z/<output>/` with a hash check, writes
    `artifacts/X.Y.Z/release.json` (the version, the commit, each component's version, commit,
-   unreleased flag and whether its folder was clean) and, when `kit.json` sets `release.zip`,
+   unreleased flag and whether its folder was clean) and, when `process.json` sets `release.zip`,
    the zip in `artifacts/` with its `.sha256` beside it (the kit's ADR 0036). Paste the last
    lines. If it fails, report and stop; it changes nothing before verify passes. A collision
    (two entries publishing different bytes at one path) stops it after the version files
    changed: paste the collision lines and stop; the owner decides, usually an `output` subfolder
-   for that entry in `kit.json`, then `scripts/release.ps1 -Version X.Y.Z -PublishOnly` redoes
+   for that entry in `process.json`, then `scripts/release.ps1 -Version X.Y.Z -PublishOnly` redoes
    the publish alone.
 6. **Check, propose, then ask.** `git rev-parse HEAD` must still be the hash of step 1, and
    `git status --porcelain -- .` must list only `CHANGELOG.md` and, unless the owner had already

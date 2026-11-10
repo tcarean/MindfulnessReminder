@@ -14,17 +14,17 @@
 #                            when a packages.lock.json does not match
 #     5. format              fails if dotnet format would change any file (it only checks)
 #     6. build               builds the solution; every warning counts as an error
-#     7. test                runs the tests, on exactly what step 6 built; kit.json's
+#     7. test                runs the tests, on exactly what step 6 built; process.json's
 #                            testFilter, when set, is passed to `dotnet test --filter`. The
-#                            process tests (kit.json's processTests: the tests of the scripts,
+#                            process tests (process.json's processTests: the tests of the scripts,
 #                            which take minutes) run only when the change can affect them: a
 #                            path they test differs from main, CI is "true" or -All is given
-#                            (Test-ProcessPathsChanged in kit-config.ps1); otherwise their
+#                            (Test-ProcessPathsChanged in process-config.ps1); otherwise their
 #                            category is left out, and a line says which of the two it was
 #   It does not touch the code. Locally, restore may update a packages.lock.json after a
 #   package change; commit it with that change. After a green run with tests it writes
 #   .verify-stamp (date and time, git-ignored), which the Claude Code Stop hook reads.
-#   The solution name and the filter come from kit.json (scripts/kit-config.ps1).
+#   The solution name and the filter come from process.json (scripts/process-config.ps1).
 #
 # WHO CALLS IT
 #   - you, from a terminal:
@@ -60,11 +60,11 @@ param(
 $ErrorActionPreference = 'Stop'
 # The project folder is the parent of scripts/, wherever the script is started from.
 $root = Split-Path -Parent $PSScriptRoot
-. (Join-Path $PSScriptRoot 'kit-config.ps1')
-$kit = Read-KitConfig $root
-$sln = Join-Path $root $kit.solution
+. (Join-Path $PSScriptRoot 'process-config.ps1')
+$config = Read-ProcessConfig $root
+$sln = Join-Path $root $config.solution
 # Child scripts run in the same PowerShell as this one (Windows PowerShell here, pwsh in CI).
-$shell = Get-KitShell
+$shell = Get-ScriptShell
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
 # Runs one step: prints its name, runs it, and if the program it ran returned a non-zero
@@ -93,15 +93,15 @@ try {
     if (-not $SkipTests) {
         # An empty filter is not passed: `--filter ""` would be an error, not "everything".
         $filters = @()
-        if ($kit.testFilter) { $filters += '(' + $kit.testFilter + ')' }
-        if ($kit.processTests.category) {
-            $paths = $kit.processTests.paths -join ', '
+        if ($config.testFilter) { $filters += '(' + $config.testFilter + ')' }
+        if ($config.processTests.category) {
+            $paths = $config.processTests.paths -join ', '
             if ($All) { $why = 'run (-All)' }
             elseif ($env:CI -eq 'true') { $why = 'run (CI)' }
-            elseif (Test-ProcessPathsChanged $kit $root) { $why = "run (a change under $paths, or git cannot tell what changed)" }
+            elseif (Test-ProcessPathsChanged $config $root) { $why = "run (a change under $paths, or git cannot tell what changed)" }
             else {
                 $why = "left out (nothing under $paths differs from main; -All runs them)"
-                $filters += 'Category!=' + $kit.processTests.category
+                $filters += 'Category!=' + $config.processTests.category
             }
             Write-Host ('process tests: ' + $why)
         }

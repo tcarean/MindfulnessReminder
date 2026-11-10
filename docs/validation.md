@@ -26,7 +26,7 @@ a design choice with a number:
   600 ms show delay (ADR 0026).
 
 Either would need a `ValidationTests` class with the trait `Category=Validation`, a case in
-`validation.json` with a `tolerance`, `kit.json`'s `testFilter` set to `Category!=Validation`,
+`validation.json` with a `tolerance`, `process.json`'s `testFilter` set to `Category!=Validation`,
 and a dated line under History. Until then there is nothing to re-measure, and this file says
 so rather than pretending otherwise (the kit's rule "Measured numbers").
 

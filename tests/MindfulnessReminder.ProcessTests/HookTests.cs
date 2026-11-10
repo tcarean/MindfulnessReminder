@@ -24,7 +24,7 @@ namespace MindfulnessReminder.ProcessTests;
 /// The Claude Code hooks judge the project the work is in, not the folder the session started in
 /// (ADR 0020). CLAUDE_PROJECT_DIR stays at that folder when the session works in a worktree; the
 /// commit gate follows the commit's own folder, the Stop hook the folder of each edited file.
-/// These tests build a throwaway repository holding two projects, A and B, each with a kit.json
+/// These tests build a throwaway repository holding two projects, A and B, each with a process.json
 /// and a stub verify.ps1 that records that it ran and exits with a chosen
 /// code. The hooks are the real ones, copied into B, the project the session "started" in. The
 /// repository starts on a claude/ branch, the only kind the assistant may commit on (ADR 0021).
@@ -52,7 +52,7 @@ public sealed class HookTests : IDisposable
         MakeProject(_b);
 
         string scripts = Path.Combine(Repo.Root, "scripts");
-        File.Copy(Path.Combine(scripts, "kit-config.ps1"), Path.Combine(_b, "scripts", "kit-config.ps1"));
+        File.Copy(Path.Combine(scripts, "process-config.ps1"), Path.Combine(_b, "scripts", "process-config.ps1"));
         foreach (string hook in new[] { "claude-commit-gate.ps1", "claude-stop-gate.ps1" })
         {
             File.Copy(Path.Combine(scripts, "hooks", hook), Path.Combine(_b, "scripts", "hooks", hook));
@@ -300,11 +300,11 @@ public sealed class HookTests : IDisposable
         Assert.True(exitCode == 0, output);
     }
 
-    /// <summary>The paths kit.json gives the process tests are judged like code: an unverified edit there does not end the turn.</summary>
+    /// <summary>The paths process.json gives the process tests are judged like code: an unverified edit there does not end the turn.</summary>
     [WindowsFact]
     public void StopGate_AnEditUnderTheProcessTestPaths_NeedsAGreenVerify()
     {
-        File.WriteAllText(Path.Combine(_a, "kit.json"), ScriptRunner.KitJson().Replace(
+        File.WriteAllText(Path.Combine(_a, "process.json"), ScriptRunner.ProcessJson().Replace(
             "\"release\": { \"publish\": [] }",
             "\"release\": { \"publish\": [] }, \"processTests\": { \"category\": \"Process\", \"paths\": [\"scripts/\"] }",
             StringComparison.Ordinal));
@@ -348,12 +348,12 @@ public sealed class HookTests : IDisposable
         ScriptRunner.DeleteTree(_repo);
     }
 
-    /// <summary>A project folder: kit.json and a stub verify.ps1, green.</summary>
+    /// <summary>A project folder: process.json and a stub verify.ps1, green.</summary>
     private static void MakeProject(string project)
     {
         Directory.CreateDirectory(Path.Combine(project, "scripts", "hooks"));
         Directory.CreateDirectory(Path.Combine(project, "src"));
-        File.WriteAllText(Path.Combine(project, "kit.json"), ScriptRunner.KitJson());
+        File.WriteAllText(Path.Combine(project, "process.json"), ScriptRunner.ProcessJson());
         WriteStub(project, "verify.ps1", 0);
     }
 

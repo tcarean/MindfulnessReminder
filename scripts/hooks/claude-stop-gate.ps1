@@ -4,10 +4,10 @@
 # WHAT IT DOES
 #   Claude Code calls it each time Claude is about to finish an answer (a "turn"). It takes
 #   the list of files this session edited and groups them by project: the nearest folder above
-#   each file that holds kit.json (Find-KitProject in kit-config.ps1), so an edit in a worktree
+#   each file that holds process.json (Find-Project in process-config.ps1), so an edit in a worktree
 #   is judged by that worktree's copy of the project, not by the folder the session started in
 #   (the kit's ADR 0020). A file in no project is not judged. Each project is judged on its
-#   own files, with its own kit.json: when code was edited (kit.json's codeFolders, codeFiles,
+#   own files, with its own process.json: when code was edited (process.json's codeFolders, codeFiles,
 #   testFolders, or the paths of processTests, the scripts whose tests the gate runs when they
 #   change), the turn may end only when scripts/verify.ps1 ran green with tests after
 #   the last such edit: .verify-stamp, which only such a run writes (-SkipTests does not), is
@@ -45,7 +45,7 @@ if (-not $session) { exit 0 }
 $list = Join-Path $env:TEMP ("claude-edits-" + $session + ".txt")
 if (-not (Test-Path $list)) { exit 0 }
 
-. (Join-Path $PSScriptRoot '..\kit-config.ps1')
+. (Join-Path $PSScriptRoot '..\process-config.ps1')
 
 function Test-Under([string]$path, [string[]]$dirs) {
     foreach ($d in $dirs) { if ($path.StartsWith($d, [System.StringComparison]::OrdinalIgnoreCase)) { return $true } }
@@ -55,13 +55,13 @@ function Test-Under([string]$path, [string[]]$dirs) {
 # The problems of one project with the files of it this session edited; an empty list when
 # there are none.
 function Get-ProjectProblems([string]$projectDir, [string[]]$edited) {
-    # kit.json says where the code is. Without a readable one there is nothing to judge by, so
+    # process.json says where the code is. Without a readable one there is nothing to judge by, so
     # the project passes; verify.ps1 will refuse the same file at commit time.
-    try { $kit = Read-KitConfig $projectDir } catch { return @() }
-    $srcDirs = @($kit.codeFolders | ForEach-Object { Get-KitFolderPath $projectDir $_ })
-    $testDirs = @($kit.testFolders | ForEach-Object { Get-KitFolderPath $projectDir $_ })
-    $srcFiles = @($kit.codeFiles | ForEach-Object { Join-Path $projectDir ($_ -replace '/', '\') })
-    $processDirs = @($kit.processTests.paths | ForEach-Object { Get-KitFolderPath $projectDir $_ })
+    try { $config = Read-ProcessConfig $projectDir } catch { return @() }
+    $srcDirs = @($config.codeFolders | ForEach-Object { Get-ConfigFolderPath $projectDir $_ })
+    $testDirs = @($config.testFolders | ForEach-Object { Get-ConfigFolderPath $projectDir $_ })
+    $srcFiles = @($config.codeFiles | ForEach-Object { Join-Path $projectDir ($_ -replace '/', '\') })
+    $processDirs = @($config.processTests.paths | ForEach-Object { Get-ConfigFolderPath $projectDir $_ })
 
     $problems = @()
 
@@ -84,11 +84,11 @@ function Get-ProjectProblems([string]$projectDir, [string[]]$edited) {
 }
 
 # Each edited path once, as a full path, grouped by the project it belongs to (the nearest
-# folder above it with kit.json). A path in no project is not this hook's to judge.
+# folder above it with process.json). A path in no project is not this hook's to judge.
 $edited = Get-Content $list | ForEach-Object { [System.IO.Path]::GetFullPath($_) } | Sort-Object -Unique
 $byProject = @{}
 foreach ($path in $edited) {
-    $projectDir = Find-KitProject $path
+    $projectDir = Find-Project $path
     if (-not $projectDir) { continue }
     if (-not $byProject.ContainsKey($projectDir)) { $byProject[$projectDir] = @() }
     $byProject[$projectDir] += $path

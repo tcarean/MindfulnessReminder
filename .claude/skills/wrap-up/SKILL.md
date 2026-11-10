@@ -53,11 +53,11 @@ adds project-specific steps and says where they go.
 8. `docs/validation.md`: if figures were re-measured, the date and the output are recorded.
 9. `README.md` is the user documentation: if the change is user-visible (a mode, an option, a
    verdict, a tab), the text there describes it. If the change touched `CLAUDE.md`,
-   `.claude/rules/`, `kit.json`, `docs/skills.md`, `.claude/settings.json` or `monorepo/`, quote
+   `.claude/rules/`, `process.json`, `docs/skills.md`, `.claude/settings.json` or `monorepo/`, quote
    what `README.md` and, in the kit, `GHID.md` say about the touched piece and fix what no
    longer holds, in this task; `RepoInvariantTests` only catches paths that no longer exist, not
    explanations that no longer hold (the kit's ADR 0011). `scripts/`, `.claude/skills/`,
-   `.claude/agents/`, `.claude/rules/kit/` and the process keys of `.claude/settings.json`
+   `.claude/agents/`, `.claude/rules/` and the process keys of `.claude/settings.json`
    belong to the kit (the kit's ADRs 0017, 0018 and 0028): in the kit, a change there ends with
    `scripts/sync.ps1` and one commit per project; in a project, such a change is made in the kit
    instead, and an edit here is refused by verify and, in the folders, by the Stop hook. When a
@@ -67,7 +67,7 @@ adds project-specific steps and says where they go.
 10. `docs/design/`: in the project folder of the task's worktree, not the main checkout, run
     `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-design.ps1 -Since main`.
     It lists the notes whose `Covers:` sentences name a code or test file this branch changed
-    (the folders and files `kit.json` lists). Read each one against the change and update or
+    (the folders and files `process.json` lists). Read each one against the change and update or
     delete what no longer holds, in this task (the kit's rule "Design notes"). Code whose
     workings a reader needs and that no note covers gets a note with a `Covers:` sentence that
     names its files as paths, and a row in `docs/design/README.md`. The gate checks the index and

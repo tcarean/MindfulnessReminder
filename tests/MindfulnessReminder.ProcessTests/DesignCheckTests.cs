@@ -25,8 +25,8 @@ namespace MindfulnessReminder.ProcessTests;
 /// is named in the index and has a Covers sentence whose paths name files or folders that git
 /// has; with -Since it lists the notes that cover a code or test file a branch changed (the
 /// kit's ADR 0031). These tests build a throwaway git repository holding one project, Proj, in a
-/// subfolder, with the real script and kit-config.ps1, its code under src/ and its tests under
-/// tests/ (kit.json), and write the notes each case needs.
+/// subfolder, with the real script and process-config.ps1, its code under src/ and its tests under
+/// tests/ (process.json), and write the notes each case needs.
 /// </summary>
 [Trait("Category", "Process")]
 public sealed class DesignCheckTests : IDisposable
@@ -54,12 +54,12 @@ public sealed class DesignCheckTests : IDisposable
         Directory.CreateDirectory(Path.Combine(_project, "scripts"));
         Directory.CreateDirectory(Path.Combine(_project, "docs", "design"));
         string scripts = Path.Combine(Repo.Root, "scripts");
-        foreach (string script in new[] { "check-design.ps1", "kit-config.ps1" })
+        foreach (string script in new[] { "check-design.ps1", "process-config.ps1" })
         {
             File.Copy(Path.Combine(scripts, script), Path.Combine(_project, "scripts", script));
         }
 
-        File.WriteAllText(Path.Combine(_project, "kit.json"), ScriptRunner.KitJson());
+        File.WriteAllText(Path.Combine(_project, "process.json"), ScriptRunner.ProcessJson());
         foreach (string file in new[]
         {
             "src/App.Core/Stats.cs", "src/App.Core/Other.cs", "src/App.Core/Analysis/Deep/Fitter.cs",
@@ -223,14 +223,14 @@ public sealed class DesignCheckTests : IDisposable
     /// branch, committed or not, deleted, renamed (also by letter case only) or new under a
     /// covered folder, with the letter case and the one-name globs of the check; it ignores files
     /// no note covers, the notes themselves, files outside the code and test folders and files of
-    /// kit.json, and the rest of the repository. The script runs from the repository root.
+    /// process.json, and the rest of the repository. The script runs from the repository root.
     /// </summary>
     [Fact]
     public void Since_ListsTheNotesThatCoverAChangedFile()
     {
         File.WriteAllText(
-            Path.Combine(_project, "kit.json"),
-            ScriptRunner.KitJson().Replace("\"testFolders\"", "\"codeFiles\": [\"Directory.Build.props\"], \"testFolders\"", StringComparison.Ordinal));
+            Path.Combine(_project, "process.json"),
+            ScriptRunner.ProcessJson().Replace("\"testFolders\"", "\"codeFiles\": [\"Directory.Build.props\"], \"testFolders\"", StringComparison.Ordinal));
         Code("src/App.Core/Case.cs", "content\n");
         Note("cli.md", "# Cli\n\n**Covers:** `src/App.Cli/Program.cs`.\n");
         Note("deep.md", "# Deep\n\n**Covers:** `Fitter.cs`.\n");

@@ -27,7 +27,7 @@ namespace MindfulnessReminder.ProcessTests;
 /// the owner did not leave room for (the kit's ADR 0029): the floor is the newest released
 /// CHANGELOG heading, and a version the owner already set in &lt;Version&gt; is released as it
 /// is. These tests build a throwaway repository whose root is the project, Proj, with the real
-/// release.ps1 and kit-config.ps1 and a stub verify.ps1 that records that it ran; the owner has
+/// release.ps1 and process-config.ps1 and a stub verify.ps1 that records that it ran; the owner has
 /// bumped &lt;Version&gt; to 2.3.0 and the newest release is 2.2.0, as in FlatCheck on 2026-10-01.
 /// </summary>
 [Trait("Category", "Process")]
@@ -49,14 +49,14 @@ public sealed class ReleaseTests : IDisposable
         Git("config", "user.name", "Test");
         Git("config", "user.email", "test@example.com");
         string scripts = Path.Combine(Repo.Root, "scripts");
-        foreach (string script in new[] { "release.ps1", "kit-config.ps1", "merge-publish.ps1" })
+        foreach (string script in new[] { "release.ps1", "process-config.ps1", "merge-publish.ps1" })
         {
             File.Copy(Path.Combine(scripts, script), Path.Combine(_project, "scripts", script));
         }
 
         File.WriteAllText(Path.Combine(_project, "scripts", "verify.ps1"),
             "Set-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) 'ran.txt') -Value 'verify'\nexit 0\n");
-        File.WriteAllText(Path.Combine(_project, "kit.json"), ScriptRunner.KitJson());
+        File.WriteAllText(Path.Combine(_project, "process.json"), ScriptRunner.ProcessJson());
         WriteProps("2.3.0");
         File.WriteAllText(Path.Combine(_project, "CHANGELOG.md"), Changelog);
         File.WriteAllText(Path.Combine(_project, ".gitignore"), "ran.txt\nartifacts/\nbin/\nobj/\n");
@@ -100,17 +100,17 @@ public sealed class ReleaseTests : IDisposable
         Assert.False(File.Exists(Path.Combine(_worktree, "ran.txt")), "verify ran");
     }
 
-    /// <summary>A standalone repository whose main branch has another name says so in kit.json.</summary>
+    /// <summary>A standalone repository whose main branch has another name says so in process.json.</summary>
     [Fact]
-    public void TheReleaseBranch_ComesFromKitJson()
+    public void TheReleaseBranch_ComesFromProcessJson()
     {
         Git("branch", "-m", "master");
         (int exitCode, string output) = Release("2.3.0", "-WhatIf");
         Assert.Equal(1, exitCode);
         Assert.Contains("A release is cut on main", output);
 
-        File.WriteAllText(Path.Combine(_project, "kit.json"),
-            ScriptRunner.KitJson().Replace("\"publish\": []", "\"publish\": [], \"branch\": \"master\"", StringComparison.Ordinal));
+        File.WriteAllText(Path.Combine(_project, "process.json"),
+            ScriptRunner.ProcessJson().Replace("\"publish\": []", "\"publish\": [], \"branch\": \"master\"", StringComparison.Ordinal));
         Commit("Release from master");
         (exitCode, output) = Release("2.3.0", "-WhatIf");
         Assert.True(exitCode == 0, output);
@@ -225,7 +225,7 @@ public sealed class ReleaseTests : IDisposable
     [Fact]
     public void AnEntryOutsideTheProject_IsRefused()
     {
-        WriteKitJson("""{ "project": "../Proj2/p.csproj" }""");
+        WriteProcessJson("""{ "project": "../Proj2/p.csproj" }""");
         Commit("An entry outside the project");
 
         (int exitCode, string output) = Release("2.3.0", "-NoPublish");
@@ -240,7 +240,7 @@ public sealed class ReleaseTests : IDisposable
     {
         string sub = Path.Combine(_project, "Sub");
         ScriptRunner.CopyTree(Path.Combine(_project, "scripts"), Path.Combine(sub, "scripts"));
-        foreach (string file in new[] { "kit.json", "Directory.Build.props", "CHANGELOG.md" })
+        foreach (string file in new[] { "process.json", "Directory.Build.props", "CHANGELOG.md" })
         {
             File.Copy(Path.Combine(_project, file), Path.Combine(sub, file));
         }
@@ -283,7 +283,7 @@ public sealed class ReleaseTests : IDisposable
             File.SetAttributes(Path.Combine(lib, "hidden.txt"), FileAttributes.Hidden);
         }
 
-        WriteKitJson("""{ "project": "src/Lib/Lib.csproj", "output": "lib" }""", zip: "Proj-{version}-win-x64.zip");
+        WriteProcessJson("""{ "project": "src/Lib/Lib.csproj", "output": "lib" }""", zip: "Proj-{version}-win-x64.zip");
         Commit("Zip the release");
         Git("switch", "-q", "-c", "claude/Task");
         byte[] props = File.ReadAllBytes(Path.Combine(_project, "Directory.Build.props"));
@@ -327,7 +327,7 @@ public sealed class ReleaseTests : IDisposable
     [Fact]
     public void PublishOnly_WithWhatIf_ChangesNothing()
     {
-        WriteKitJson(string.Empty, zip: "Proj-{version}.zip");
+        WriteProcessJson(string.Empty, zip: "Proj-{version}.zip");
         Commit("Zip the release");
         string old = Path.Combine(_project, "artifacts", "2.3.0", "old.txt");
         Directory.CreateDirectory(Path.GetDirectoryName(old)!);
@@ -386,7 +386,7 @@ public sealed class ReleaseTests : IDisposable
             .First(d => d.Length > 0 && File.Exists(Path.Combine(d, "dotnet.exe")));
         string path = string.Join(Path.PathSeparator, dotnet, Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0"), Environment.SystemDirectory);
         WriteLibrary("src/Lib");
-        WriteKitJson("""{ "project": "src/Lib/Lib.csproj", "output": "lib" }""");
+        WriteProcessJson("""{ "project": "src/Lib/Lib.csproj", "output": "lib" }""");
         Commit("One library");
 
         (int exitCode, string output) = ScriptRunner.RunWith(_project, new Dictionary<string, string> { ["PATH"] = path },
@@ -431,7 +431,7 @@ public sealed class ReleaseTests : IDisposable
     {
         WriteLibrary("src/A");
         WriteLibrary("src/B", source: "namespace B;\n\npublic static class Marker\n{\n}\n");
-        WriteKitJson("""{ "project": "src/A/Lib.csproj", "output": "" }, { "project": "src/B/Lib.csproj", "output": "" }""");
+        WriteProcessJson("""{ "project": "src/A/Lib.csproj", "output": "" }, { "project": "src/B/Lib.csproj", "output": "" }""");
         Commit("Two libraries named Lib");
 
         (int exitCode, string output) = Release("2.3.0", "-PublishOnly");
@@ -447,7 +447,7 @@ public sealed class ReleaseTests : IDisposable
     {
         string lib = WriteLibrary("src/Lib", items: """<None Include="release.json" CopyToPublishDirectory="PreserveNewest" />""");
         File.WriteAllText(Path.Combine(lib, "release.json"), "{ \"app\": \"own\" }\n");
-        WriteKitJson("""{ "project": "src/Lib/Lib.csproj", "output": "" }""");
+        WriteProcessJson("""{ "project": "src/Lib/Lib.csproj", "output": "" }""");
         Commit("A library that ships release.json");
 
         (int exitCode, string output) = Release("2.3.0", "-PublishOnly");
@@ -460,7 +460,7 @@ public sealed class ReleaseTests : IDisposable
     [Fact]
     public void AFailedPublish_IsNotReportedAsACollision()
     {
-        WriteKitJson("""{ "project": "src/Missing/Missing.csproj", "output": "" }""");
+        WriteProcessJson("""{ "project": "src/Missing/Missing.csproj", "output": "" }""");
         Commit("An entry whose project is missing");
 
         (int exitCode, string output) = Release("2.3.0", "-PublishOnly");
@@ -487,12 +487,12 @@ public sealed class ReleaseTests : IDisposable
             $"<Project>\n  <PropertyGroup>\n    <Version>{version}</Version>\n  </PropertyGroup>\n</Project>\n");
     }
 
-    /// <summary>Proj's kit.json with the given release.publish entries and, when given, release.zip.</summary>
-    private void WriteKitJson(string entries, string? zip = null)
+    /// <summary>Proj's process.json with the given release.publish entries and, when given, release.zip.</summary>
+    private void WriteProcessJson(string entries, string? zip = null)
     {
         string zipKey = zip is null ? string.Empty : $", \"zip\": \"{zip}\"";
-        File.WriteAllText(Path.Combine(_project, "kit.json"),
-            ScriptRunner.KitJson().Replace("\"publish\": []", $"\"publish\": [{entries}]{zipKey}", StringComparison.Ordinal));
+        File.WriteAllText(Path.Combine(_project, "process.json"),
+            ScriptRunner.ProcessJson().Replace("\"publish\": []", $"\"publish\": [{entries}]{zipKey}", StringComparison.Ordinal));
     }
 
     /// <summary>

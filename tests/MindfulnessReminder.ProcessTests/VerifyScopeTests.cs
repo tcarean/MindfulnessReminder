@@ -21,7 +21,7 @@ namespace MindfulnessReminder.ProcessTests;
 
 /// <summary>
 /// The process tests take minutes, so scripts/verify.ps1 runs them only when the change touches
-/// what they test: Test-ProcessPathsChanged in kit-config.ps1 says whether a path of kit.json's
+/// what they test: Test-ProcessPathsChanged in process-config.ps1 says whether a path of process.json's
 /// processTests.paths differs from where the branch left main, committed, staged, modified or
 /// untracked. When git cannot tell, it says yes. These tests build a throwaway repository with
 /// a project at its root and ask the real function through a one-line probe script.
@@ -35,12 +35,12 @@ public sealed class VerifyScopeTests : IDisposable
     {
         Directory.CreateDirectory(Path.Combine(_repo, "scripts"));
         Directory.CreateDirectory(Path.Combine(_repo, "src"));
-        File.Copy(Path.Combine(Repo.Root, "scripts", "kit-config.ps1"), Path.Combine(_repo, "scripts", "kit-config.ps1"));
+        File.Copy(Path.Combine(Repo.Root, "scripts", "process-config.ps1"), Path.Combine(_repo, "scripts", "process-config.ps1"));
         File.WriteAllText(Path.Combine(_repo, "scripts", "probe.ps1"),
-            ". (Join-Path $PSScriptRoot 'kit-config.ps1')\n"
+            ". (Join-Path $PSScriptRoot 'process-config.ps1')\n"
             + "$root = Split-Path -Parent $PSScriptRoot\n"
-            + "Write-Output (Test-ProcessPathsChanged (Read-KitConfig $root) $root)\n");
-        File.WriteAllText(Path.Combine(_repo, "kit.json"), ScriptRunner.KitJson().Replace(
+            + "Write-Output (Test-ProcessPathsChanged (Read-ProcessConfig $root) $root)\n");
+        File.WriteAllText(Path.Combine(_repo, "process.json"), ScriptRunner.ProcessJson().Replace(
             "\"release\": { \"publish\": [] }",
             "\"release\": { \"publish\": [] }, \"processTests\": { \"category\": \"Process\", \"paths\": [\"scripts/\"] }",
             StringComparison.Ordinal));
@@ -124,7 +124,7 @@ public sealed class VerifyScopeTests : IDisposable
     [Fact]
     public void WithoutProcessTests_NothingCounts()
     {
-        File.WriteAllText(Path.Combine(_repo, "kit.json"), ScriptRunner.KitJson());
+        File.WriteAllText(Path.Combine(_repo, "process.json"), ScriptRunner.ProcessJson());
         File.WriteAllText(Path.Combine(_repo, "scripts", "extra.ps1"), "# new\n");
         Assert.Equal("False", Probe());
     }

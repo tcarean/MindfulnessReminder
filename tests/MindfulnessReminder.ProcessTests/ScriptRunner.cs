@@ -33,8 +33,8 @@ internal static class ScriptRunner
     /// <summary>The shell the scripts are written for: Windows PowerShell 5.1 where it exists, pwsh elsewhere.</summary>
     public static string Shell => OperatingSystem.IsWindows() ? "powershell" : "pwsh";
 
-    /// <summary>A minimal valid kit.json for a throwaway project.</summary>
-    public static string KitJson()
+    /// <summary>A minimal valid process.json for a throwaway project.</summary>
+    public static string ProcessJson()
     {
         return """
             { "solution": "X.sln", "codeFolders": ["src/"], "testFolders": ["tests/"],

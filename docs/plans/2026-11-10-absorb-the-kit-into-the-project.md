@@ -334,3 +334,9 @@ The owner approved this plan on 2026-11-10.
   `ACleanCheckout_LeavesTheProcessTestsOut_UnlessAll`; `HookTests` gained
   `StopGate_AnEditUnderTheProcessTestPaths_NeedsAGreenVerify`. All twelve were red before the
   scripts changed and green after.
+- Stage 3 measured at its commit: `Passed: 320` and `Passed: 104` (the process tests, all
+  run, the branch changes `scripts/`), `== OK in 159s`.
+- Stage 4: 216 replacements in 31 files (92 `kit.json`, 36 `$kit`, 24 `kit-config.ps1`, 20
+  `KitJson`, the five function names, 12 paths under `.claude/rules/kit/`). The check found
+  one line left, in the released 1.4.0 section of `CHANGELOG.md`, which stays. `git mv` left
+  `.claude/rules/kit/` empty on disk; it was removed.

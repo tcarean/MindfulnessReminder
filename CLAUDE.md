@@ -49,17 +49,17 @@ and `Screen`, both from the WindowsDesktop shared framework (ADR 0007).
   an empty manifest: there is no test data.
 - `Directory.Build.props` - `<Version>` and `<Copyright>`, the single place for both (ADR
   0011), and the strictness every project builds with (ADR 0003).
-- `kit.json` - what the scripts, skills and agent need to know about this project; its `kit`
+- `process.json` - what the scripts, skills and agent need to know about this project; its `kit`
   is `"."`. `docs/skills.md` - this project's additions to the skills. `scripts/` (the three
   git hooks in `scripts/hooks/` included), `.claude/skills/`, `.claude/agents/`,
-  `.claude/rules/kit/` and the process keys of `.claude/settings.json` came from the kit and
+  `.claude/rules/` and the process keys of `.claude/settings.json` came from the kit and
   are this repository's own (ADR 0038; the rule "The kit's files are this repository's").
 - `docs/requirements.md` - the behaviour, with IDs. `docs/decisions/` - ADRs;
   `docs/decisions/kit/` - the kit's, a closed copy: "the kit's ADR NNNN" is `NNNN-*.md` there.
   `docs/validation.md` + `.json` - no figures, and why. `docs/design/` - the explanations, per
   area, read on demand. `docs/plans/` - approved plans. `README.md` - the user documentation,
   English.
-- The process rules are the kit's, in `.claude/rules/kit/process.md`; this project's own are in
+- The process rules are the kit's, in `.claude/rules/process.md`; this project's own are in
   this file. The reasons behind the process are in `GHID.md`, the kit's guide, in Romanian (for
   people, not loaded).
 - The project is the root of its own repository since 2026-11-10. Until then it was a folder of
@@ -69,7 +69,7 @@ and `Screen`, both from the WindowsDesktop shared framework (ADR 0007).
 
 ## Rules
 
-The process rules every project made from the kit follows are in `.claude/rules/kit/process.md`,
+The process rules every project made from the kit follows are in `.claude/rules/process.md`,
 loaded with this file (the kit's ADR 0028). These are Mindfulness Reminder's own; one that
 extends or varies a kit rule names it.
 
@@ -78,7 +78,7 @@ extends or varies a kit rule names it.
   0004, ADR 0038).
 - **The kit's files are this repository's** (varies the kit's rule "Shared folders"). There is
   no kit beside this project and no other project to keep in step: `scripts/`,
-  `.claude/skills/`, `.claude/agents/`, `.claude/rules/kit/` and the process keys of
+  `.claude/skills/`, `.claude/agents/`, `.claude/rules/` and the process keys of
   `.claude/settings.json` are edited here, with an ADR when the change is a decision.
   `scripts/sync.ps1` has nothing to copy and step 0 of the gate is skipped (ADR 0038).
 - **A kit decision is cited, never edited** (varies the kit's rule "Decisions").
@@ -125,7 +125,7 @@ extends or varies a kit rule names it.
 
 ## Workflow
 
-The kit's workflow in `.claude/rules/kit/process.md` applies. Mindfulness Reminder adds:
+The kit's workflow in `.claude/rules/process.md` applies. Mindfulness Reminder adds:
 
 - `/wrap-up` checks `README.md`, the user documentation. A change under
   `src/MindfulnessReminder.App/` is looked at with `--preview` (the reminder window only) or

@@ -14,7 +14,7 @@ read `docs/skills.md` if it exists: its `## /new-feature` section adds project-s
    the exit code when there is one. Show the draft to the user and wait for it to be accepted
    before going on.
 2. **Acceptance test.** Write the black-box test(s) named after the requirement IDs
-   (`R###_...`), in the test project(s) `kit.json` lists under `testFolders`. If the feature has
+   (`R###_...`), in the test project(s) `process.json` lists under `testFolders`. If the feature has
    measurable output, add a case to `docs/validation.json` with `expected` left as `null` and a
    note in `docs/validation.md` saying it is unmeasured. The tests must fail now. Run them and
    paste the failing output.

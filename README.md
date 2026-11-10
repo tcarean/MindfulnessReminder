@@ -311,9 +311,9 @@ piece. In short, what is enforced mechanically:
   ```
 
 - **The commit message** is one line, in English, of at most 100 characters.
-- **`scripts/`, `.claude/skills/`, `.claude/agents/` and `.claude/rules/kit/` came from the
+- **`scripts/`, `.claude/skills/`, `.claude/agents/` and `.claude/rules/` came from the
   kit** and have been this repository's own since 2026-11-10 (ADR 0038); what is specific to
-  the project as values is in `kit.json`, the steps it adds to the skills are in
+  the project as values is in `process.json`, the steps it adds to the skills are in
   `docs/skills.md`.
 - **The behaviour is in `docs/requirements.md`**, with `R-NNN` IDs carried in the test names;
   `RepoInvariantTests` requires every `implemented` requirement to have a test with its ID, and
@@ -329,7 +329,7 @@ piece. In short, what is enforced mechanically:
   one.
 - **The explanations behind the code** are in `docs/design/`, with the index in
   `docs/design/README.md`; `CLAUDE.md` holds only the project's rules, and the process rules are
-  the kit's, in `.claude/rules/kit/process.md`.
+  the kit's, in `.claude/rules/process.md`.
 - **The version** is bumped by the owner, in `Directory.Build.props`. A release is made on
   `main`, with `scripts/release.ps1 -Version X.Y.Z`, which runs the gate, closes the CHANGELOG
   section and publishes the application, framework-dependent, into `artifacts/X.Y.Z/`. The

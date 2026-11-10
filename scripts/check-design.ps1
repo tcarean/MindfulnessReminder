@@ -23,12 +23,12 @@
 #   start with "-", and has a "/" or ends in a known extension written in lower case (cs,
 #   csproj, props, targets, sln, xaml, json, md, py, ps1, txt, yml, yaml, xml, ico, png); other
 #   spans (a class, a method, a test, a flag) are not checked. A path may start at the project
-#   root, at a code or test folder of kit.json, or at docs/design/; "*" and "?" match within one
+#   root, at a code or test folder of process.json, or at docs/design/; "*" and "?" match within one
 #   name, and nothing else is a wildcard; a name without "/" may also be a file found anywhere
 #   in the project.
 #
 #   With -Since, nothing is checked: the script lists the notes whose Covers sentences name a
-#   code or test file (the folders and files kit.json lists) changed since the merge base of
+#   code or test file (the folders and files process.json lists) changed since the merge base of
 #   <ref> and HEAD: committed, staged, unstaged, deleted, either side of a rename, or untracked.
 #   /wrap-up runs it in the task's worktree to find the notes a task must read again. Where HEAD
 #   is on <ref> itself, as in the main checkout, there is nothing to compare: that is an error.
@@ -54,8 +54,8 @@ param([string]$Since = '')
 $ErrorActionPreference = 'Stop'
 # The project folder is the parent of scripts/.
 $root = Split-Path -Parent $PSScriptRoot
-. (Join-Path $PSScriptRoot 'kit-config.ps1')
-$kit = Read-KitConfig $root
+. (Join-Path $PSScriptRoot 'process-config.ps1')
+$config = Read-ProcessConfig $root
 $dir = Join-Path $root 'docs\design'
 if (-not (Test-Path -LiteralPath $dir)) {
     Write-Host 'design notes: no docs/design/ folder, nothing to check' -ForegroundColor Yellow
@@ -63,7 +63,7 @@ if (-not (Test-Path -LiteralPath $dir)) {
 }
 
 # The folders a Covers path may start at, relative and ending in "/"; '' is the project root.
-$bases = @('') + @($kit.codeFolders) + @($kit.testFolders) + @('docs/design/')
+$bases = @('') + @($config.codeFolders) + @($config.testFolders) + @('docs/design/')
 $extensions = 'cs|csproj|props|targets|sln|xaml|json|md|py|ps1|txt|yml|yaml|xml|ico|png'
 $ordinal = [System.StringComparer]::Ordinal
 
@@ -292,7 +292,7 @@ if ($Since) {
         Write-Host ("GIT        cannot find where '{0}' and HEAD meet in {1}" -f $Since, $root) -ForegroundColor Red
         exit 1
     }
-    # Relative to the project folder, as kit.json's folders are: both sides of a rename, deleted
+    # Relative to the project folder, as process.json's folders are: both sides of a rename, deleted
     # files, and the working tree's changes, committed or not.
     $changed = @(Invoke-Git @('diff', '--name-only', '--relative', '--no-renames', $base[0]))
     if (-not $script:gitFailed) { $changed += @(Invoke-Git @('ls-files', '--others', '--exclude-standard')) }
@@ -304,8 +304,8 @@ if ($Since) {
     # The code and test files among them, compared as the Stop hook compares them.
     $inScope = New-Object 'System.Collections.Generic.SortedSet[string]' ($ordinal)
     foreach ($file in $changed) {
-        $isCode = $kit.codeFiles -contains $file
-        foreach ($folder in @($kit.codeFolders) + @($kit.testFolders)) {
+        $isCode = $config.codeFiles -contains $file
+        foreach ($folder in @($config.codeFolders) + @($config.testFolders)) {
             if ($file.StartsWith($folder, [System.StringComparison]::OrdinalIgnoreCase)) { $isCode = $true }
         }
         if ($isCode) { [void]$inScope.Add($file) }

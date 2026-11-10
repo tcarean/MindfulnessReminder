@@ -2,12 +2,12 @@
 # check-testdata.ps1 - checks that the test data files are present and unchanged.
 #
 # WHAT IT DOES
-#   Reads manifest.json in the test data folder named by kit.json (testData.folder, in the
+#   Reads manifest.json in the test data folder named by process.json (testData.folder, in the
 #   kit tests/testdata/), the list of every test data file with its SHA-256 hash (a
 #   fingerprint of the file's bytes), and checks each file:
 #     - "repo" files live in <testData.folder>/fixtures/ and must be there;
 #     - "large" files are kept out of git, in <testData.folder>/large/ or in the folder named
-#       by the environment variable kit.json calls testData.largeEnv (in the kit
+#       by the environment variable process.json calls testData.largeEnv (in the kit
 #       STARTER_TESTDATA_LARGE). A missing one is only a yellow warning on your machine, but
 #       an error in CI when its entry has "requiredInCi": true;
 #     - a file that is there must have exactly the hash in the manifest. Another hash means
@@ -34,12 +34,12 @@ param([switch]$Update)
 $ErrorActionPreference = 'Stop'
 # The project folder is the parent of scripts/.
 $root = Split-Path -Parent $PSScriptRoot
-. (Join-Path $PSScriptRoot 'kit-config.ps1')
-$kit = Read-KitConfig $root
-$testdata = Get-KitFolderPath $root $kit.testData.folder
+. (Join-Path $PSScriptRoot 'process-config.ps1')
+$config = Read-ProcessConfig $root
+$testdata = Get-ConfigFolderPath $root $config.testData.folder
 $manifestPath = Join-Path $testdata 'manifest.json'
 # Large files: an environment variable can point to another place (another disk, a share).
-$largeOverride = [System.Environment]::GetEnvironmentVariable($kit.testData.largeEnv)
+$largeOverride = [System.Environment]::GetEnvironmentVariable($config.testData.largeEnv)
 $largeDir = if ($largeOverride) { $largeOverride } else { Join-Path $testdata 'large' }
 # CI services set CI=true; the kit's CI files also set it themselves.
 $inCi = $env:CI -eq 'true'

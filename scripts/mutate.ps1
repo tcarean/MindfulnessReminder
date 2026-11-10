@@ -6,7 +6,7 @@
 #   example turning < into <= or + into -, and runs the tests against each one. A mutant the
 #   tests catch is "killed"; one they miss "survives" and points at a missing or weak test.
 #   This script fetches Stryker if it is not there yet (a local tool, pinned in
-#   .config/dotnet-tools.json), runs it from the test project kit.json names
+#   .config/dotnet-tools.json), runs it from the test project process.json names
 #   (mutate.testProject, in the kit tests/Starter.Tests/) with the stryker-config.json there,
 #   then prints the score and every survivor as file:line with the change that was made.
 #   It changes no source file. The full report goes to
@@ -22,7 +22,7 @@
 # OPTIONS
 #   -Mutate "**/Stats.cs"   only mutate matching files (faster, focused)
 #   -BreakAt 80             exit 1 when the mutation score is below 80 %
-#   -TestProject <folder>   the test project Stryker runs from (default: kit.json's)
+#   -TestProject <folder>   the test project Stryker runs from (default: process.json's)
 #
 # RESULT
 #   Stryker's own exit code: 0 when it finished (and the score reached -BreakAt, if given),
@@ -37,9 +37,9 @@ param(
 $ErrorActionPreference = 'Stop'
 # The project folder is the parent of scripts/.
 $root = Split-Path -Parent $PSScriptRoot
-. (Join-Path $PSScriptRoot 'kit-config.ps1')
-$kit = Read-KitConfig $root
-if (-not $TestProject) { $TestProject = $kit.mutate.testProject }
+. (Join-Path $PSScriptRoot 'process-config.ps1')
+$config = Read-ProcessConfig $root
+if (-not $TestProject) { $TestProject = $config.mutate.testProject }
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
 # Fetch the tools pinned in .config/dotnet-tools.json (Stryker.NET), if not there yet.

@@ -168,8 +168,8 @@ function Get-CommitProjects([string]$folder) {
     if ($arguments -match '\s--all\b' -or (Get-ShortOptions $arguments) -ccontains 'a') {
         $files += @(Invoke-Git -C $folder diff --name-only --diff-filter=ACMR)
     }
-    $projects = @($files | ForEach-Object { Find-KitProject (Join-Path $top[0] $_) 'scripts\verify.ps1' })
-    if ($files.Count -eq 0) { $projects = @(Find-KitProject $folder 'scripts\verify.ps1') }
+    $projects = @($files | ForEach-Object { Find-Project (Join-Path $top[0] $_) 'scripts\verify.ps1' })
+    if ($files.Count -eq 0) { $projects = @(Find-Project $folder 'scripts\verify.ps1') }
     return @($projects | Where-Object { $_ } | Sort-Object -Unique)
 }
 
@@ -192,7 +192,7 @@ function Test-Commit {
         }
 
         # 2. The commit's folder; one the command names but that is not there cannot be judged.
-        . (Join-Path $PSScriptRoot '..\kit-config.ps1')
+        . (Join-Path $PSScriptRoot '..\process-config.ps1')
         $folder = Get-CommitFolder
         if (-not $folder -or -not (Test-Path -LiteralPath $folder -PathType Container)) {
             $named = if ($folder) { "$folder does not exist" } else { "$($script:unreadPath) is not a path" }

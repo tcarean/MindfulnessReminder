@@ -14,7 +14,7 @@ where they go.
 1. Ask which file or area, unless the user named one. A whole-core run is fine on a small test
    suite; on a large one always pass a file filter, because Stryker runs the whole suite once
    per mutant: `scripts/mutate.ps1 -Mutate "**/Stats.cs"`. Stryker runs from the test project
-   `kit.json` names under `mutate.testProject`.
+   `process.json` names under `mutate.testProject`.
 2. Run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/mutate.ps1 [-Mutate ...]`.
    Paste the summary line (total, killed, survived, no coverage, score) and the survivors list.
 3. For each survivor, say in one line what behaviour it changes and whether that behaviour is a

@@ -10,7 +10,7 @@ have read the code folders by now, or will). So delegate it. Before step 1, read
 `docs/skills.md` if it exists: its `## /docs-health` section adds project-specific steps and
 says where they go.
 
-1. Read `kit.json` for the solution name. Launch the `docs-auditor` subagent (Agent tool,
+1. Read `process.json` for the solution name. Launch the `docs-auditor` subagent (Agent tool,
    `subagent_type: docs-auditor`) with this prompt: "Audit this project. Solution:
    `<solution>`. Small change to plan in step 4: `<one the user named, or pick a plausible one
    from the CHANGELOG>`." Do not add anything you know about the code; that would defeat the
@@ -22,4 +22,4 @@ says where they go.
 4. Do not fix anything in this pass. If the user picks gaps to close, that is a normal task:
    requirement or ADR or design note first, then `/wrap-up`.
 5. If the report's list of files opened holds anything under a `codeFolders` entry or one of
-   the `codeFiles` of `kit.json`, say so and discard the report; the audit is invalid.
+   the `codeFiles` of `process.json`, say so and discard the report; the audit is invalid.

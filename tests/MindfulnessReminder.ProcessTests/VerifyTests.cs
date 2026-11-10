@@ -35,7 +35,7 @@ public sealed class VerifyTests : IDisposable
     public VerifyTests()
     {
         ScriptRunner.CopyTree(Path.Combine(Repo.Root, "scripts"), Path.Combine(_project, "scripts"));
-        File.WriteAllText(Path.Combine(_project, "kit.json"), ScriptRunner.KitJson().Replace(
+        File.WriteAllText(Path.Combine(_project, "process.json"), ScriptRunner.ProcessJson().Replace(
             "\"release\": { \"publish\": [] }",
             "\"release\": { \"publish\": [] }, \"processTests\": { \"category\": \"Process\", \"paths\": [\"scripts/\"] }",
             StringComparison.Ordinal));

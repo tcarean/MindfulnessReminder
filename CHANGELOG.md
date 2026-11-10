@@ -10,7 +10,7 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
 
 - The project is the root of its own repository (ADR 0038): the kit's scripts, git hooks,
   skills, rules, decision records (`docs/decisions/kit/`) and guide (`GHID.md`) live in it,
-  `kit.json`'s `kit` is `"."`, the git hooks are installed from `scripts/hooks/`, CI runs the
+  `process.json`'s `kit` is `"."`, the git hooks are installed from `scripts/hooks/`, CI runs the
   gate on GitHub, and a release is tagged `vX.Y.Z`.
 
 ## [1.5.0] - 2026-10-26

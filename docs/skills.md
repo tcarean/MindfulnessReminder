@@ -4,7 +4,7 @@ The skills under `.claude/skills/` came from the kit and hold nothing about this
 kit's ADR 0018; ADR 0038). What Mindfulness Reminder needs on top of them is here, one section per
 skill; each skill reads this file before its first step, and each section says at which step it
 applies. Values (the solution, the folders, the publish list, what the auditor may also read)
-are in `kit.json`, not here.
+are in `process.json`, not here.
 
 ## /new-feature
 
@@ -65,5 +65,5 @@ are in `kit.json`, not here.
 
 ## /docs-health
 
-(none; `audit.alsoRead` in `kit.json` lets the auditor read `README.md`, the user
+(none; `audit.alsoRead` in `process.json` lets the auditor read `README.md`, the user
 documentation, which states behaviour and is not code)
