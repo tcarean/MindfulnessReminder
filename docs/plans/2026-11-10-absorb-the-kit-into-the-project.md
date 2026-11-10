@@ -390,3 +390,17 @@ The owner approved this plan on 2026-11-10.
   an old form on purpose: `ACitationOfAKitAdr_IsNotAReference` (its data is "the kit's ADR
   0007", which the check must refuse) and `AGreenRun_RunsEveryStep_ComparesWithNoKit_...`
   (it asserts that no "kit files" line comes back).
+- Stage 6 measured at its commit: `ok 75 decisions`, `ok 9 design notes`, `Passed: 321` and
+  `Passed: 104`, `== OK in 155s`. Stage 7's ADR 0075 was written in stage 5, where its Status
+  clauses were needed; its CHANGELOG lines in stage 6.
+- Verification: (1) every commit of the branch ran the gate with the process tests, the branch
+  changing `scripts/`, the last at `== OK in 155s`; (2) on a clean clone of the branch with
+  `main` checked out, the gate left them out, `== OK in 25s` and `22s`; (3) no commit since
+  stage 2 printed a line about kit files; (4) on such a clone,
+  `scripts/release.ps1 -Version 1.5.1 -WhatIf` printed
+  `== release 1.5.1 (<Version> 1.5.0, newest released 1.5.0), tag v1.5.1` and changed nothing;
+  (5) the checks of stages 4 and 6 are recorded above; (6) `git -C E:\Photografie\Code status
+  --short` printed nothing. `photo`'s HEAD moved during the session, from 5e1bb8fb to c42285ca,
+  by the owner's merge of a task of another project, which changed no file under
+  `ClaudeCodeStarterKit/`.
+- Not done here: the first CI run with the process tests, which is the next push.
