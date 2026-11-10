@@ -9,7 +9,8 @@
 #   Read-KitConfig, which reads <project folder>/kit.json and returns its values with the paths
 #   already normalised (forward slashes, one trailing slash on folders), Find-KitProject,
 #   which finds the project a file or folder belongs to (the Claude Code hooks use it, the
-#   kit's ADR 0020), and Get-KitShell, the PowerShell to start another script with.
+#   kit's ADR 0020), Get-KitShell, the PowerShell to start another script with, and
+#   Test-ProcessPathsChanged, whether a change touches what the process tests test.
 #   A missing kit.json, or a missing required key, is an error with the key named: a project
 #   that has scripts/ must say what it is; nothing is guessed from the folder layout.
 #
@@ -38,6 +39,12 @@
 #     audit.alsoRead      optional; files or folders, besides docs/ and the test data README
 #                         and manifest, that the docs-auditor agent may read: expected outputs,
 #                         notices. Never code.
+#     processTests        optional; the tests of the process itself (the scripts), which take
+#                         minutes: category is their Category trait, paths the files and
+#                         folders they test. verify.ps1 leaves out Category=<category> unless a
+#                         path differs from main (Test-ProcessPathsChanged), CI is "true" or it
+#                         is run with -All; the Stop hook judges an edit under paths as code.
+#                         Absent: no such tests, nothing left out
 #
 # WHO CALLS IT
 #   Every script in scripts/ and scripts/hooks/ that needs a project value. Nobody runs it.
@@ -69,6 +76,10 @@ function Read-KitConfig([string]$ProjectDir) {
     if ($null -eq $cfg.PSObject.Properties['audit']) { $cfg | Add-Member -NotePropertyName audit -NotePropertyValue ([pscustomobject]@{ alsoRead = @() }) }
     if ($null -eq $cfg.audit.PSObject.Properties['alsoRead']) { $cfg.audit | Add-Member -NotePropertyName alsoRead -NotePropertyValue @() }
     $cfg.audit.alsoRead = @($cfg.audit.alsoRead | ForEach-Object { $_.Replace('\', '/') })
+    if ($null -eq $cfg.PSObject.Properties['processTests']) { $cfg | Add-Member -NotePropertyName processTests -NotePropertyValue ([pscustomobject]@{ category = ''; paths = @() }) }
+    if ($null -eq $cfg.processTests.PSObject.Properties['category']) { $cfg.processTests | Add-Member -NotePropertyName category -NotePropertyValue '' }
+    if ($null -eq $cfg.processTests.PSObject.Properties['paths']) { $cfg.processTests | Add-Member -NotePropertyName paths -NotePropertyValue @() }
+    $cfg.processTests.paths = @($cfg.processTests.paths | Where-Object { $_ } | ForEach-Object { $_.Replace('\', '/') })
 
     # Folders: forward slashes and exactly one trailing slash, whatever the file says. @( )
     # keeps a one-element list a list; ConvertFrom-Json would hand a single string back.
@@ -116,6 +127,33 @@ function Find-KitProject([string]$Path, [string]$Marker = 'kit.json') {
         $dir = [System.IO.Path]::GetDirectoryName($dir)
     }
     return $null
+}
+
+# Whether the process tests can be affected by the change in $ProjectDir: true when a path of
+# processTests.paths differs from where the branch left main, committed on the branch, staged,
+# modified or untracked; on main itself, or where there is no main, the base is HEAD, so only
+# what is not committed yet counts (during a merge, the index holds what the merge brings).
+# True too when git cannot answer (no git, no repository, no commit): the tests run rather
+# than a guess leaving them out. False when the project names no process tests.
+function Test-ProcessPathsChanged($Config, [string]$ProjectDir) {
+    $paths = @($Config.processTests.paths)
+    if (-not $Config.processTests.category -or $paths.Count -eq 0) { return $false }
+    if (-not (Get-Command git -CommandType Application -ErrorAction SilentlyContinue)) { return $true }
+    # A native command's stderr stops a script whose $ErrorActionPreference is Stop under
+    # Windows PowerShell 5.1, even sent to $null; here a failure is an answer, not an error.
+    $ErrorActionPreference = 'Continue'
+    $head = (git -C $ProjectDir rev-parse --verify --quiet HEAD 2>$null)
+    if ($LASTEXITCODE -ne 0 -or -not $head) { return $true }
+    $base = $head
+    if ((git -C $ProjectDir branch --show-current 2>$null) -ne 'main') {
+        $mergeBase = (git -C $ProjectDir merge-base HEAD main 2>$null)
+        if ($LASTEXITCODE -eq 0 -and $mergeBase) { $base = $mergeBase }
+    }
+    $changed = @(git -C $ProjectDir diff --name-only $base -- @paths 2>$null)
+    if ($LASTEXITCODE -ne 0) { return $true }
+    $changed += @(git -C $ProjectDir diff --cached --name-only $base -- @paths 2>$null)
+    $changed += @(git -C $ProjectDir ls-files --others --exclude-standard -- @paths 2>$null)
+    return @($changed | Where-Object { $_ }).Count -gt 0
 }
 
 # The PowerShell running this script (powershell.exe 5.1 or pwsh), to start another script

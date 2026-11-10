@@ -7,8 +7,9 @@
 #   each file that holds kit.json (Find-KitProject in kit-config.ps1), so an edit in a worktree
 #   is judged by that worktree's copy of the project, not by the folder the session started in
 #   (the kit's ADR 0020). A file in no project is not judged. Each project is judged on its
-#   own files, with its own kit.json: when code was edited (kit.json's codeFolders, codeFiles
-#   or testFolders), the turn may end only when scripts/verify.ps1 ran green with tests after
+#   own files, with its own kit.json: when code was edited (kit.json's codeFolders, codeFiles,
+#   testFolders, or the paths of processTests, the scripts whose tests the gate runs when they
+#   change), the turn may end only when scripts/verify.ps1 ran green with tests after
 #   the last such edit: .verify-stamp, which only such a run writes (-SkipTests does not), is
 #   newer than the newest edited file. Whether the change needs a CHANGELOG line is a
 #   judgment, not checked here (the kit's ADR 0023).
@@ -60,11 +61,13 @@ function Get-ProjectProblems([string]$projectDir, [string[]]$edited) {
     $srcDirs = @($kit.codeFolders | ForEach-Object { Get-KitFolderPath $projectDir $_ })
     $testDirs = @($kit.testFolders | ForEach-Object { Get-KitFolderPath $projectDir $_ })
     $srcFiles = @($kit.codeFiles | ForEach-Object { Join-Path $projectDir ($_ -replace '/', '\') })
+    $processDirs = @($kit.processTests.paths | ForEach-Object { Get-KitFolderPath $projectDir $_ })
 
     $problems = @()
 
-    # Code edits: those under a code folder, a test folder, or named as a code file.
-    $codeEdits = @($edited | Where-Object { (Test-Under $_ $srcDirs) -or (Test-Under $_ $testDirs) -or ($srcFiles -contains $_) })
+    # Code edits: those under a code folder, a test folder or a process-test path, or named as
+    # a code file.
+    $codeEdits = @($edited | Where-Object { (Test-Under $_ $srcDirs) -or (Test-Under $_ $testDirs) -or (Test-Under $_ $processDirs) -or ($srcFiles -contains $_) })
     if ($codeEdits.Count -gt 0) {
         # verify ran green, with tests, after the last code edit: compare the stamp's time
         # with the newest modification time among the edited files that still exist.

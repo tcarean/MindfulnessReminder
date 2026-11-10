@@ -18,7 +18,8 @@
 #        - this project is the root of its repository, and every release.publish entry is a
 #          project file inside it: the tag vX.Y.Z names a version of the whole repository;
 #        - the git tag for this version does not exist yet.
-#   2. Runs scripts/verify.ps1. If it is red, it stops; still nothing changed.
+#   2. Runs scripts/verify.ps1 -All, the process tests included. If it is red, it stops;
+#      still nothing changed.
 #   3. Writes the new version into <Version> in Directory.Build.props, unless it is already
 #      there.
 #   4. In CHANGELOG.md, turns "## [Unreleased]" into "## [X.Y.Z] - <today>" and puts a new,
@@ -371,7 +372,7 @@ try {
     }
 
     # --- gate ---------------------------------------------------------------------------
-    & (Get-KitShell) -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'verify.ps1')
+    & (Get-KitShell) -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'verify.ps1') -All
     if ($LASTEXITCODE -ne 0) { throw 'verify.ps1 failed; release aborted, nothing changed.' }
 
     # --- files --------------------------------------------------------------------------

@@ -324,3 +324,13 @@ The owner approved this plan on 2026-11-10.
   `AnEntryOutsideTheProject_IsRefused`, `AProjectBelowTheGitRoot_IsRefused` and
   `ADirtyTree_IsRefused_WithThePathsAsGitPrintsThem`. The last one replaces the coverage of
   `AComponentWithAModifiedFile_...` for this project's own tree, which no test checked.
+- Stage 3: the key is `processTests: { category, paths }`, not `{ filter, paths }`: the gate
+  has to negate it, and a `dotnet test` filter expression cannot be negated in general, a
+  category can (`Category!=Process`, joined to `testFilter` with `&`). Measured on the
+  solution: `dotnet test --filter "Category!=Process"` runs the 320 tests of
+  `MindfulnessReminder.Tests` and exits 0 in 3 s; the process test assembly, with nothing
+  left to run, does not fail the run. `VerifyScopeTests` (nine cases) ask the real
+  `Test-ProcessPathsChanged` through a probe script; `VerifyTests` gained
+  `ACleanCheckout_LeavesTheProcessTestsOut_UnlessAll`; `HookTests` gained
+  `StopGate_AnEditUnderTheProcessTestPaths_NeedsAGreenVerify`. All twelve were red before the
+  scripts changed and green after.

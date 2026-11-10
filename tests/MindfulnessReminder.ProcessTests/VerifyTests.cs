@@ -22,7 +22,8 @@ namespace MindfulnessReminder.ProcessTests;
 /// <summary>
 /// scripts/verify.ps1 is the gate. This test runs the real one, with the real checks it calls, on
 /// a throwaway project: one class library in X.sln, no decisions, no design notes, an empty test
-/// data manifest. Restore, format, build and test do run, so it takes about 15 s.
+/// data manifest, and the process tests named Category=Process over scripts/. Restore, format,
+/// build and test do run, so each run takes about 15 s.
 /// </summary>
 [Trait("Category", "Process")]
 public sealed class VerifyTests : IDisposable
@@ -34,7 +35,10 @@ public sealed class VerifyTests : IDisposable
     public VerifyTests()
     {
         ScriptRunner.CopyTree(Path.Combine(Repo.Root, "scripts"), Path.Combine(_project, "scripts"));
-        File.WriteAllText(Path.Combine(_project, "kit.json"), ScriptRunner.KitJson());
+        File.WriteAllText(Path.Combine(_project, "kit.json"), ScriptRunner.KitJson().Replace(
+            "\"release\": { \"publish\": [] }",
+            "\"release\": { \"publish\": [] }, \"processTests\": { \"category\": \"Process\", \"paths\": [\"scripts/\"] }",
+            StringComparison.Ordinal));
         Directory.CreateDirectory(Path.Combine(_project, "tests", "testdata"));
         File.WriteAllText(Path.Combine(_project, "tests", "testdata", "manifest.json"), "{ \"files\": [] }\n");
 
@@ -81,10 +85,36 @@ public sealed class VerifyTests : IDisposable
         }
 
         Assert.True(File.Exists(Path.Combine(_project, ".verify-stamp")), "verify wrote no stamp");
+
+        // %TEMP% is in no repository: git cannot tell what changed, so the process tests run.
+        Assert.Contains("process tests: run", output);
+    }
+
+    /// <summary>On main with nothing changed under scripts/, the process tests are left out, and the output says so; -All runs them.</summary>
+    [Fact]
+    public void ACleanCheckout_LeavesTheProcessTestsOut_UnlessAll()
+    {
+        Git("init", "-q", "-b", "main");
+        Git("add", "-A");
+        Git("-c", "user.name=Test", "-c", "user.email=test@example.com", "-c", "core.hooksPath=no-hooks", "commit", "-q", "-m", "First");
+
+        (int exitCode, string output) = ScriptRunner.RunScript(_project, Path.Combine(_project, "scripts", "verify.ps1"));
+        Assert.True(exitCode == 0, output);
+        Assert.Contains("process tests: left out", output);
+
+        (exitCode, output) = ScriptRunner.RunScript(_project, Path.Combine(_project, "scripts", "verify.ps1"), "-All");
+        Assert.True(exitCode == 0, output);
+        Assert.Contains("process tests: run (-All)", output);
     }
 
     public void Dispose()
     {
         ScriptRunner.DeleteTree(_project);
+    }
+
+    private void Git(params string[] args)
+    {
+        (int exitCode, string output) = ScriptRunner.Run(_project, gitDir: null, "git", args);
+        Assert.True(exitCode == 0, output);
     }
 }

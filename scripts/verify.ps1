@@ -15,7 +15,12 @@
 #     5. format              fails if dotnet format would change any file (it only checks)
 #     6. build               builds the solution; every warning counts as an error
 #     7. test                runs the tests, on exactly what step 6 built; kit.json's
-#                            testFilter, when set, is passed to `dotnet test --filter`
+#                            testFilter, when set, is passed to `dotnet test --filter`. The
+#                            process tests (kit.json's processTests: the tests of the scripts,
+#                            which take minutes) run only when the change can affect them: a
+#                            path they test differs from main, CI is "true" or -All is given
+#                            (Test-ProcessPathsChanged in kit-config.ps1); otherwise their
+#                            category is left out, and a line says which of the two it was
 #   It does not touch the code. Locally, restore may update a packages.lock.json after a
 #   package change; commit it with that change. After a green run with tests it writes
 #   .verify-stamp (date and time, git-ignored), which the Claude Code Stop hook reads.
@@ -35,6 +40,7 @@
 # OPTIONS
 #   -SkipTests             every step but the tests, a fast loop while editing; writes no
 #                          stamp, so it does not count as "verify ran" for the Stop hook
+#   -All                   run the process tests whatever changed (scripts/release.ps1 does)
 #   -Configuration Debug   build and test in Debug instead of Release
 #
 # RESULT
@@ -46,6 +52,7 @@
 [CmdletBinding()]
 param(
     [switch]$SkipTests,
+    [switch]$All,
     [string]$Configuration = 'Release'
 )
 
@@ -85,8 +92,21 @@ try {
     Invoke-Step 'build'              { dotnet build $sln -c $Configuration --no-restore --nologo -v q -warnaserror }
     if (-not $SkipTests) {
         # An empty filter is not passed: `--filter ""` would be an error, not "everything".
+        $filters = @()
+        if ($kit.testFilter) { $filters += '(' + $kit.testFilter + ')' }
+        if ($kit.processTests.category) {
+            $paths = $kit.processTests.paths -join ', '
+            if ($All) { $why = 'run (-All)' }
+            elseif ($env:CI -eq 'true') { $why = 'run (CI)' }
+            elseif (Test-ProcessPathsChanged $kit $root) { $why = "run (a change under $paths, or git cannot tell what changed)" }
+            else {
+                $why = "left out (nothing under $paths differs from main; -All runs them)"
+                $filters += 'Category!=' + $kit.processTests.category
+            }
+            Write-Host ('process tests: ' + $why)
+        }
         $testArgs = @()
-        if ($kit.testFilter) { $testArgs = @('--filter', $kit.testFilter) }
+        if ($filters.Count -gt 0) { $testArgs = @('--filter', ($filters -join '&')) }
         Invoke-Step 'test'           { dotnet test $sln -c $Configuration --no-build --nologo -v q @testArgs }
         # Success stamp, read by the Claude Code Stop hook ("did verify run after the last edit?").
         # Only a run with tests writes it: -SkipTests is the edit loop, not the gate.

@@ -300,6 +300,24 @@ public sealed class HookTests : IDisposable
         Assert.True(exitCode == 0, output);
     }
 
+    /// <summary>The paths kit.json gives the process tests are judged like code: an unverified edit there does not end the turn.</summary>
+    [WindowsFact]
+    public void StopGate_AnEditUnderTheProcessTestPaths_NeedsAGreenVerify()
+    {
+        File.WriteAllText(Path.Combine(_a, "kit.json"), ScriptRunner.KitJson().Replace(
+            "\"release\": { \"publish\": [] }",
+            "\"release\": { \"publish\": [] }, \"processTests\": { \"category\": \"Process\", \"paths\": [\"scripts/\"] }",
+            StringComparison.Ordinal));
+        Edit(_a, "scripts", "extra.ps1");
+        (int exitCode, string output) = RunStopGate(sessionDir: _b);
+        Assert.Equal(2, exitCode);
+        Assert.Contains("has not run green with tests", output);
+
+        Green(_a);
+        (exitCode, output) = RunStopGate(sessionDir: _b);
+        Assert.True(exitCode == 0, output);
+    }
+
     /// <summary>The scripts, the skills and the rules are the project's own: an edit there, verified, ends the turn like any other.</summary>
     [WindowsTheory]
     [InlineData("scripts")]
