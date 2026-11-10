@@ -1,5 +1,5 @@
 {
-  "$comment": "What the scripts, skills and agent need to know about MindfulnessReminder. Since 2026-11-10 the project is the root of its own repository and holds the kit's files itself (ADR 0038): 'kit' is '.', so scripts/, .claude/skills/, .claude/agents/ and .claude/rules/kit/ are edited here, step 0 of scripts/verify.ps1 is skipped and scripts/sync.ps1 has nothing to copy; the kit's decisions are in docs/decisions/kit/ and its guide is GHID.md. The layout is the kit's default, src/ and tests/ (ADR 0002). There is no test data and no validation case (ADR 0005): the manifest lists nothing, testFilter is empty, and MINDFULNESS_TESTDATA_LARGE is the override kit-config.ps1 requires a name for, which nobody sets. The release publishes the application framework-dependent, as the README's deployment note does, so no runtime is declared (ADR 0002; the kit's ADR 0034 does not apply). See scripts/kit-config.ps1 for every key.",
+  "$comment": "What the scripts, skills and agent need to know about MindfulnessReminder. Since 2026-11-10 the project is the root of its own repository and holds the kit's files itself (ADR 0038): scripts/, .claude/skills/, .claude/agents/ and .claude/rules/kit/ are edited here; the kit's decisions are in docs/decisions/kit/ and its guide is GHID.md. The layout is the kit's default, src/ and tests/ (ADR 0002). There is no test data and no validation case (ADR 0005): the manifest lists nothing, testFilter is empty, and MINDFULNESS_TESTDATA_LARGE is the override kit-config.ps1 requires a name for, which nobody sets. The release publishes the application framework-dependent, as the README's deployment note does, so no runtime is declared (ADR 0002; the kit's ADR 0034 does not apply). See scripts/kit-config.ps1 for every key.",
   "solution": "MindfulnessReminder.sln",
   "testFilter": "",
   "codeFolders": ["src/"],
@@ -23,6 +23,5 @@
   },
   "audit": {
     "alsoRead": ["README.md"]
-  },
-  "kit": "."
+  }
 }

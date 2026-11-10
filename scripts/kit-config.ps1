@@ -7,12 +7,9 @@
 #   publishes) lives in kit.json at the project root, never in a script. This file is
 #   dot-sourced by the scripts (". (Join-Path $PSScriptRoot 'kit-config.ps1')") and gives them
 #   Read-KitConfig, which reads <project folder>/kit.json and returns its values with the paths
-#   already normalised (forward slashes, one trailing slash on folders), and Find-KitProject,
+#   already normalised (forward slashes, one trailing slash on folders), Find-KitProject,
 #   which finds the project a file or folder belongs to (the Claude Code hooks use it, the
-#   kit's ADR 0020), Get-KitShell, the PowerShell to start another script with, and
-#   Get-KitSharedFolders, the one list of the folders that are the kit's in every project
-#   (sync.ps1 mirrors them, the Stop hook guards them; the kit's ADR 0028), with
-#   Get-KitSharedFolderNames, the same list as both scripts' messages print it.
+#   kit's ADR 0020), and Get-KitShell, the PowerShell to start another script with.
 #   A missing kit.json, or a missing required key, is an error with the key named: a project
 #   that has scripts/ must say what it is; nothing is guessed from the folder layout.
 #
@@ -41,11 +38,6 @@
 #     audit.alsoRead      optional; files or folders, besides docs/ and the test data README
 #                         and manifest, that the docs-auditor agent may read: expected outputs,
 #                         notices. Never code.
-#     kit                 optional; the kit folder, relative to the project ("." in the kit
-#                         itself). sync.ps1 copies the shared folders (Get-KitSharedFolders)
-#                         and the process keys of .claude/settings.json from there, and
-#                         verify.ps1 checks that they are identical. Absent: no check, sync by
-#                         hand.
 #
 # WHO CALLS IT
 #   Every script in scripts/ and scripts/hooks/ that needs a project value. Nobody runs it.
@@ -74,7 +66,6 @@ function Read-KitConfig([string]$ProjectDir) {
     # Optional keys get their empty value, so a script never tests for their presence.
     if ($null -eq $cfg.PSObject.Properties['testFilter']) { $cfg | Add-Member -NotePropertyName testFilter -NotePropertyValue '' }
     if ($null -eq $cfg.PSObject.Properties['codeFiles']) { $cfg | Add-Member -NotePropertyName codeFiles -NotePropertyValue @() }
-    if ($null -eq $cfg.PSObject.Properties['kit']) { $cfg | Add-Member -NotePropertyName kit -NotePropertyValue '' }
     if ($null -eq $cfg.PSObject.Properties['audit']) { $cfg | Add-Member -NotePropertyName audit -NotePropertyValue ([pscustomobject]@{ alsoRead = @() }) }
     if ($null -eq $cfg.audit.PSObject.Properties['alsoRead']) { $cfg.audit | Add-Member -NotePropertyName alsoRead -NotePropertyValue @() }
     $cfg.audit.alsoRead = @($cfg.audit.alsoRead | ForEach-Object { $_.Replace('\', '/') })
@@ -109,12 +100,6 @@ function ConvertTo-KitFolder([string]$Folder) {
     return $Folder.Replace('\', '/').TrimEnd('/') + '/'
 }
 
-# The kit folder named in kit.json, as a full path, or $null when kit.json names none.
-function Get-KitPath($Config, [string]$ProjectDir) {
-    if (-not $Config.kit) { return $null }
-    return [System.IO.Path]::GetFullPath((Join-Path $ProjectDir $Config.kit)).TrimEnd('\', '/')
-}
-
 # The project $Path (a file or a folder, existing or not) belongs to: the nearest folder at or
 # above it that holds $Marker (kit.json unless told otherwise; the commit gate asks for
 # scripts\verify.ps1, the git pre-commit hook's rule), as a full path without a trailing
@@ -131,19 +116,6 @@ function Find-KitProject([string]$Path, [string]$Marker = 'kit.json') {
         $dir = [System.IO.Path]::GetDirectoryName($dir)
     }
     return $null
-}
-
-# The folders that are the kit's: the same bytes in the kit and in every project, mirrored by
-# sync.ps1 and guarded by the Stop hook. Relative to the project root, with forward slashes and
-# no trailing one. Only rules/kit/ under .claude/rules/: a project may keep rules files of its
-# own beside it.
-function Get-KitSharedFolders {
-    return @('scripts', '.claude/skills', '.claude/agents', '.claude/rules/kit')
-}
-
-# The shared folders as messages name them: "scripts/, .claude/skills/, ...".
-function Get-KitSharedFolderNames {
-    return (@(Get-KitSharedFolders) | ForEach-Object { $_ + '/' }) -join ', '
 }
 
 # The PowerShell running this script (powershell.exe 5.1 or pwsh), to start another script

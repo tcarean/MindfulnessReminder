@@ -302,3 +302,25 @@ The owner approved this plan on 2026-11-10.
   carriage returns were removed (the byte order mark kept). R-092 now says "the four
   projects"; its scan test is renamed `R092_The_scan_sees_all_four_projects_and_the_xaml` and
   also asserts `ScriptRunner.cs`.
+- Stage 2, tests changed beyond the ones this plan names, each because the change makes its
+  data false: `DecisionsCheckTests.WellFormedHeaders_...` used "the kit's ADR 0007" as a valid
+  reference in two Status lines (0004 and 0010), now plain ones; the fixture of
+  `DecisionsCheckTests` holds one project, without `kit-config.ps1` and `kit.json`, which
+  `check-decisions.ps1` no longer reads. `ReleaseTests` put the project one folder below the
+  git root, the monorepo layout the release now refuses: git is initialized in the project
+  folder, so `Git`, `AssertNothingChanged`, the `.gitignore`, the linked worktree's paths and
+  the `rev-parse` of `PublishOnly_WritesReleaseJsonAndTheZip_FromAnyBranch` point at it,
+  `PublishOnly_OutsideAGitRepository_WritesEmptyCommits` deletes the `.git` it now copies, and
+  `AnExistingTag_IsRefused` tags `v2.3.0` instead of `proj-v2.3.0`.
+- Stage 2, tests removed: `StopGate_SharedFolderEdit_DependsOnThatProjectsKitJson`,
+  `StopGate_RulesEdit_IsRefusedOnlyUnderKit`, the three `KitReference_*`, and in
+  `ReleaseTests` `AnEntryInAFolderWithoutKitJson_IsRefused_WithTheFolderNamed`,
+  `AComponentWithAnUncommittedFile_IsRefusedAsNotClean`, `ACleanComponent_IsListedByWhatIf`,
+  `AComponentWithAModifiedFile_IsListedAsGitPrintsIt` and
+  `PublishOnly_ListsEveryComponent_InReleaseJson`, with the helper `MakeComponent`. Tests
+  added: `StopGate_AnEditOfTheProcessFiles_IsNotRefusedAsAnotherFolders` (three cases),
+  `ACitationOfAKitAdr_IsNotAReference`, `InstallHooksTests` (two), `VerifyTests` (one, which
+  runs the real gate on a one-library solution, about 15 s), and in `ReleaseTests`
+  `AnEntryOutsideTheProject_IsRefused`, `AProjectBelowTheGitRoot_IsRefused` and
+  `ADirtyTree_IsRefused_WithThePathsAsGitPrintsThem`. The last one replaces the coverage of
+  `AComponentWithAModifiedFile_...` for this project's own tree, which no test checked.

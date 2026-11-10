@@ -300,31 +300,17 @@ public sealed class HookTests : IDisposable
         Assert.True(exitCode == 0, output);
     }
 
-    /// <summary>A shared folder may be edited only in the kit: that project's kit.json decides.</summary>
+    /// <summary>The scripts, the skills and the rules are the project's own: an edit there, verified, ends the turn like any other.</summary>
     [WindowsTheory]
-    [InlineData("../Kit", 2)]
-    [InlineData(".", 0)]
-    public void StopGate_SharedFolderEdit_DependsOnThatProjectsKitJson(string kit, int expected)
+    [InlineData("scripts")]
+    [InlineData(".claude/skills/wrap-up")]
+    [InlineData(".claude/rules")]
+    public void StopGate_AnEditOfTheProcessFiles_IsNotRefusedAsAnotherFolders(string folder)
     {
-        WriteKitJson(_a, kit);
-        Edit(_a, "scripts", "extra.ps1");
+        Edit(_a, folder.Replace('/', Path.DirectorySeparatorChar), "extra.md");
+        Green(_a);
         (int exitCode, string output) = RunStopGate(sessionDir: _b);
-        Assert.True(exitCode == expected, output);
-    }
-
-    /// <summary>.claude/rules/kit/ is a shared folder (the kit's ADR 0028); a rules file of the project's own beside it is not.</summary>
-    [WindowsTheory]
-    [InlineData("kit", 2)]
-    [InlineData("", 0)]
-    public void StopGate_RulesEdit_IsRefusedOnlyUnderKit(string subfolder, int expected)
-    {
-        Edit(_a, Path.Combine(".claude", "rules", subfolder), "process.md");
-        (int exitCode, string output) = RunStopGate(sessionDir: _b);
-        Assert.True(exitCode == expected, output);
-        if (expected == 2)
-        {
-            Assert.Contains(".claude/rules/kit/ was edited here", output);
-        }
+        Assert.True(exitCode == 0, output);
     }
 
     [WindowsFact]
@@ -349,20 +335,8 @@ public sealed class HookTests : IDisposable
     {
         Directory.CreateDirectory(Path.Combine(project, "scripts", "hooks"));
         Directory.CreateDirectory(Path.Combine(project, "src"));
-        WriteKitJson(project, "../Kit");
+        File.WriteAllText(Path.Combine(project, "kit.json"), ScriptRunner.KitJson());
         WriteStub(project, "verify.ps1", 0);
-    }
-
-    private static void WriteKitJson(string project, string kit)
-    {
-        File.WriteAllText(Path.Combine(project, "kit.json"),
-            $$"""
-            { "solution": "X.sln", "codeFolders": ["src/"], "testFolders": ["tests/"],
-              "testData": { "folder": "tests/testdata/", "largeEnv": "X_TESTDATA_LARGE" },
-              "mutate": { "testProject": "tests/X.Tests/" },
-              "release": { "publish": [] },
-              "kit": "{{kit}}" }
-            """);
     }
 
     /// <summary>A stand-in for the project's verify.ps1: appends its name to ran.txt, then exits.</summary>

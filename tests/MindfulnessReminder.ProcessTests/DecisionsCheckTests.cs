@@ -23,39 +23,26 @@ namespace MindfulnessReminder.ProcessTests;
 /// <summary>
 /// scripts/check-decisions.ps1 is the "decisions" step of verify.ps1: it checks the header lines
 /// of every ADR and that both sides of a supersession agree (the kit's ADR 0024). These tests
-/// build a throwaway "repository" holding a kit and a project whose kit.json points at it, each
-/// with the real script, and write the ADRs each case needs.
+/// build a throwaway "repository" holding a project with the real script, and write the ADRs
+/// each case needs.
 /// </summary>
 [Trait("Category", "Process")]
 public sealed class DecisionsCheckTests : IDisposable
 {
     private readonly string _repo = Path.Combine(Path.GetTempPath(), "mindfulness-process-decisions", Guid.NewGuid().ToString("N"));
-    private readonly string _kit;
     private readonly string _project;
 
     public DecisionsCheckTests()
     {
-        _kit = Path.Combine(_repo, "Kit");
         _project = Path.Combine(_repo, "Proj");
         Directory.CreateDirectory(Path.Combine(_repo, ".git"));
         string real = Repo.Root;
-        foreach (string dir in new[] { _kit, _project })
-        {
-            Directory.CreateDirectory(Path.Combine(dir, "scripts"));
-            Directory.CreateDirectory(Path.Combine(dir, "docs", "decisions"));
-            foreach (string script in new[] { "check-decisions.ps1", "kit-config.ps1" })
-            {
-                File.Copy(Path.Combine(real, "scripts", script), Path.Combine(dir, "scripts", script));
-            }
-
-            File.Copy(
-                Path.Combine(real, "docs", "decisions", "0000-template.md"),
-                Path.Combine(dir, "docs", "decisions", "0000-template.md"));
-        }
-
-        File.WriteAllText(Path.Combine(_kit, "kit.json"), ScriptRunner.KitJson("."));
-        File.WriteAllText(Path.Combine(_project, "kit.json"), ScriptRunner.KitJson("../Kit"));
-        Write(_kit, "0007-a-kit-decision.md", Adr(7, "Status: accepted 2026-09-01"));
+        Directory.CreateDirectory(Path.Combine(_project, "scripts"));
+        Directory.CreateDirectory(Path.Combine(_project, "docs", "decisions"));
+        File.Copy(Path.Combine(real, "scripts", "check-decisions.ps1"), Path.Combine(_project, "scripts", "check-decisions.ps1"));
+        File.Copy(
+            Path.Combine(real, "docs", "decisions", "0000-template.md"),
+            Path.Combine(_project, "docs", "decisions", "0000-template.md"));
     }
 
     /// <summary>Every form the grammar allows, including a wrapped note outside the decision and a non-ASCII title.</summary>
@@ -69,7 +56,7 @@ public sealed class DecisionsCheckTests : IDisposable
             title: "Radial fit on 2θ and 4θ",
             consequences: "A reason that no longer holds. (Restated\n  2026-09-20: it moved.)"));
         Write(_project, "0003-third.md", Adr(3, "Status: accepted 2026-09-02", "Supersedes: 0001, 0002 in part (the list of steps)"));
-        Write(_project, "0004-fourth.md", Adr(4, "Status: accepted 2026-09-03; the order superseded by 0005; the naming superseded by the kit's ADR 0007"));
+        Write(_project, "0004-fourth.md", Adr(4, "Status: accepted 2026-09-03; the order superseded by 0005"));
         Write(_project, "0005-fifth.md", Adr(5, "Status: accepted 2026-09-04", "Supersedes: 0002 in part (the name); 0004 in part (the order)"));
         Write(_project, "0006-sixth.md", Adr(6, "Status: proposed"));
 
@@ -77,11 +64,11 @@ public sealed class DecisionsCheckTests : IDisposable
         Write(_project, "0007-seventh.md", Adr(7, "Status: accepted 2026-09-05; the rule superseded by 0002 in March superseded by 0008"));
         Write(_project, "0008-eighth.md", Adr(8, "Status: accepted 2026-09-06", "Supersedes: 0007 in part (the rule)"));
 
-        // Windows line endings, a byte order mark, and a head that names a kit ADR.
+        // Windows line endings and a byte order mark.
         Write(_project, "0009-crlf.md", Adr(9, "Status: accepted 2026-09-07").ReplaceLineEndings("\r\n"));
         File.WriteAllText(
             Path.Combine(_project, "docs", "decisions", "0010-bom.md"),
-            Adr(10, "Status: superseded by the kit's ADR 0007"),
+            Adr(10, "Status: accepted 2026-09-08"),
             new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
 
         (int exitCode, string output) = RunCheck(_project);
@@ -161,41 +148,14 @@ public sealed class DecisionsCheckTests : IDisposable
         Assert.Contains("LINK       0028-names-nothing.md: supersedes 0026 according to 0026-joined.md", output);
     }
 
+    /// <summary>A reference is a number of docs/decisions/: "the kit's ADR NNNN" is not one, since the kit's records are numbered there too.</summary>
     [Fact]
-    public void KitReference_InAProject_MustNameAnAdrOfTheKit()
+    public void ACitationOfAKitAdr_IsNotAReference()
     {
-        Write(_project, "0001-follows-the-kit.md", Adr(1, "Status: accepted 2026-09-01; the naming superseded by the kit's ADR 0007"));
-        Assert.Equal(0, RunCheck(_project).ExitCode);
-
-        Write(_project, "0001-follows-the-kit.md", Adr(1, "Status: accepted 2026-09-01; the naming superseded by the kit's ADR 0008"));
-        Write(_project, "0002-names-the-template.md", Adr(2, "Status: superseded by the kit's ADR 0000"));
+        Write(_project, "0001-cites-the-kit.md", Adr(1, "Status: accepted 2026-09-01; the naming superseded by the kit's ADR 0007"));
         (int exitCode, string output) = RunCheck(_project);
         Assert.Equal(1, exitCode);
-        Assert.Contains("'the kit's ADR 0008' does not exist in the kit's docs/decisions/", output);
-        Assert.Contains("'the kit's ADR 0000' does not exist in the kit's docs/decisions/", output);
-    }
-
-    /// <summary>With no kit beside the project, or none named, a kit reference cannot be checked and passes.</summary>
-    [Fact]
-    public void KitReference_WithoutTheKitBeside_IsNotChecked()
-    {
-        Write(_project, "0001-follows-the-kit.md", Adr(1, "Status: accepted 2026-09-01; the naming superseded by the kit's ADR 0999"));
-
-        File.WriteAllText(Path.Combine(_project, "kit.json"), ScriptRunner.KitJson("../Nowhere"));
-        Assert.Equal(0, RunCheck(_project).ExitCode);
-
-        File.WriteAllText(Path.Combine(_project, "kit.json"), ScriptRunner.KitJson(null));
-        (int exitCode, string output) = RunCheck(_project);
-        Assert.True(exitCode == 0, output);
-    }
-
-    [Fact]
-    public void KitReference_InsideTheKit_IsAnError()
-    {
-        Write(_kit, "0008-cites-itself.md", Adr(8, "Status: accepted 2026-09-01; the naming superseded by the kit's ADR 0007"));
-        (int exitCode, string output) = RunCheck(_kit);
-        Assert.Equal(1, exitCode);
-        Assert.Contains("'the kit's ADR 0007': the kit names its own ADRs by number", output);
+        Assert.Contains("STATUS     0001-cites-the-kit.md", output);
     }
 
     public void Dispose()

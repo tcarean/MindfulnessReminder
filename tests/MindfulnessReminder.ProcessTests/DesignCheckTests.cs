@@ -59,7 +59,7 @@ public sealed class DesignCheckTests : IDisposable
             File.Copy(Path.Combine(scripts, script), Path.Combine(_project, "scripts", script));
         }
 
-        File.WriteAllText(Path.Combine(_project, "kit.json"), ScriptRunner.KitJson(null));
+        File.WriteAllText(Path.Combine(_project, "kit.json"), ScriptRunner.KitJson());
         foreach (string file in new[]
         {
             "src/App.Core/Stats.cs", "src/App.Core/Other.cs", "src/App.Core/Analysis/Deep/Fitter.cs",
@@ -230,7 +230,7 @@ public sealed class DesignCheckTests : IDisposable
     {
         File.WriteAllText(
             Path.Combine(_project, "kit.json"),
-            ScriptRunner.KitJson(null).Replace("\"testFolders\"", "\"codeFiles\": [\"Directory.Build.props\"], \"testFolders\"", StringComparison.Ordinal));
+            ScriptRunner.KitJson().Replace("\"testFolders\"", "\"codeFiles\": [\"Directory.Build.props\"], \"testFolders\"", StringComparison.Ordinal));
         Code("src/App.Core/Case.cs", "content\n");
         Note("cli.md", "# Cli\n\n**Covers:** `src/App.Cli/Program.cs`.\n");
         Note("deep.md", "# Deep\n\n**Covers:** `Fitter.cs`.\n");

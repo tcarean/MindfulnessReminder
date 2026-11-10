@@ -15,12 +15,8 @@
 #        - -Version is not below <Version> in Directory.Build.props. It may equal it: the
 #          owner may bump <Version> per feature, and the release then uses it;
 #        - CHANGELOG.md has something under [Unreleased];
-#        - every release.publish entry is in a kit project (a folder with kit.json, the one
-#          nearest above the entry's project file). An entry in another project, a sibling
-#          folder such as ../X/src/X.Cli/X.Cli.csproj, makes that project a *component* of
-#          this release (the kit's ADR 0036): it must have a readable kit.json, a <Version>
-#          in its Directory.Build.props and a CHANGELOG.md, and its folder must be clean.
-#          It is published from its checkout as it is; it need not be released first;
+#        - this project is the root of its repository, and every release.publish entry is a
+#          project file inside it: the tag vX.Y.Z names a version of the whole repository;
 #        - the git tag for this version does not exist yet.
 #   2. Runs scripts/verify.ps1. If it is red, it stops; still nothing changed.
 #   3. Writes the new version into <Version> in Directory.Build.props, unless it is already
@@ -37,16 +33,15 @@
 #          output subfolder for that entry, and re-runs with -PublishOnly. .stage/ is removed
 #          after the last merge;
 #        - writes artifacts/<version>/release.json: this project's name (its folder), the
-#          version, the date, the commit, and each component (this project first) with its
-#          <Version>, its last commit, whether its CHANGELOG has [Unreleased] content and
-#          whether its folder was clean (the two version files a full release has just
+#          version, the date, the commit, and its components, which are this project alone,
+#          with its <Version>, its last commit, whether its CHANGELOG has [Unreleased] content
+#          and whether its folder was clean (the two version files a full release has just
 #          changed do not count). An entry that published a release.json at the root
 #          collides with it. Outside git the commits are empty and clean is false;
 #        - when kit.json sets release.zip, zips artifacts/<version>/ into artifacts/<zip name>
 #          ("{version}" replaced) and writes the zip's SHA-256 beside it in <zip name>.sha256.
 #   It commits nothing and tags nothing. At the end it prints the commit and the tag to
-#   propose: the commit limited to Directory.Build.props and CHANGELOG.md, the tag vX.Y.Z in a
-#   standalone repository, <folder>-vX.Y.Z inside a monorepo.
+#   propose: the commit limited to Directory.Build.props and CHANGELOG.md, and the tag vX.Y.Z.
 #
 # WHO CALLS IT
 #   - Claude, in the /release skill, in a session the owner opened in the project folder of
@@ -57,13 +52,12 @@
 #
 # OPTIONS
 #   -Version X.Y.Z   the new version; required
-#   -WhatIf          run the step 1 checks and show what would change and which components
-#                    would be bundled; touch nothing
+#   -WhatIf          run the step 1 checks and show what would change; touch nothing
 #   -NoPublish       skip step 5
 #   -PublishOnly     run step 5 alone for -Version, with none of the checks and no change to
 #                    Directory.Build.props or CHANGELOG.md: the retry after a collision, or a
 #                    measurement of what a release would publish, from any branch. With
-#                    -WhatIf it lists the components and what it would publish, and stops
+#                    -WhatIf it says what it would publish, and stops
 #
 # RESULT
 #   exit 0  done, or the -WhatIf preview finished; it prints the files changed and the tag
@@ -114,22 +108,21 @@ function ConvertTo-LocalPath([string]$Relative) {
     return Join-Path $root ($Relative -replace '[\\/]', [System.IO.Path]::DirectorySeparatorChar)
 }
 
-# The projects the release.publish entries belong to, this project first, each once: the
-# nearest folder with kit.json above the entry's project file. Throws for an entry in no kit
-# project, with the folder named.
-function Get-ReleaseComponents {
-    $here = [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
-    $roots = New-Object System.Collections.Generic.List[string]
-    $roots.Add($here)
+# This project's folder as a full path, without a trailing separator.
+function Get-ProjectRoot {
+    return [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
+}
+
+# Throws, with the entry and the folder named, when a release.publish entry is not a project
+# file inside this project's folder: a release publishes this project only.
+function Assert-PublishEntries {
+    $here = Get-ProjectRoot
     foreach ($p in $kit.release.publish) {
         $projectFile = [System.IO.Path]::GetFullPath((ConvertTo-LocalPath $p.project))
-        $componentRoot = Find-KitProject $projectFile
-        if (-not $componentRoot) {
-            throw ("release.publish entry '{0}' is in no kit project: no kit.json in {1} or above it, inside the repository." -f $p.project, (Split-Path -Parent $projectFile))
+        if (-not $projectFile.StartsWith($here + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw ("release.publish entry '{0}' is outside the project folder {1}: a release publishes this project only." -f $p.project, $here)
         }
-        if (-not ($roots | Where-Object { $_ -eq $componentRoot })) { $roots.Add($componentRoot) }
     }
-    return $roots.ToArray()
 }
 
 # What release.json says about one component: its folder name, its <Version> ('' when absent),
@@ -183,8 +176,8 @@ function ConvertTo-JsonText([string]$Text) {
 # or a collision, with what to do next. -AfterVersionEdits: a full release, which has just
 # changed Directory.Build.props and CHANGELOG.md itself; they do not make this project unclean.
 function Publish-Release([switch]$AfterVersionEdits) {
-    # Resolved first: an entry in no kit project stops before anything is built.
-    $componentRoots = @(Get-ReleaseComponents)
+    # Checked first: an entry outside the project stops before anything is built.
+    Assert-PublishEntries
     $out = Join-Path (ConvertTo-LocalPath 'artifacts') $Version
     # A previous run's files would be compared with this run's and reported as collisions,
     # and would end up in the zip: the folder is rebuilt from nothing.
@@ -217,13 +210,11 @@ function Publish-Release([switch]$AfterVersionEdits) {
     }
 
     # release.json: what this folder holds, for the people who receive it and for a program
-    # that shows the versions. UTF-8 without a byte order mark, LF line ends. A component whose
-    # folder held uncommitted files says so ("clean": false): -PublishOnly checks nothing.
-    $components = @()
-    foreach ($componentRoot in $componentRoots) {
-        $exclude = if ($AfterVersionEdits -and $components.Count -eq 0) { @('Directory.Build.props', 'CHANGELOG.md') } else { @() }
-        $components += Get-ComponentInfo $componentRoot $exclude
-    }
+    # that shows the versions. UTF-8 without a byte order mark, LF line ends. Its one component
+    # is this project; when the folder held uncommitted files it says so ("clean": false):
+    # -PublishOnly checks nothing.
+    $exclude = if ($AfterVersionEdits) { @('Directory.Build.props', 'CHANGELOG.md') } else { @() }
+    $components = @(Get-ComponentInfo (Get-ProjectRoot) $exclude)
     $head = Invoke-GitText $root @('rev-parse', 'HEAD')
     if (-not $head) { $head = '' }
     $lines = @(
@@ -300,7 +291,7 @@ try {
         if ($WhatIfPreference) {
             $targets = ($kit.release.publish | ForEach-Object { $_.project }) -join ', '
             $zipPlan = if ($kit.release.zip) { ', zip ' + $kit.release.zip.Replace('{version}', $Version) } else { '' }
-            foreach ($componentRoot in @(Get-ReleaseComponents)) { Write-Host ("component {0} ({1})" -f (Split-Path $componentRoot -Leaf), $componentRoot) }
+            Assert-PublishEntries
             Write-Host ("WhatIf: would publish {0} into artifacts/{1}/ after emptying it, write release.json{2}." -f $(if ($targets) { $targets } else { 'nothing' }), $Version, $zipPlan)
             exit 0
         }
@@ -319,6 +310,12 @@ try {
     $commonDir = [System.IO.Path]::GetFullPath((git rev-parse --path-format=absolute --git-common-dir)).TrimEnd('\', '/')
     if ($gitDir -ne $commonDir) {
         throw "A release is cut on $releaseBranch, in the main checkout; this is a linked worktree ($root)."
+    }
+    # The tag vX.Y.Z names a version of the whole repository, so the project is its root.
+    $here = Get-ProjectRoot
+    $gitRoot = [System.IO.Path]::GetFullPath((git rev-parse --show-toplevel)).TrimEnd('\', '/')
+    if ($gitRoot -ne $here) {
+        throw "A release is cut from a project that is the root of its repository; this project is $here, the repository's root is $gitRoot."
     }
     $branch = (git branch --show-current 2>$null)
     if ($branch -ne $releaseBranch) {
@@ -353,35 +350,11 @@ try {
     if (-not $unreleased.Success) { throw 'CHANGELOG.md has no [Unreleased] section.' }
     if ($unreleased.Groups[1].Value.Trim().Length -eq 0) { throw '[Unreleased] is empty; nothing to release.' }
 
-    # The components: the other kit projects the entries publish from (the kit's ADR 0036).
-    # Each is published from its folder as it is, so the folder must be committed; a problem
-    # is collected, and -WhatIf lists every component before the first problem stops it.
-    $here = [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
-    $componentLines = @()
-    $problems = @()
-    foreach ($componentRoot in @(Get-ReleaseComponents | Where-Object { $_ -ne $here })) {
-        $name = Split-Path $componentRoot -Leaf
-        $info = Get-ComponentInfo $componentRoot
-        $problem = $null
-        try { $null = Read-KitConfig $componentRoot } catch { $problem = "Component $name has no usable kit.json: $($_.Exception.Message)" }
-        if (-not $problem) {
-            if (-not $info.Version) { $problem = "Component $name has no <Version> in Directory.Build.props." }
-            elseif (-not (Test-Path -LiteralPath (Join-Path $componentRoot 'CHANGELOG.md'))) { $problem = "Component $name has no CHANGELOG.md." }
-            elseif (-not $info.Clean) { $problem = "Component $name is not clean; commit or stash first:`n" + ($info.Dirty -join "`n") }
-        }
-        $state = if ($problem) { 'NOT READY' } else { 'clean' }
-        $flag = if ($info.Unreleased) { ', unreleased changes' } else { '' }
-        $componentLines += ("component {0} {1} ({2}{3}) - {4}" -f $name, $info.Version, $componentRoot, $flag, $state)
-        if ($problem) { $problems += $problem }
-    }
-    if ($WhatIfPreference) { $componentLines | ForEach-Object { Write-Host $_ } }
-    if ($problems.Count -gt 0) { throw ($problems -join "`n") }
+    # A release publishes this project only.
+    Assert-PublishEntries
 
     # --- tag name ---------------------------------------------------------------------
-    # Standalone repository: v1.2.3. Folder inside a monorepo: <folder>-v1.2.3, so the tags
-    # of different projects in one repository do not collide.
-    $gitRoot = [System.IO.Path]::GetFullPath((git rev-parse --show-toplevel)).TrimEnd('\', '/')
-    $tag = if ($gitRoot -eq $here) { "v$Version" } else { (Split-Path $here -Leaf).ToLowerInvariant() + "-v$Version" }
+    $tag = "v$Version"
     if (git tag --list $tag) { throw "Tag $tag already exists." }
 
     # -WhatIf stops here: the checks passed, nothing was changed.
