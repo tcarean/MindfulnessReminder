@@ -76,7 +76,8 @@ does not apply.
     ask: does the owner want you to run the merge, or will they do it by hand? Do nothing until
     they answer. The merge is `git merge --no-ff <branch>` in the main checkout, so that the git
     hooks see it: a fast-forward runs none (ADR 0022, 0026). A merge that brings a change to
-    `scripts/` runs the process tests in `pre-merge-commit`: give it a 10-minute timeout too. If a
+    `scripts/` or the process tests runs them in `pre-merge-commit`: give it a 10-minute timeout
+    too. If a
     merge you run stops on conflicts, resolve them, `git add` the files and
     conclude with `git merge --continue`, never `git commit`, which the hook refuses on `main`;
     a conflict where the two sides meant different things is a question for the owner. If the

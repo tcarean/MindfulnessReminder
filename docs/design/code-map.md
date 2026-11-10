@@ -110,7 +110,8 @@
   class carries `Category=Process`, which the gate leaves out unless a change touches
   `scripts/` or this project (ADR 0075).
   - `ScriptRunner.cs` — starts a script, git or a hook with its output captured and every
-    `GIT_*` variable and `CLAUDECODE` removed; `ProcessJson()`, a minimal `process.json`.
+    `GIT_*` variable, `CLAUDECODE`, `CI` and `PSModulePath` removed; `ProcessJson()`, a minimal
+    `process.json`; `MakeJunction`, a junction for the tests of a root reached through one.
     `Repo.cs` — the repository root, found from the test binaries.
   - `HookTests.cs` — the Claude Code commit gate and Stop hook, on two throwaway projects;
     it also holds `WindowsFact` and `WindowsTheory`. `GitHookTests.cs` — `pre-commit`,

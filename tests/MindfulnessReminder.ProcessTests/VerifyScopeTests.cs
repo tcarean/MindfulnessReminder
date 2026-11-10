@@ -128,6 +128,23 @@ public sealed class VerifyScopeTests : IDisposable
         Assert.Equal("True", Probe());
     }
 
+    /// <summary>
+    /// A local main left behind the remote's would count what main gained since as the branch's
+    /// change: the newer of the two is the base.
+    /// </summary>
+    [Fact]
+    public void WithALocalMainBehindTheRemotes_TheNewerOneIsTheBase()
+    {
+        Git("switch", "-q", "-c", "upstream");
+        File.WriteAllText(Path.Combine(_repo, "scripts", "gained.ps1"), "# main gained this\n");
+        Commit("Main gains a script");
+        Git("update-ref", "refs/remotes/origin/main", "HEAD");
+        Git("switch", "-q", "-c", "claude/Task");
+        File.AppendAllText(Path.Combine(_repo, "src", "X.cs"), "// task\n");
+        Commit("Change the code");
+        Assert.Equal("False", Probe());
+    }
+
     /// <summary>With no main to compare with, git cannot tell what the branch changed: the tests run.</summary>
     [Fact]
     public void WithNoMainAtAll_EverythingCounts()

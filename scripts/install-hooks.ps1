@@ -24,12 +24,17 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 try {
+    # Under Windows PowerShell 5.1 a native command's stderr, even sent to $null, stops a script
+    # whose $ErrorActionPreference is Stop; git's exit code is the answer here, and throw still
+    # ends the script.
+    $ErrorActionPreference = 'Continue'
     # The root of the git repository this folder belongs to.
     $gitRoot = (git rev-parse --show-toplevel 2>$null)
     if ($LASTEXITCODE -ne 0 -or -not $gitRoot) { throw 'Not inside a git repository. Run git init first.' }
     # git says where this folder is inside the repository: nothing at its root. Comparing two
     # paths instead would take the same folder, reached through a junction, for another.
     $prefix = (git rev-parse --show-prefix 2>$null)
+    if ($LASTEXITCODE -ne 0) { throw 'git rev-parse --show-prefix failed.' }
     if ($prefix) {
         throw ("The project must be the root of its repository: it is the folder {0} of the repository at {1}. Nothing was changed." -f $prefix.TrimEnd('/'), $gitRoot)
     }

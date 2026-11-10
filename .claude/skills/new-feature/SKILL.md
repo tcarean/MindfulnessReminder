@@ -36,7 +36,9 @@ Follow the order. Do not write implementation code before step 4 is approved.
    After approval save the plan to `docs/plans/YYYY-MM-DD-slug.md`.
 5. **Code.** Implement in `MindfulnessReminder.Core` first (the compile boundary CLAUDE.md
    names), then the adapter or the window, which only call it. Keep
-   `scripts/verify.ps1 -SkipTests` green while editing; run the full gate before claiming done.
+   `scripts/verify.ps1 -SkipTests` green while editing; run the full gate before claiming done
+   (on a branch that changes `scripts/` or the process tests, about three minutes: give it a
+   10-minute timeout).
    A change under `src/MindfulnessReminder.App/` is not done until it was looked at:
    `--preview` runs the reminder window and `--detect` the activity monitor, and nothing else of
    the App. Anything else (the tray menu, Settings, About, the presenter, the timers, the

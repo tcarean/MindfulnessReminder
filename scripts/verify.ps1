@@ -18,7 +18,8 @@
 #                            testFilter, when set, is passed to `dotnet test --filter`. The
 #                            process tests (process.json's processTests: the tests of the scripts,
 #                            which take minutes) run only when the change can affect them: a
-#                            path they test differs from main, CI is "true" or -All is given
+#                            path they test differs from the main branch (release.branch), CI
+#                            is "true" or -All is given
 #                            (Test-ProcessPathsChanged in process-config.ps1); otherwise their
 #                            category is left out. A line says which of the two it was, and
 #                            another the filter passed to `dotnet test`, when there is one
@@ -101,7 +102,7 @@ try {
             elseif ($env:CI -eq 'true') { $why = 'run (CI)' }
             elseif (Test-ProcessPathsChanged $config $root) { $why = "run (a change under $paths, or git cannot tell what changed)" }
             else {
-                $why = "left out (nothing under $paths differs from main; -All runs them)"
+                $why = "left out (nothing under $paths differs from $($config.release.branch); -All runs them)"
                 $filters += 'Category!=' + $config.processTests.category
             }
             Write-Host ('process tests: ' + $why)

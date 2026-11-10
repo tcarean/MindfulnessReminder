@@ -148,10 +148,15 @@ function Test-ProcessPathsChanged($Config, [string]$ProjectDir) {
     $mainBranch = if ($Config.release.branch) { $Config.release.branch } else { 'main' }
     $base = $head
     if ((git -C $ProjectDir branch --show-current 2>$null) -ne $mainBranch) {
+        # A local main left behind the remote's would count what main gained since as the
+        # branch's change: of the two merge bases, the newer one is where the branch left main.
         $base = $null
         foreach ($ref in @($mainBranch, "origin/$mainBranch")) {
             $mergeBase = (git -C $ProjectDir merge-base HEAD $ref 2>$null)
-            if ($LASTEXITCODE -eq 0 -and $mergeBase) { $base = $mergeBase; break }
+            if ($LASTEXITCODE -ne 0 -or -not $mergeBase) { continue }
+            if (-not $base) { $base = $mergeBase; continue }
+            git -C $ProjectDir merge-base --is-ancestor $base $mergeBase 2>$null
+            if ($LASTEXITCODE -eq 0) { $base = $mergeBase }
         }
         if (-not $base) { return $true }
     }

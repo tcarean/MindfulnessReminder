@@ -22,7 +22,8 @@ the tests. A mutant that survives is a line no test really checks.
    requirement (name the R-ID) or an equivalent mutant (no observable change; say why).
 4. For each non-equivalent survivor, propose the test that would kill it: name (with the R-ID),
    input, expected value. Do not write the tests yet; the user picks which ones are worth it.
-5. If the user accepts, write the tests, run `scripts/verify.ps1`, then re-run `mutate.ps1` on the
+5. If the user accepts, write the tests, run `scripts/verify.ps1` (with a 10-minute timeout on a
+   branch that changes `scripts/` or the process tests), then re-run `mutate.ps1` on the
    same filter and paste the new score. New tests alone get no CHANGELOG line; a bug they
    expose, once fixed, gets one under `Fixed`.
 6. Never "fix" a survivor by weakening the mutation config or ignoring the file. The score is a

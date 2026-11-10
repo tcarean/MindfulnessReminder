@@ -407,7 +407,8 @@ The owner approved this plan on 2026-11-10.
 - Review, the same day, by a subagent with a clean context: nine findings and two risks, all
   taken on this branch, the tests first where behaviour changed (8 of 17 red before the fixes,
   each for the expected reason; the 54 tests of the classes touched green after, run with
-  `CI=true` as on GitHub).
+  `CI=true` set, as GitHub sets it; the pwsh host GitHub runs the gate under was not
+  reproduced, pwsh not being installed here).
   - F1, which would have made the first CI run red: `ScriptRunner` passed `CI` on, so the
     nested gate of `VerifyTests` said "run (CI)". It now removes `CI` like `CLAUDECODE`, and
     `PSModulePath` too (the first risk: a Windows PowerShell child of a gate run under pwsh
@@ -438,3 +439,26 @@ The owner approved this plan on 2026-11-10.
   - The second risk: on a branch that changes `scripts/`, a commit of the assistant runs the
     gate twice, about six minutes, against a command timeout of two by default. `/wrap-up`
     (steps 1 and 11) and `/release` (step 5) now say to give 10 minutes.
+- Second review, by another subagent with a clean context, of the two commits above: F1, F4,
+  F5, F7 and F8 fixed as they stood; eight more findings, all taken, three of them with a test
+  first (red before, each for the expected reason; the 47 tests of the classes touched green
+  after, run with `CI=true`):
+  - a release reached through a junction named itself after the link in `release.json`; the
+    name is now the repository folder's, from `git rev-parse --show-toplevel`
+    (`Get-ProjectName`), the folder seen outside git;
+  - a local `main` left behind `origin/main` made the branch's comparison count what main had
+    gained, running the process tests for nothing; the newer of the two merge bases is the base;
+  - outside a repository, `install-hooks.ps1` died on git's own error instead of its advice:
+    under Windows PowerShell 5.1 a native command's stderr stops a script whose
+    `$ErrorActionPreference` is Stop; the git calls now run under Continue with their exit codes
+    checked, and `release.ps1` checks that of `--show-prefix`;
+  - the "left out" line named `main` whatever `release.branch` says; it names that branch;
+  - a third comment about a Linux CI, in `release.ps1`; the code map's sentence on
+    `ScriptRunner`; the timeout notes, now also in `/new-feature` step 5 and `/mutate` step 5,
+    and for a merge that brings a change to the process tests; and the "as on GitHub" above,
+    which claimed more than was reproduced.
+  The reviewer's experiment ran its git commands in this worktree for two minutes, its own
+  folder having failed to open: it switched branches, made six branches and five files and
+  fetched from GitHub, then put everything back. Checked afterwards: the worktree on this
+  branch at 9e6089c and clean, no branch but `main` and this one, no stash, `.git/config` as
+  before, and GitHub holding only `main` at 1330a04.

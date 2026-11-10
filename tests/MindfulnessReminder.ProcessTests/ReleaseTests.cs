@@ -264,6 +264,14 @@ public sealed class ReleaseTests : IDisposable
             (int exitCode, string output) = ScriptRunner.RunScript(link, Path.Combine(link, "scripts", "release.ps1"), "-Version", "2.3.0", "-WhatIf");
             Assert.True(exitCode == 0, output);
             Assert.Contains("tag v2.3.0", output);
+
+            // release.json names the project after its folder, not after the link it was reached by.
+            (exitCode, output) = ScriptRunner.RunScript(link, Path.Combine(link, "scripts", "release.ps1"), "-Version", "2.3.0", "-PublishOnly");
+            Assert.True(exitCode == 0, output);
+            using JsonDocument release = JsonDocument.Parse(File.ReadAllText(Path.Combine(_project, "artifacts", "2.3.0", "release.json")));
+            Assert.Equal("Proj", release.RootElement.GetProperty("name").GetString());
+            JsonElement component = Assert.Single(release.RootElement.GetProperty("components").EnumerateArray());
+            Assert.Equal("Proj", component.GetProperty("name").GetString());
         }
         finally
         {

@@ -103,8 +103,8 @@ function Invoke-GitText([string]$Dir, [string[]]$Arguments) {
     return (@($output | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] }) -join "`n").TrimEnd()
 }
 
-# A process.json path (forward slashes) as a path under the project on this system: pwsh on Linux,
-# where CI may run, takes a backslash for part of a file name.
+# A process.json path (forward slashes) as a path under the project on this system: pwsh on Linux
+# takes a backslash for part of a file name.
 function ConvertTo-LocalPath([string]$Relative) {
     return Join-Path $root ($Relative -replace '[\\/]', [System.IO.Path]::DirectorySeparatorChar)
 }
@@ -112,6 +112,14 @@ function ConvertTo-LocalPath([string]$Relative) {
 # This project's folder as a full path, without a trailing separator.
 function Get-ProjectRoot {
     return [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
+}
+
+# The project's name, the one release.json gives it: its folder as git resolves it, so that a
+# project reached through a junction keeps its own name; the folder this script sees outside git.
+function Get-ProjectName {
+    $top = Invoke-GitText $root @('rev-parse', '--show-toplevel')
+    if ($top) { return Split-Path $top -Leaf }
+    return Split-Path (Get-ProjectRoot) -Leaf
 }
 
 # Throws, with the entry and the folder named, when a release.publish entry is not a project
@@ -126,7 +134,7 @@ function Assert-PublishEntries {
     }
 }
 
-# What release.json says about one component: its folder name, its <Version> ('' when absent),
+# What release.json says about one component: its name (Get-ProjectName), its <Version> ('' when absent),
 # its last commit ('' outside git), whether its CHANGELOG.md has content under [Unreleased],
 # and whether its folder is clean, with the uncommitted paths when it is not. $Exclude names
 # paths, relative to the component, that do not count against clean: the version files a
@@ -149,7 +157,7 @@ function Get-ComponentInfo([string]$ComponentRoot, [string[]]$Exclude = @()) {
     $status = Invoke-GitText $ComponentRoot (@('status', '--porcelain', '--', '.') + @($Exclude | Where-Object { $_ } | ForEach-Object { ":(exclude)$_" }))
     $dirty = if ($null -eq $status) { @("(git status failed: $script:GitError)") } elseif ($status) { @($status -split "`n") } else { @() }
     return [pscustomobject]@{
-        Name = Split-Path $ComponentRoot -Leaf
+        Name = Get-ProjectName
         Version = $version
         Commit = if ($commit) { $commit } else { '' }
         Unreleased = $pending
@@ -220,7 +228,7 @@ function Publish-Release([switch]$AfterVersionEdits) {
     if (-not $head) { $head = '' }
     $lines = @(
         '{',
-        ('  "name": {0},' -f (ConvertTo-JsonText (Split-Path ([System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')) -Leaf))),
+        ('  "name": {0},' -f (ConvertTo-JsonText (Get-ProjectName))),
         ('  "version": {0},' -f (ConvertTo-JsonText $Version)),
         ('  "date": {0},' -f (ConvertTo-JsonText (Get-Date).ToString('yyyy-MM-dd'))),
         ('  "commit": {0},' -f (ConvertTo-JsonText $head)),
@@ -316,6 +324,7 @@ try {
     # says where this folder is inside the repository, nothing at its root: comparing two paths
     # instead would take the same folder, reached through a junction, for another.
     $prefix = (git rev-parse --show-prefix)
+    if ($LASTEXITCODE -ne 0) { throw 'git rev-parse --show-prefix failed; see its message above.' }
     if ($prefix) {
         throw ("A release is cut from a project that is the root of its repository; this project is the folder {0} of the repository at {1}." -f $prefix.TrimEnd('/'), (git rev-parse --show-toplevel))
     }

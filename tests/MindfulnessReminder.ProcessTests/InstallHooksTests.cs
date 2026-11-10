@@ -60,6 +60,24 @@ public sealed class InstallHooksTests : IDisposable
         Assert.Equal(string.Empty, GitOutput("config", "--get", "core.hooksPath"));
     }
 
+    /// <summary>Outside a repository git writes an error; the script answers with its own advice, not with git's message.</summary>
+    [Fact]
+    public void OutsideARepository_SaysToRunGitInitFirst()
+    {
+        string plain = _repo + "-plain";
+        CopyScripts(plain);
+        try
+        {
+            (int exitCode, string output) = Install(plain);
+            Assert.Equal(1, exitCode);
+            Assert.Contains("Not inside a git repository. Run git init first.", output);
+        }
+        finally
+        {
+            ScriptRunner.DeleteTree(plain);
+        }
+    }
+
     /// <summary>git answers with the real path; the script, started through a junction, must not take that for another folder.</summary>
     [WindowsFact]
     public void ThroughAJunction_TheRootIsStillTheRoot()
