@@ -24,8 +24,8 @@ namespace MindfulnessReminder.Tests;
 
 /// <summary>
 /// Tests about the repository itself: things a rule asks for and a test can enforce instead
-/// (ADR 0001). Cheap, and never forgotten in a long session. The requirement-to-test link is
-/// read from the compiled test methods, by their names, as the kit's own tests read it.
+/// (ADR 0035). Cheap, and never forgotten in a long session. The requirement-to-test link is
+/// read from the compiled test methods, by their names.
 /// Version and copyright plumbing is in <see cref="VersionTests"/>, the licence notice in
 /// <see cref="LicenseHeaderTests"/>.
 /// </summary>
@@ -46,7 +46,7 @@ public class RepoInvariantTests
     private static string RepoDir([CallerFilePath] string thisFile = "")
         => Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(thisFile)))!;
 
-    /// <summary>The kit's rule "Requirements first" made checkable: an implemented requirement has at least one test named after it.</summary>
+    /// <summary>The rule "Requirements first" made checkable: an implemented requirement has at least one test named after it.</summary>
     [Fact]
     public void Every_implemented_requirement_has_a_test_carrying_its_id()
     {
@@ -106,7 +106,7 @@ public class RepoInvariantTests
     }
 
     /// <summary>
-    /// The design notes and their index exist. The kit's check-design.ps1 checks the index and the
+    /// The design notes and their index exist. scripts/check-design.ps1 checks the index and the
     /// Covers paths but passes a project without docs/design/; this one has notes, and CLAUDE.md
     /// sends every session to them.
     /// </summary>
@@ -120,7 +120,7 @@ public class RepoInvariantTests
     }
 
     /// <summary>
-    /// docs/validation.json lists no case on purpose (ADR 0005), and the kit's skills read it. This
+    /// docs/validation.json lists no case on purpose (ADR 0039), and the skills read it. This
     /// keeps the file well formed, and its case IDs unique, for the day the first case arrives.
     /// </summary>
     [Fact]
@@ -142,7 +142,97 @@ public class RepoInvariantTests
     {
         var lines = File.ReadLines(Path.Combine(Root, "CLAUDE.md")).Count();
 
-        Assert.True(lines <= 200, $"CLAUDE.md has {lines} lines; move explanations to docs/design/ (ADR 0001)");
+        Assert.True(lines <= 200, $"CLAUDE.md has {lines} lines; move explanations to docs/design/ (ADR 0035)");
+    }
+
+    /// <summary>
+    /// Every decision a living file cites, "ADR NNNN" alone, in a list or a range, broken across
+    /// lines or not, is a record in docs/decisions/. The records themselves are left out: they
+    /// also cite other projects' records by number ("FlatCheck ADR 0045", "its ADR 0001"), and
+    /// their own citations were renumbered and compared one by one with ADR 0075. The plans and
+    /// the released sections of CHANGELOG.md keep the numbers of their date.
+    /// </summary>
+    [Fact]
+    public void Every_cited_decision_exists()
+    {
+        var recorded = Directory.EnumerateFiles(Path.Combine(Root, "docs", "decisions"), "*.md")
+            .Select(f => DecisionFile.Match(Path.GetFileName(f)))
+            .Where(m => m.Success)
+            .Select(m => m.Groups[1].Value)
+            .ToHashSet(StringComparer.Ordinal);
+        var missing = new List<string>();
+        var cited = 0;
+        foreach (var file in LivingTextFiles(Root))
+        {
+            var text = File.ReadAllText(file);
+            if (Path.GetRelativePath(Root, file) == "CHANGELOG.md")
+            {
+                text = UnreleasedSection.Match(text).Value;
+            }
+
+            foreach (Match citation in Citation.Matches(text))
+            {
+                cited += citation.Groups["n"].Captures.Count;
+                missing.AddRange(citation.Groups["n"].Captures
+                    .Where(n => !recorded.Contains(n.Value))
+                    .Select(n => Path.GetRelativePath(Root, file).Replace('\\', '/') + ": ADR " + n.Value));
+            }
+        }
+
+        // Without this, a scan that reads no file would pass.
+        Assert.True(recorded.Count > 1 && cited > 100, $"{recorded.Count} records, {cited} citations: the scan is broken");
+        Assert.True(missing.Count == 0, "Decisions cited but not in docs/decisions/: " + string.Join(", ", missing));
+    }
+
+    /// <summary>"ADR 0046", "ADRs 0051, 0052 and 0062", "ADR 0046 to 0048", with any white space or comment marker between the words.</summary>
+    private static readonly Regex Citation = new(
+        @"\bADRs?(?:\s|#|/)+(?<n>\d{4})\b(?:(?:,(?:\s|#|/)*(?:(?:and|or|to)(?:\s|#|/)+)?|(?:\s|#|/)+(?:and|or|to)(?:\s|#|/)+)(?<n>\d{4})\b)*",
+        RegexOptions.Compiled);
+
+    private static readonly Regex DecisionFile = new(@"^(\d{4})-.+\.md$", RegexOptions.Compiled);
+
+    private static readonly Regex UnreleasedSection =
+        new(@"^## \[Unreleased\]\s*$.*?(?=^## \[|\z)", RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.Singleline);
+
+    /// <summary>The folders whose files are not living text: build output, history, other checkouts.</summary>
+    private static readonly string[] NotLiving =
+    {
+        "bin", "obj", ".git", ".vs", "artifacts", "TestResults", "StrykerOutput",
+        Path.Combine(".claude", "worktrees"), Path.Combine("docs", "plans"), Path.Combine("docs", "decisions"),
+    };
+
+    private static readonly string[] TextExtensions =
+    {
+        ".md", ".cs", ".ps1", ".json", ".props", ".xaml", ".yml", ".csproj", ".editorconfig", ".gitattributes", ".gitignore",
+    };
+
+    /// <summary>The text files of the repository a session reads and edits, the git hooks included.</summary>
+    private static IEnumerable<string> LivingTextFiles(string root)
+    {
+        var pending = new Stack<string>();
+        pending.Push(root);
+        while (pending.Count > 0)
+        {
+            var folder = pending.Pop();
+            foreach (var file in Directory.EnumerateFiles(folder))
+            {
+                var name = Path.GetFileName(file);
+                var inHooks = Path.GetFileName(folder) == "hooks" && Path.GetExtension(name).Length == 0;
+                if (inHooks || TextExtensions.Contains(Path.GetExtension(name)) || TextExtensions.Contains(name))
+                {
+                    yield return file;
+                }
+            }
+
+            foreach (var sub in Directory.EnumerateDirectories(folder))
+            {
+                var relative = Path.GetRelativePath(root, sub);
+                if (!NotLiving.Contains(Path.GetFileName(sub)) && !NotLiving.Contains(relative))
+                {
+                    pending.Push(sub);
+                }
+            }
+        }
     }
 
     /// <summary>Table rows of docs/requirements.md: "| R-001 | implemented | ..." gives R001, implemented.</summary>

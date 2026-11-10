@@ -4,21 +4,15 @@
 # WHAT IT DOES
 #   Claude Code calls it each time Claude is about to finish an answer (a "turn"). It takes
 #   the list of files this session edited and groups them by project: the nearest folder above
-#   each file that holds kit.json (Find-KitProject in kit-config.ps1), so an edit in a worktree
+#   each file that holds process.json (Find-Project in process-config.ps1), so an edit in a worktree
 #   is judged by that worktree's copy of the project, not by the folder the session started in
-#   (the kit's ADR 0020). A file in no project is not judged. Each project gets two checks,
-#   on its own files, with its own kit.json:
-#     A. the shared folders (Get-KitSharedFolders in kit-config.ps1: scripts/, .claude/skills/,
-#        .claude/agents/, .claude/rules/kit/) are the kit's: in a project that is not the kit
-#        (kit.json's "kit" is not "."), an edit under one of them ends no turn; the change is
-#        made in the kit and copied with scripts/sync.ps1. The process keys of
-#        .claude/settings.json are the kit's too, but a project edits its own allow entries in
-#        the same file, so they are checked at commit time, by step 0 of verify.ps1, not here.
-#     B. code was edited (kit.json's codeFolders, codeFiles or testFolders): the turn may end
-#        only when scripts/verify.ps1 ran green with tests after the last such edit:
-#        .verify-stamp, which only such a run writes (-SkipTests does not), is newer than the
-#        newest edited file. Whether the change needs a CHANGELOG line is a judgment, not
-#        checked here (the kit's ADR 0023).
+#   (ADR 0020). A file in no project is not judged. Each project is judged on its
+#   own files, with its own process.json: when code was edited (process.json's codeFolders, codeFiles,
+#   testFolders, or the paths of processTests, the scripts whose tests the gate runs when they
+#   change), the turn may end only when scripts/verify.ps1 ran green with tests after
+#   the last such edit: .verify-stamp, which only such a run writes (-SkipTests does not), is
+#   newer than the newest edited file. Whether the change needs a CHANGELOG line is a
+#   judgment, not checked here (ADR 0023).
 #   If not, it answers exit 2 with the reasons under each project's full path, and Claude Code sends Claude back to work
 #   (the message points to /wrap-up). It never runs verify itself, so it takes under a
 #   second. When Claude is already continuing because of this hook (stop_hook_active), it
@@ -51,7 +45,7 @@ if (-not $session) { exit 0 }
 $list = Join-Path $env:TEMP ("claude-edits-" + $session + ".txt")
 if (-not (Test-Path $list)) { exit 0 }
 
-. (Join-Path $PSScriptRoot '..\kit-config.ps1')
+. (Join-Path $PSScriptRoot '..\process-config.ps1')
 
 function Test-Under([string]$path, [string[]]$dirs) {
     foreach ($d in $dirs) { if ($path.StartsWith($d, [System.StringComparison]::OrdinalIgnoreCase)) { return $true } }
@@ -61,28 +55,26 @@ function Test-Under([string]$path, [string[]]$dirs) {
 # The problems of one project with the files of it this session edited; an empty list when
 # there are none.
 function Get-ProjectProblems([string]$projectDir, [string[]]$edited) {
-    # kit.json says where the code is. Without a readable one there is nothing to judge by, so
+    # process.json says where the code is. Without a readable one there is nothing to judge by, so
     # the project passes; verify.ps1 will refuse the same file at commit time.
-    try { $kit = Read-KitConfig $projectDir } catch { return @() }
-    $srcDirs = @($kit.codeFolders | ForEach-Object { Get-KitFolderPath $projectDir $_ })
-    $testDirs = @($kit.testFolders | ForEach-Object { Get-KitFolderPath $projectDir $_ })
-    $srcFiles = @($kit.codeFiles | ForEach-Object { Join-Path $projectDir ($_ -replace '/', '\') })
-    # The folders that are the kit's, mirrored by scripts/sync.ps1 (one list, in kit-config.ps1).
-    $sharedDirs = @(Get-KitSharedFolders) | ForEach-Object { Get-KitFolderPath $projectDir $_ }
-    $sharedNames = Get-KitSharedFolderNames
+    try { $config = Read-ProcessConfig $projectDir } catch { return @() }
+    $srcDirs = @($config.codeFolders | ForEach-Object { Get-ConfigFolderPath $projectDir $_ })
+    $testDirs = @($config.testFolders | ForEach-Object { Get-ConfigFolderPath $projectDir $_ })
+    $srcFiles = @($config.codeFiles | ForEach-Object { Join-Path $projectDir ($_ -replace '/', '\') })
+    # A process-test path is a folder when it ends with a slash or is one on disk, else a file.
+    $processDirs = @()
+    $processFiles = @()
+    foreach ($p in $config.processTests.paths) {
+        $full = Join-Path $projectDir ($p -replace '/', '\')
+        if ($p.EndsWith('/') -or (Test-Path -LiteralPath $full -PathType Container)) { $processDirs += Get-ConfigFolderPath $projectDir $p }
+        else { $processFiles += $full }
+    }
 
     $problems = @()
 
-    # A. A shared folder edited in a project that is not the kit.
-    $kitPath = Get-KitPath $kit $projectDir
-    $isKit = $kitPath -and ($kitPath -eq $projectDir)
-    $sharedEdits = @($edited | Where-Object { Test-Under $_ $sharedDirs })
-    if (-not $isKit -and $sharedEdits.Count -gt 0) {
-        $problems += 'One of ' + $sharedNames + ' was edited here, but those folders are the kit''s (byte-identical in every project). Make the change in the kit, then run scripts/sync.ps1 here; project-specific values go in kit.json, project-specific skill steps in docs/skills.md. Edited: ' + (($sharedEdits | ForEach-Object { $_.Substring($projectDir.Length + 1) }) -join ', ')
-    }
-
-    # B. Code edits: those under a code folder, a test folder, or named as a code file.
-    $codeEdits = @($edited | Where-Object { (Test-Under $_ $srcDirs) -or (Test-Under $_ $testDirs) -or ($srcFiles -contains $_) })
+    # Code edits: those under a code folder, a test folder or a process-test path, or named as
+    # a code file.
+    $codeEdits = @($edited | Where-Object { (Test-Under $_ $srcDirs) -or (Test-Under $_ $testDirs) -or (Test-Under $_ $processDirs) -or ($srcFiles -contains $_) -or ($processFiles -contains $_) })
     if ($codeEdits.Count -gt 0) {
         # verify ran green, with tests, after the last code edit: compare the stamp's time
         # with the newest modification time among the edited files that still exist.
@@ -99,11 +91,11 @@ function Get-ProjectProblems([string]$projectDir, [string[]]$edited) {
 }
 
 # Each edited path once, as a full path, grouped by the project it belongs to (the nearest
-# folder above it with kit.json). A path in no project is not this hook's to judge.
+# folder above it with process.json). A path in no project is not this hook's to judge.
 $edited = Get-Content $list | ForEach-Object { [System.IO.Path]::GetFullPath($_) } | Sort-Object -Unique
 $byProject = @{}
 foreach ($path in $edited) {
-    $projectDir = Find-KitProject $path
+    $projectDir = Find-Project $path
     if (-not $projectDir) { continue }
     if (-not $byProject.ContainsKey($projectDir)) { $byProject[$projectDir] = @() }
     $byProject[$projectDir] += $path

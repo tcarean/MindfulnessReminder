@@ -11,9 +11,9 @@
 #     2. copies the files that are not under -Into yet, subfolders kept, but only when pass 1
 #        found no collision. On any collision nothing is copied, not even the files that do
 #        not collide, so -Into is left as it was.
-#   A release that bundles several publishes into one folder (release.publish in kit.json)
-#   would otherwise let the last publish overwrite the others' files unseen (the kit's ADR
-#   0036).
+#   A release that bundles several publishes into one folder (release.publish in process.json)
+#   would otherwise let the last publish overwrite the others' files unseen (ADR
+#   0071).
 #
 # WHO CALLS IT
 #   - scripts/release.ps1, step 5, once per release.publish entry, from its staging folder

@@ -4,11 +4,11 @@
 #
 # WHAT IT DOES
 #   Everything pre-commit does, step 0 included: a Claude Code session's merge onto a claude/
-#   branch left in the main checkout is refused (the kit's ADR 0026). A fast-forward merge
+#   branch left in the main checkout is refused (ADR 0026). A fast-forward merge
 #   records no merge commit and runs no hook.
 #   git calls it when a merge completes without conflicts, just before it records the merge
 #   commit. Such a merge runs neither pre-commit nor the Claude commit hook, so without this
-#   file a clean merge into main entered the history with no gate at all (the kit's ADR
+#   file a clean merge into main entered the history with no gate at all (ADR
 #   0022). The index already holds the merged result, and git diff --cached lists what the
 #   merge brings in over HEAD; so it simply runs the pre-commit hook beside it, which gates
 #   every project those files touch: verify, on the merged tree.
@@ -17,9 +17,8 @@
 #
 # WHO CALLS IT
 #   git itself, on every git merge that creates a merge commit, yours or Claude's, because
-#   core.hooksPath points at this file's folder (set by scripts/install-hooks.ps1, which copies
-#   it to <git root>/.githooks/ in a monorepo). git merge --no-verify skips it; CLAUDE.md
-#   forbids that.
+#   core.hooksPath points at this file's folder (set by scripts/install-hooks.ps1). git merge
+#   --no-verify skips it; the rule "Gate" forbids that.
 #
 # RESULT
 #   the result of pre-commit: exit 0 records the merge; exit 1 refuses it, the working tree

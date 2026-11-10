@@ -1,6 +1,6 @@
 # Test data
 
-Mindfulness Reminder has none (ADR 0005). Every test runs on fakes: `FakeRegistryStore` for
+Mindfulness Reminder has none (ADR 0039). Every test runs on fakes: `FakeRegistryStore` for
 the registry, and the clock, timer, session monitor, presenter and activity monitor inside
 `ReminderCoordinatorTests`. The application reads no file, decodes nothing and measures
 nothing on data; the numbers it carries are constants pinned by unit tests.

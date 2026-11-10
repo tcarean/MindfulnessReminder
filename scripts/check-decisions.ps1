@@ -4,7 +4,7 @@
 # WHAT IT DOES
 #   Reads every .md in docs/decisions/. Each is named NNNN-slug.md, lowercase words joined by
 #   hyphens; 0000-template.md is skipped, and no other file may use 0000. Then it checks the
-#   first lines of each ADR, as the kit's ADR 0024 fixes them (letter case counts):
+#   first lines of each ADR, as ADR 0024 fixes them (letter case counts):
 #     1  # NNNN. <title>              NNNN is the number in the file name
 #     2  (blank)
 #     3  Date: YYYY-MM-DD
@@ -12,8 +12,7 @@
 #        any number of "; <part> superseded by REF", each with an optional " (<note>)"
 #     5  Supersedes: NNNN or NNNN in part (<part>), separated by "; " or ", " (optional line,
 #        followed by a blank line)
-#   REF is the number of an ADR of this project; in a project that is not the kit it may also
-#   be "the kit's ADR NNNN".
+#   REF is the number of an ADR in docs/decisions/.
 #   Then, across the files:
 #     - no number is used twice, and every ADR has exactly one "## Decision" section;
 #     - no dated correction note ("Corrected|Restated|Amended YYYY-MM-DD", in any letter case)
@@ -22,9 +21,7 @@
 #     - every number named on a Status or Supersedes line exists and is older than the ADR
 #       that supersedes it;
 #     - both sides of a supersession agree: "Supersedes: X" in N goes with "Status: superseded
-#       by N" in X, and "X in part (...)" in N with a "; <part> superseded by N" clause in X;
-#     - "the kit's ADR NNNN" names an ADR in the kit's docs/decisions/, checked only when
-#       kit.json's "kit" names a folder, other than this project, that has docs/decisions/.
+#       by N" in X, and "X in part (...)" in N with a "; <part> superseded by N" clause in X.
 #   Whether an edit to an accepted ADR should have been a new ADR is not checked here: that is
 #   a judgment made at /wrap-up.
 #
@@ -43,26 +40,14 @@ param()
 $ErrorActionPreference = 'Stop'
 # The project folder is the parent of scripts/.
 $root = Split-Path -Parent $PSScriptRoot
-. (Join-Path $PSScriptRoot 'kit-config.ps1')
-$kit = Read-KitConfig $root
 $dir = Join-Path $root 'docs\decisions'
 if (-not (Test-Path -LiteralPath $dir)) {
     Write-Host 'decisions: no docs/decisions/ folder, nothing to check' -ForegroundColor Yellow
     exit 0
 }
 
-# Where the kit's decisions are, if this project may cite them and they can be checked.
-$kitPath = Get-KitPath $kit $root
-$here = [System.IO.Path]::GetFullPath($root).TrimEnd('\', '/')
-$isKit = $kitPath -and ($kitPath -eq $here)
-$kitDecisions = $null
-if ($kitPath -and -not $isKit) {
-    $candidate = Join-Path $kitPath 'docs\decisions'
-    if (Test-Path -LiteralPath $candidate) { $kitDecisions = $candidate }
-}
-
-# REF: a number of this project, or "the kit's ADR NNNN". The kit itself may not use the second.
-$ref = '(?:\d{4}|the kit''s ADR \d{4})'
+# REF: the number of an ADR in docs/decisions/.
+$ref = '\d{4}'
 $clause = "; [^;]+? superseded by (?<ref>$ref)(?: \([^();]+\))?"
 $statusRx = "^Status: (?:proposed|(?:accepted \d{4}-\d{2}-\d{2}|superseded by (?<head>$ref))(?:$clause)*)$"
 $item = '(?<num>\d{4})(?<part> in part \([^()]+\))?'
@@ -144,18 +129,6 @@ foreach ($f in $files) {
     else { $adrs[$number] = $entry }
 }
 
-# A REF is either local (NNNN) or the kit's; the kit may not cite itself that way, and a kit
-# ADR is only checked when the kit is beside this project.
-function Test-KitRef([string]$File, [string]$Ref) {
-    $n = $Ref.Substring($Ref.Length - 4)
-    if (-not $kitPath) { return }
-    if ($isKit) { Add-Problem 'LINK' $File "'$Ref': the kit names its own ADRs by number"; return }
-    # 0000 is the kit's template, not an ADR.
-    if ($kitDecisions -and ($n -eq '0000' -or -not (Get-ChildItem -LiteralPath $kitDecisions -Filter "$n-*.md" -File))) {
-        Add-Problem 'LINK' $File "'$Ref' does not exist in the kit's docs/decisions/"
-    }
-}
-
 foreach ($number in ($adrs.Keys | Sort-Object)) {
     $a = $adrs[$number]
     # This ADR supersedes others: each must exist, be older, and say so in its Status.
@@ -174,7 +147,6 @@ foreach ($number in ($adrs.Keys | Sort-Object)) {
     if ($a.Head) { $refs += @{ Ref = $a.Head; Part = $false } }
     foreach ($c in $a.Clauses) { $refs += @{ Ref = $c; Part = $true } }
     foreach ($r in $refs) {
-        if ($r.Ref -notmatch '^\d{4}$') { Test-KitRef $a.File $r.Ref; continue }
         $by = $r.Ref
         if (-not $adrs.ContainsKey($by)) { Add-Problem 'LINK' $a.File "is superseded by $by, which does not exist"; continue }
         if ([int]$by -le [int]$number) { Add-Problem 'LINK' $a.File "is superseded by $by, which is not newer"; continue }

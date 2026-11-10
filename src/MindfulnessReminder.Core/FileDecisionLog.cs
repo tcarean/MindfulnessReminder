@@ -20,7 +20,7 @@ namespace MindfulnessReminder.Core;
 /// <summary>
 /// The decision log as a file: <see cref="FileName"/> in the folder it is given, one stamped
 /// line per event, rotated once to <see cref="RotatedFileName"/> past
-/// <see cref="DecisionLog.MaxBytes"/> (R-110; ADR 0037). Every failure is swallowed: a log must
+/// <see cref="DecisionLog.MaxBytes"/> (R-110; ADR 0073). Every failure is swallowed: a log must
 /// never take the tray down. App names the folder, <c>%LOCALAPPDATA%\MindfulnessReminder</c>;
 /// the rules live here so the tests can run them against a folder of their own.
 /// </summary>
@@ -66,7 +66,7 @@ public sealed class FileDecisionLog : IDecisionLog
             Rotate();
 
             // Stamped with the local clock, read directly: the time is for the owner's eyes,
-            // in the owner's time, and no rule depends on it (ADR 0037).
+            // in the owner's time, and no rule depends on it (ADR 0073).
             File.AppendAllText(_path, DecisionLog.FormatLine(DateTimeOffset.Now, text) + Environment.NewLine);
         }
         catch (Exception)

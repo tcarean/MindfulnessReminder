@@ -1,6 +1,6 @@
 # Pausing for what the user is doing: the device, full screen, --detect
 
-> Moved unchanged on 2026-10-09 (ADR 0001) from `CLAUDE.md`, "Pausing for what the user is doing".
+> Moved unchanged on 2026-10-09 (ADR 0035) from `CLAUDE.md`, "Pausing for what the user is doing".
 > Where a paragraph became a decision record, its number is given after it. **Covers:**
 > `src/MindfulnessReminder.App/WindowsActivityMonitor.cs`,
 > `src/MindfulnessReminder.Core/ForegroundState.cs`,
@@ -21,7 +21,7 @@ the Settings window rather than inside the periodic panel.
 
 **Reading the device, not the window title, is the whole point.** Windows records per-app
 capture usage under `HKCU\...\CapabilityAccessManager\ConsentStore\{microphone,webcam}`,
-(and the same path under `HKLM`, which the adapter also reads: ADR 0016),
+(and the same path under `HKLM`, which the adapter also reads: ADR 0050),
 with `LastUsedTimeStop == 0` while the stream is open -- the same record its own tray privacy
 indicator reads. That covers Zoom, Teams (desktop and browser), a Slack huddle, Meet, Webex,
 Discord, and whatever ships next, and it is still right on mute. A table of window titles was
@@ -29,14 +29,14 @@ considered and rejected: it needs an entry per application, breaks on each new r
 misses a Slack huddle outright, because a huddle lives inside the main Slack window and has
 no title of its own. **Do not reintroduce one.**
 
-See ADR 0016.
+See ADR 0050.
 
 Full screen is `SHQueryUserNotificationState`, one P/Invoke, mapped in Core by
 `UserNotificationState.FromShellState` so the table is testable. If it ever proves lossy on
 borderless-fullscreen windows, the fallback is `GetForegroundWindow` + `GetWindowRect` against
 the monitor bounds -- `--detect` is how to find out.
 
-See ADR 0017.
+See ADR 0051.
 
 Rules that are easy to break:
 
@@ -61,8 +61,8 @@ Rules that are easy to break:
 - **No cap on how long a reminder is held back.** That is the requirement, and the tooltip
   carries the reason so a quiet tray icon can be told from a broken one.
 
-See ADR 0017 for the first rule, ADR 0018 for the second and the last, ADR 0013 for the third
-and ADR 0019 for the fourth.
+See ADR 0051 for the first rule, ADR 0052 for the second and the last, ADR 0047 for the third
+and ADR 0053 for the fourth.
 
 The decision log records a skipped unlock reminder with its reason, and a held-back periodic
 one with one line when the hold starts, one more only when the reason changes, and one with the
@@ -70,13 +70,13 @@ total when it finally appears, or is raised because its window was already open:
 keeps the moment the hold began (`_heldSince`) for that line alone, and clears it on a lock, an
 unlock, a settings change, or a clock moved back, which restart the countdown anyway
 (`IntervalSchedule.JumpRestartedCountdown` tells it about the last of those). The retries in
-between, and the idle 10-second readings, write nothing (ADR 0037).
+between, and the idle 10-second readings, write nothing (ADR 0073).
 
 `--detect` shows the raw readings and exits. It exists because neither signal can be
 exercised without a real call or a real game, and it is the only way to tell a signal that is
 not arriving from a setting that is switched off.
 
-See ADR 0020.
+See ADR 0054.
 
 **`--detect <seconds>` is the form that matters for full screen**, and the reason it exists is
 not convenience: a reading taken as the switch runs is useless there, because getting to a
@@ -86,4 +86,4 @@ Core, and tested, because a report that quietly lost the one moment the reading 
 send someone hunting a bug that is not there. The message box is shown only after the run
 ends, so it cannot disturb what is being measured.
 
-See ADR 0020.
+See ADR 0054.

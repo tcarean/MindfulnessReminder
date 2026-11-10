@@ -1,6 +1,6 @@
 # The periodic reminder: one timer, one deadline on the wall clock
 
-> Moved unchanged on 2026-10-09 (ADR 0001) from `CLAUDE.md`, "The periodic reminder". Where a
+> Moved unchanged on 2026-10-09 (ADR 0035) from `CLAUDE.md`, "The periodic reminder". Where a
 > paragraph became a decision record, its number is given after it. **Covers:**
 > `src/MindfulnessReminder.Core/ReminderCoordinator.cs`,
 > `src/MindfulnessReminder.Core/IntervalSchedule.cs`,
@@ -21,7 +21,7 @@ tick — deciding whether the interval has elapsed, and redrawing the tooltip co
 a one-shot timer armed for the interval would have needed a second timer beside it. The
 requirement was explicitly for one timer.
 
-See ADR 0012.
+See ADR 0046.
 
 **The deadline is on the wall clock, never a count of elapsed ticks.** A `DispatcherTimer`
 does not tick while the machine sleeps, so accumulating ticks would silently stretch a
@@ -29,7 +29,7 @@ does not tick while the machine sleeps, so accumulating ticks would silently str
 instead means a reminder that came due during sleep fires on the first tick after waking,
 which is the wanted behaviour. Do not "fix" this into a stopwatch.
 
-See ADR 0013.
+See ADR 0047.
 
 **A lock suspends the schedule; an unlock restarts it in full.** `ISessionMonitor` raises
 `Locked` for this and nothing else — no reminder is ever shown on lock. Without the suspend,
@@ -39,15 +39,15 @@ coordinator would raise it instead of showing one. `Resume` grants the whole int
 regardless of how long the lock lasted, which is the requirement, and is why no time is
 carried across a lock.
 
-See ADR 0014; `ISessionMonitor` and its `Locked` event are ADR 0029.
+See ADR 0048; `ISessionMonitor` and its `Locked` event are ADR 0063.
 
 **The clock can move backwards.** An NTP correction or a hand-set clock would otherwise
 postpone the reminder by however far it jumped. `TryConsumeDue` notices a deadline further
-out than a whole interval could put it (the span it was armed with, since 89de6c8: ADR 0013)
+out than a whole interval could put it (the span it was armed with, since 89de6c8: ADR 0047)
 and starts over. The other direction needs no guard
 and must not get one — see the sleep case above.
 
-See ADR 0013.
+See ADR 0047.
 
 Two smaller rules that are easy to break:
 
@@ -57,14 +57,14 @@ Two smaller rules that are easy to break:
   already on screen) still leaves a sane schedule instead of a deadline stuck in the past
   that fires on every subsequent tick.
 
-See ADR 0014.
+See ADR 0048.
 
 Settings are applied by `ApplySettings`, which **restarts the countdown from zero**. Keeping
 the elapsed time would mean changing 30 minutes to 10 with 25 gone either fires immediately
 or leaves the tooltip showing a number the new setting cannot explain.
 
-See ADR 0014.
+See ADR 0048.
 
 Each of these decisions also goes to the decision log, through the `IDecisionLog` the
 coordinator is given: a lock, an unlock, a reminder shown or raised, settings applied. The tick
-itself never writes a line; `code-map.md` says how the lines are composed (ADR 0037).
+itself never writes a line; `code-map.md` says how the lines are composed (ADR 0073).

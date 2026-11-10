@@ -7,17 +7,17 @@
 #   (exit 0), so ordinary commands cost almost nothing. For a git commit it:
 #     1. blocks a commit that would skip the git hooks: --no-verify, -n alone or in a group of
 #        short options (-anm), or git -c core.hooksPath=...;
-#     2. finds the folder the commit runs in (the kit's ADR 0020), and blocks the commit when
+#     2. finds the folder the commit runs in (ADR 0020), and blocks the commit when
 #        the command names a folder it cannot find (a variable, a folder that does not exist);
 #     3. blocks the commit unless that folder is on a branch named claude/..., the branches the
 #        assistant creates: main, any other branch and a detached HEAD are the owner's, who
-#        commits there by hand (the kit's ADR 0021);
+#        commits there by hand (ADR 0021);
 #     4. asks git, in that folder, which files the commit takes (the staged ones, plus the
 #        changed tracked ones with -a) and finds the project of each: the nearest folder above
 #        it holding scripts/verify.ps1, as the git pre-commit hook does. With no such file, the
 #        project of the folder itself;
 #     5. runs, for each project once, scripts/verify.ps1, the full gate. Whether the commit
-#        needs a CHANGELOG line is a judgment, not checked here (the kit's ADR 0023).
+#        needs a CHANGELOG line is a judgment, not checked here (ADR 0023).
 #   If it fails, the commit does not run, and Claude gets the reason and the output.
 #   It fails closed: an error inside this hook itself also blocks the commit (exit 2), it
 #   never lets one through by accident. Next to the git pre-commit hook it is a second check
@@ -168,8 +168,8 @@ function Get-CommitProjects([string]$folder) {
     if ($arguments -match '\s--all\b' -or (Get-ShortOptions $arguments) -ccontains 'a') {
         $files += @(Invoke-Git -C $folder diff --name-only --diff-filter=ACMR)
     }
-    $projects = @($files | ForEach-Object { Find-KitProject (Join-Path $top[0] $_) 'scripts\verify.ps1' })
-    if ($files.Count -eq 0) { $projects = @(Find-KitProject $folder 'scripts\verify.ps1') }
+    $projects = @($files | ForEach-Object { Find-Project (Join-Path $top[0] $_) 'scripts\verify.ps1' })
+    if ($files.Count -eq 0) { $projects = @(Find-Project $folder 'scripts\verify.ps1') }
     return @($projects | Where-Object { $_ } | Sort-Object -Unique)
 }
 
@@ -186,13 +186,13 @@ function Test-Commit {
                 return 2
             }
             if (@($m.Groups['config'].Captures | Where-Object { $_.Value -match '^[''"]?core\.hooksPath' }).Count -gt 0) {
-                [Console]::Error.WriteLine("Blocked: git -c core.hooksPath=... would skip the git hooks (the kit's ADR 0020).")
+                [Console]::Error.WriteLine("Blocked: git -c core.hooksPath=... would skip the git hooks (ADR 0020).")
                 return 2
             }
         }
 
         # 2. The commit's folder; one the command names but that is not there cannot be judged.
-        . (Join-Path $PSScriptRoot '..\kit-config.ps1')
+        . (Join-Path $PSScriptRoot '..\process-config.ps1')
         $folder = Get-CommitFolder
         if (-not $folder -or -not (Test-Path -LiteralPath $folder -PathType Container)) {
             $named = if ($folder) { "$folder does not exist" } else { "$($script:unreadPath) is not a path" }
@@ -205,7 +205,7 @@ function Test-Commit {
         $branch = @(Invoke-Git -C $folder branch --show-current) -join ''
         if (-not $branch.StartsWith('claude/')) {
             $where = if ($branch) { "on $branch" } else { 'on a detached HEAD' }
-            [Console]::Error.WriteLine("Blocked: $folder is $where. A commit there is the owner's, made by hand (the kit's ADR 0021); the assistant commits only on the claude/ branch of its task.")
+            [Console]::Error.WriteLine("Blocked: $folder is $where. A commit there is the owner's, made by hand (ADR 0021); the assistant commits only on the claude/ branch of its task.")
             return 2
         }
 

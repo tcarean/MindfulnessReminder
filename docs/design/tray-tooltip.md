@@ -1,6 +1,6 @@
 # The tray tooltip
 
-> Moved unchanged on 2026-10-09 (ADR 0001) from `CLAUDE.md`, "The tray tooltip". Where a paragraph
+> Moved unchanged on 2026-10-09 (ADR 0035) from `CLAUDE.md`, "The tray tooltip". Where a paragraph
 > became a decision record, its number is given after it. **Covers:**
 > `src/MindfulnessReminder.Core/TrayTooltip.cs`, `src/MindfulnessReminder.App/TrayIconHost.cs`,
 > `src/MindfulnessReminder.App/App.xaml.cs`. A change to the code this describes means this note is
@@ -9,7 +9,7 @@
 ## The tray tooltip
 
 `NotifyIcon.Text` is capped at 63 characters and **throws** above it (127 on .NET 6 and later;
-the code keeps 63: ADR 0025). That is the only
+the code keeps 63: ADR 0059). That is the only
 reason `TrayTooltip` is a separate pure type: the one thing worth testing is that the longest
 string the app can produce still fits, and
 `R062_The_longest_tooltip_the_app_can_produce_fits_the_tray_limit` pins it.
@@ -26,4 +26,4 @@ cannot keep -- the number would run down and nothing would appear.
 `App.UpdateTooltip` compares the rendered string before writing it. The countdown ticks every
 second but changes once a minute, and every write is a `Shell_NotifyIcon` call.
 
-See ADR 0025; that a held-back reminder shows its reason is also ADR 0018.
+See ADR 0059; that a held-back reminder shows its reason is also ADR 0052.

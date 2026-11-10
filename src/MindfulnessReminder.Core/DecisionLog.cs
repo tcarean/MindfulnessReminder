@@ -31,7 +31,7 @@ public enum ReminderKind
 }
 
 /// <summary>
-/// Every text the decision log can hold, and the shape of a line (R-110 to R-114; ADR 0037).
+/// Every text the decision log can hold, and the shape of a line (R-110 to R-114; ADR 0073).
 /// Pure functions: the callers decide when, this type decides the words, and the tests pin
 /// both. The writer stamps the time with <see cref="FormatLine"/>.
 /// </summary>

@@ -1,9 +1,10 @@
 # Code map: every file, one line each
 
-> Moved unchanged on 2026-10-09 (ADR 0001) from `CLAUDE.md`, "Structure". Where a paragraph became a
+> Moved unchanged on 2026-10-09 (ADR 0035) from `CLAUDE.md`, "Structure". Where a paragraph became a
 > decision record, its number is given after it. **Covers:** `src/MindfulnessReminder.Core/`,
 > `src/MindfulnessReminder.App/`,
-> `tests/MindfulnessReminder.Tests/MindfulnessReminder.Tests.csproj`, `Directory.Build.props`. A
+> `tests/MindfulnessReminder.Tests/MindfulnessReminder.Tests.csproj`,
+> `tests/MindfulnessReminder.ProcessTests/`, `Directory.Build.props`. A
 > change to the code this describes means this note is updated in the same task, or deleted with the
 > decision it explains. A section this map names in quotation marks is now the note of the same
 > subject: "The periodic reminder" is `periodic-reminder.md`, "Pausing for what the user is doing"
@@ -54,9 +55,9 @@
   - `ApplicationRestart.cs` — the values handed to `RegisterApplicationRestart` (the command
     line `--restarted`, `RESTART_NO_REBOOT`) and the two decisions around them: which start
     registers (the tray copy, never `--preview` or `--detect`) and which start is a restart,
-    so the tray can say so (ADR 0036).
+    so the tray can say so (ADR 0072).
   - `CrashReport.cs` — the crash dialog's text as a pure function: type, message when there is
-    one, the file a load failure names, the inner exceptions, the banner (ADR 0036).
+    one, the file a load failure names, the inner exceptions, the banner (ADR 0072).
   - `IDecisionLog.cs` — the seam the decision log is written through, one text per event, and
     `NullDecisionLog`, the default that drops them. `DecisionLog.cs` — every text the log can
     hold (the start line, the coordinator's decisions, the settings and auto-start lines, the
@@ -65,12 +66,12 @@
     coordinator, the settings store and the registrar take an `IDecisionLog` and write at the
     point of each decision; the coordinator remembers when a hold began so that a held-back
     reminder gets one line at the start, one per change of reason and one, with the total, when
-    it appears (ADR 0037).
+    it appears (ADR 0073).
   - `FileDecisionLog.cs` — the decision log as a file, in the folder App gives it: stamps each
     text with `DecisionLog.FormatLine`, appends, moves the file to `log.1.txt` once it is past
     the cap (a move that fails is let go and the line is written anyway), and swallows every
     error, so a log can never take the tray down. In Core so the tests run it against a temp
-    folder (ADR 0037).
+    folder (ADR 0073).
   - `WindowPlacement.cs`, `Version.cs`, `LicenseInfo.cs`, `AutoStartStatus.cs`.
 - `src/MindfulnessReminder.App/` — `net8.0-windows`, `WinExe`, `AssemblyName` is
   `MindfulnessReminder`, so the binary is `MindfulnessReminder.exe`. A **thin adapter layer**:
@@ -79,11 +80,11 @@
   - `App.xaml.cs` — composition root. `ShutdownMode` is `OnExplicitShutdown`; there is no
     main window. Also holds the single-instance mutex, the restart registration right after
     it, the crash dialog (`CrashReport.Format`, then the tray icon hidden, then
-    `Environment.FailFast`, never `Shutdown`: ADR 0036), the `--restarted` balloon, the
+    `Environment.FailFast`, never `Shutdown`: ADR 0072), the `--restarted` balloon, the
     decision log (created right after the mutex with the folder `LogFolder` names under
     `%LOCALAPPDATA%`, its first line written after the restart registration, handed to the
     store, the coordinator and the registrar, and given the crash text before the dialog:
-    ADR 0037), the lifetimes of the Settings and About windows (both
+    ADR 0073), the lifetimes of the Settings and About windows (both
     modeless and single-instance; `TrayIconHost` only raises the request), and `--preview` /
     `--detect` — both of which run BEFORE the mutex is claimed, so they work alongside the copy
     already in the tray and write no log.
@@ -100,13 +101,28 @@
     the adapters. The last one reads the `ConsentStore` capture-usage keys and calls
     `SHQueryUserNotificationState`, and interprets neither.
   - `Theme/DarkTheme.xaml` — the dark palette and the control templates that go with it.
-    Merged into `SettingsWindow` **alone** (and into `AboutWindow`, since 432edfd: ADR 0030). See "The dark theme".
+    Merged into `SettingsWindow` **alone** (and into `AboutWindow`, since 432edfd: ADR 0064). See "The dark theme".
   - `ImmersiveDarkMode.cs` — the one P/Invoke that darkens a window's title bar.
   - `DarkMenuRenderer.cs` — the same palette again, for the Windows Forms tray menu.
 - `tests/MindfulnessReminder.Tests/` — xUnit, `net8.0`. References **Core only**.
+- `tests/MindfulnessReminder.ProcessTests/` — xUnit, `net8.0`, references no project: the tests of
+  `scripts/`, which start the real scripts and git in throwaway folders under `%TEMP%`. Every
+  class carries `Category=Process`, which the gate leaves out unless a change touches
+  `scripts/` or this project (ADR 0075).
+  - `ScriptRunner.cs` — starts a script, git or a hook with its output captured and every
+    `GIT_*` variable, `CLAUDECODE`, `CI` and `PSModulePath` removed; `ProcessJson()`, a minimal
+    `process.json`; `MakeJunction`, a junction for the tests of a root reached through one.
+    `Repo.cs` — the repository root, found from the test binaries.
+  - `HookTests.cs` — the Claude Code commit gate and Stop hook, on two throwaway projects;
+    it also holds `WindowsFact` and `WindowsTheory`. `GitHookTests.cs` — `pre-commit`,
+    `pre-merge-commit` and `commit-msg`. `InstallHooksTests.cs` — `install-hooks.ps1`.
+  - `VerifyTests.cs` — the real gate on a one-library solution. `VerifyScopeTests.cs` —
+    `Test-ProcessPathsChanged`, the choice whether the process tests run.
+  - `ReleaseTests.cs`, `MergePublishTests.cs` — `release.ps1` and the publish merge it uses.
+    `DecisionsCheckTests.cs`, `DesignCheckTests.cs` — the two checks of `docs/`.
 - `README.md` — **the** user-facing documentation, and the single source for it.
 - `Directory.Build.props` — `<Version>` and `<Copyright>` for the whole solution.
 - `LICENSE` — the verbatim GNU GPL v3 text.
 
-See ADR 0008 for the line between Core and App, ADR 0007 for the hybrid of WPF and Windows Forms,
-ADR 0011 and ADR 0010 for the version and the copyright.
+See ADR 0042 for the line between Core and App, ADR 0041 for the hybrid of WPF and Windows Forms,
+ADR 0045 and ADR 0044 for the version and the copyright.

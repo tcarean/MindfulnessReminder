@@ -63,6 +63,7 @@ public class LicenseHeaderTests
         Path.Combine("src", "MindfulnessReminder.Core"),
         Path.Combine("src", "MindfulnessReminder.App"),
         Path.Combine("tests", "MindfulnessReminder.Tests"),
+        Path.Combine("tests", "MindfulnessReminder.ProcessTests"),
     };
 
     private static IEnumerable<string> SourceFiles()
@@ -126,13 +127,14 @@ public class LicenseHeaderTests
 
     /// <summary>Without this, a broken scan would let the test above pass on zero files.</summary>
     [Fact]
-    public void R092_The_scan_sees_all_three_projects_and_the_xaml()
+    public void R092_The_scan_sees_all_four_projects_and_the_xaml()
     {
         var names = SourceFiles().Select(Path.GetFileName).ToList();
 
         Assert.Contains("LicenseInfo.cs", names);
         Assert.Contains("TrayIconHost.cs", names);
         Assert.Contains("LicenseHeaderTests.cs", names);
+        Assert.Contains("ScriptRunner.cs", names);
         Assert.Contains("App.xaml", names);
         Assert.Contains("BreakWindow.xaml", names);
         Assert.True(names.Count > 20, "too few files scanned: " + names.Count);

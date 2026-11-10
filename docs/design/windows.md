@@ -1,6 +1,6 @@
 # The windows the app shows
 
-> Moved unchanged on 2026-10-09 (ADR 0001) from `CLAUDE.md`, "Windows the app shows". Where a
+> Moved unchanged on 2026-10-09 (ADR 0035) from `CLAUDE.md`, "Windows the app shows". Where a
 > paragraph became a decision record, its number is given after it. **Covers:**
 > `src/MindfulnessReminder.App/BreakWindow.xaml`, `src/MindfulnessReminder.App/BreakWindow.xaml.cs`,
 > `src/MindfulnessReminder.App/SettingsWindow.xaml.cs`,
@@ -24,4 +24,4 @@ to whatever was being typed. It must be *Preview*: plain `KeyDown` bubbles up fr
 button, which would already have handled the key. Esc and Space still close it — both far
 less likely mid-sentence than Enter, but if that ever changes, the same handler is the place.
 
-See ADR 0026; About's own reasons are ADR 0032.
+See ADR 0060; About's own reasons are ADR 0066.

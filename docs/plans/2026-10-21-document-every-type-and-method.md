@@ -1,5 +1,9 @@
 # Document every type and method in the code
 
+> Note, 2026-11-10: the decision numbers in this plan are those of its date, when the kit's
+> records and the project's were two series. ADR 0075 numbered them into one; its last
+> section maps each old number to the present one.
+
 ## Context
 
 On 2026-10-21 the kit's rule "Documentation comments" (the kit's ADR 0035, merged as 2b2235f)

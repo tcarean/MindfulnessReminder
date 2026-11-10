@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- The tests of scripts/: they run the real PowerShell scripts and git in throwaway folders
+       under %TEMP%, so they reference no project of the solution. Every class carries the trait
+       Category=Process, which scripts/verify.ps1 leaves out unless the change touches what
+       process.json lists under processTests.paths. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+</Project>

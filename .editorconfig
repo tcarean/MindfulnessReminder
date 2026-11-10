@@ -1,7 +1,7 @@
 # Whitespace rules, enforced by `dotnet format --verify-no-changes` in scripts/verify.ps1.
 # EnforceCodeStyleInBuild, Nullable and warnings-as-errors are on in Directory.Build.props; the
-# kit's code-style rules (braces, var) and the analyzers are deliberately not enabled here
-# (ADR 0003): a style pass over the code base is a task of its own.
+# code-style rules beyond whitespace (braces, var) and the analyzers are deliberately not enabled
+# here (ADR 0037): a style pass over the code base is a task of its own.
 root = true
 
 [*]
