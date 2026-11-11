@@ -45,4 +45,13 @@
     <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
   </PropertyGroup>
 
+  <!-- The release publishes for win-x64 (process.json), so the zip's name holds on any machine;
+       a publish for a runtime restores for it, and the lock files of every project it builds
+       would change in the release unless every restore already includes it (ADR 0034, ADR
+       0080). Not on the two test projects, which are never published: both names end in
+       "Tests", where ADR 0034's ".Tests" would miss MindfulnessReminder.ProcessTests. -->
+  <PropertyGroup Condition="!$(MSBuildProjectName.EndsWith('Tests'))">
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+  </PropertyGroup>
+
 </Project>

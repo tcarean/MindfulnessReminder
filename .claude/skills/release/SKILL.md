@@ -31,8 +31,8 @@ you propose one.
    with every test (`-All`, about three minutes), edits `Directory.Build.props` and
    `CHANGELOG.md`, publishes each entry of `release.publish` to a staging folder and merges
    it into `artifacts/X.Y.Z/<output>/` with a hash check: here the application,
-   framework-dependent, into `artifacts/X.Y.Z/` itself (`dotnet publish -c Release` of
-   `src/MindfulnessReminder.App`, no runtime, ADR 0036). It writes
+   framework-dependent for win-x64, into `artifacts/X.Y.Z/` itself (`dotnet publish -c Release
+   -r win-x64 --self-contained false` of `src/MindfulnessReminder.App`, ADR 0080). It writes
    `artifacts/X.Y.Z/release.json` (the version, the commit, and this project's version, commit,
    unreleased flag and whether its folder was clean) and, when `process.json` sets `release.zip`,
    as it does here (`MindfulnessReminder-X.Y.Z-win-x64.zip`, ADR 0076), the zip in

@@ -3,13 +3,13 @@
 A small break reminder for Windows. It sits in the notification area and, every time you
 unlock the computer, shows a window that says **Ground yourself** on top of everything else.
 While you work, it reminds you again every 30 minutes. If you are on a call or in a
-full-screen app, it waits instead of interrupting. In **Settings...** you can turn either
+full-screen app, it does not interrupt you. In **Settings...** you can turn either
 reminder off, give each one its own message, and change the interval.
 
 ## Build and run
 
 You need the .NET 9 SDK, 9.0.318 or a later 9.0.3xx (the version `global.json` asks for), and
-the .NET 8 Desktop Runtime, because the app runs on .NET 8.
+the .NET 8 Desktop Runtime for x64, because the app runs on .NET 8.
 
 From the repository folder:
 
@@ -41,7 +41,7 @@ folder, start it once by hand.
   one **Close** button. Esc closes it too. Enter does not, so a reminder that pops up while
   you are typing is not dismissed by accident.
 - Hover over the tray icon to see when the next reminder is due, for example
-  `Mindfulness Reminder X.Y.Z - next in 12 min`, or why one is waiting:
+  `Mindfulness Reminder X.Y.Z - next in 12 min`, or that reminders are paused:
   `Mindfulness Reminder X.Y.Z - paused while your mic is on`.
 - **Settings**, **About** and the tray menu are always dark. The reminder window is light, so
   it stands out over dark windows.
@@ -107,9 +107,12 @@ ends. **Check again every N seconds** sets that gap, from 5 to 300; it is shared
 switches and can be changed while either one is on. An unlock reminder that is held back is
 skipped, not postponed.
 
-The tray tooltip shows when this is happening. Within about ten seconds of joining a call it
-reads `Mindfulness Reminder X.Y.Z - paused while your mic is on` instead of the countdown,
-and the countdown comes back just as quickly when the call ends.
+While the periodic reminder is on, the tray tooltip shows when this is happening: within about
+ten seconds of joining a call it reads
+`Mindfulness Reminder X.Y.Z - paused while your mic is on` instead of the countdown, and the
+countdown comes back just as quickly when the call ends. With the periodic reminder off, the
+tooltip shows only the name and version, and an unlock reminder that was skipped leaves its
+reason in the log.
 
 ### How it detects them
 
@@ -125,8 +128,8 @@ notification: is a full-screen app, a game or a presentation in front?
 ### What it will and will not catch
 
 Anything that keeps the microphone open counts, meeting or not: a voice channel left open,
-dictation, screen recording. While the microphone is on, the reminder waits, however long
-that is. Hovering over the tray icon shows why.
+dictation, screen recording. For as long as the microphone is open, a periodic reminder waits
+and an unlock reminder is skipped.
 
 It does not notice a meeting you only listen to, without ever opening your microphone.
 
@@ -139,9 +142,9 @@ detects:
 artifacts\X.Y.Z\MindfulnessReminder.exe --detect
 ```
 
-It lists the apps using the microphone or the camera, says what Windows reports about full
-screen, and tells you whether a reminder would be held back with your current settings. Then
-it exits.
+It opens a message box that lists the apps using the microphone or the camera, says what
+Windows reports about full screen, and tells you whether a reminder would be held back with
+your current settings.
 
 To check full screen, add a number of seconds:
 
@@ -151,17 +154,21 @@ artifacts\X.Y.Z\MindfulnessReminder.exe --detect 60
 
 A single reading cannot catch full screen, because typing the command means leaving it. With
 a number, it takes one reading a second for that long, up to ten minutes. Start it, switch to
-the game, play for a while, come back, and it shows what it saw:
+the game and play for a while. When the time is up, a message box shows what it saw:
 
 ```
-0:00 - 0:04   mic off, camera off, Normal       ->  None
+Watched for 60 seconds.
+
+0:01 - 0:04   mic off, camera off, Normal   ->  None
 0:05 - 0:48   mic off, camera off, FullScreen   ->  FullScreen
-0:49 - 1:00   mic off, camera off, Normal       ->  None
+0:49 - 1:00   mic off, camera off, Normal   ->  None
 
-A reminder would have been held back for 44 of the 61 readings.
+A reminder would have been held back for 44 of the 60 readings.
+
+Mindfulness Reminder X.Y.Z
 ```
 
-The results appear only at the end, so nothing gets in the way while it measures. Both
+The message box appears only at the end, so nothing gets in the way while it measures. Both
 `--detect` and `--preview` can run while the app is in the tray.
 
 ## Licence

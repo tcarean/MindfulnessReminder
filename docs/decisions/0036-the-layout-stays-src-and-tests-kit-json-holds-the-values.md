@@ -1,7 +1,7 @@
 # 0036. The layout stays src/ and tests/; kit.json holds the values; a release publishes framework-dependent
 
 Date: 2026-10-09
-Status: accepted 2026-10-09; the kit value and the tag name superseded by 0074
+Status: accepted 2026-10-09; the kit value and the tag name superseded by 0074; a publish with no runtime superseded by 0080
 
 ## Context
 
@@ -37,9 +37,9 @@ No runtime is declared in `Directory.Build.props`: ADR 0034 does not apply.
 
 ## Alternatives rejected
 
-(Restated 2026-11-11: "the one the README's "Deployment note" documents" no longer holds, nor
+(Restated 2026-11-11: "the one the README's 'Deployment note' documents" no longer holds, nor
 "the framework-dependent publish the README already documents" below. The README has no
-deployment note and shows no `dotnet publish`; the application is built only by
+deployment note and shows no `dotnet publish`; the README builds the application with
 `scripts/release.ps1`, into `artifacts/X.Y.Z/` with a zip of that folder beside it (ADR 0076).
 The publish itself is unchanged: framework-dependent, with no extra arguments.)
 

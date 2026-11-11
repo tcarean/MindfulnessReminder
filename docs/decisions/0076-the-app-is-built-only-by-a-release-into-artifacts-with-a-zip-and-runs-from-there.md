@@ -1,4 +1,4 @@
-# 0076. The application is built only by a full release, into artifacts/X.Y.Z/ with a zip beside it, and runs from there
+# 0076. The README builds with the full release, into artifacts/X.Y.Z/ with a zip beside it, and the application runs from there
 
 Date: 2026-11-11
 Status: accepted 2026-11-11; the README's line superseded by 0078

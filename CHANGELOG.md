@@ -27,6 +27,10 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
   publishes and zips the version in `Directory.Build.props`, and changes no file of the
   repository, so it works on any clone and again after a pull. Any publish now stops, deleting
   nothing, while a program runs from `artifacts/<version>/` (ADR 0078).
+- The release publishes for win-x64 (`-r win-x64 --self-contained false`), so the zip's
+  `win-x64` holds whichever SDK builds it; App and Core declare the runtime, and their lock
+  files carry its section (ADR 0080). The README's rules gained their exceptions and its
+  writing rules (ADR 0079).
 
 ## [1.5.0] - 2026-10-26
 

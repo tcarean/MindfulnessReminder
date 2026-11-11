@@ -114,8 +114,11 @@ Mindfulness Reminder's own; one that extends a process rule names it.
 - **User documentation lives in `README.md`, and only there.** It is the single source for it;
   `docs/` explains what the code does and why, for whoever maintains it (ADR 0068). It is
   written for the people who use the app: what it does, the one line that builds it, how to
-  use it, the licence. No process, no design rationale, no version history, no version number,
-  and no mention of Claude or of the owner (ADR 0077).
+  use it, the licence. No process, no design rationale, no version history, no number of the
+  app's own version (examples write `X.Y.Z`), no test, class or API names, and no mention of
+  Claude or of the owner; the licence notice keeps its copyright line (ADR 0077). Plain
+  sentences: no em-dash asides, no bold lead-in on every bullet, no "deliberately", "on
+  purpose", "honest", "happily" or "the whole point" (ADR 0079).
 
 ## Workflow
 
@@ -129,9 +132,9 @@ The workflow in `.claude/rules/process.md` applies. Mindfulness Reminder adds:
   is refreshed in three steps: **Exit** in the tray menu, `scripts/release.ps1 -Build` in the
   main checkout, then start `artifacts/<version>/MindfulnessReminder.exe` (ADR 0078).
 - A release is tagged `vX.Y.Z`, the name `scripts/release.ps1` prints; it publishes the
-  application framework-dependent into `artifacts/X.Y.Z/`, where the app runs from, and zips
-  that folder into `artifacts/MindfulnessReminder-X.Y.Z-win-x64.zip` with its `.sha256` (ADR
-  0036, ADR 0074, ADR 0076).
+  application framework-dependent for win-x64 (ADR 0080) into `artifacts/X.Y.Z/`, where the
+  app runs from, and zips that folder into `artifacts/MindfulnessReminder-X.Y.Z-win-x64.zip`
+  with its `.sha256` (ADR 0036, ADR 0074, ADR 0076).
 
 ## Read before touching
 

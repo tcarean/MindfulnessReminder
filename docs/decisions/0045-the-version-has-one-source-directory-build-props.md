@@ -34,7 +34,9 @@ since, each step an edit of that one element (ADR 0040).
 ## Alternatives rejected
 
 - **A literal in `Version.cs`.** A second place to edit, where the header of `Version.cs` wants
-  "One place to edit"; the README says "Don't reintroduce a literal".
+  "One place to edit"; the README says "Don't reintroduce a literal". (Restated 2026-11-11:
+  the README no longer says it, since it holds only what a user needs (ADR 0077). The header of
+  `Version.cs` and `docs/design/versioning-and-licence.md` still do.)
 - **A `<Version>` in a project file.** It would override the shared one for that assembly, and
   "the three would silently drift" (`VersionTests`).
 - **`AssemblyVersion` as the value shown.** It "would give "1.0.0.0", which is not what anyone

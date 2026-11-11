@@ -1,7 +1,7 @@
 # 0059. TrayTooltip is a pure type that keeps the tooltip within 63 characters, clear of where NotifyIcon.Text throws; minutes round up, a pause shows its reason, and only a change is written
 
 Date: 2026-10-09
-Status: accepted 2026-10-09
+Status: accepted 2026-10-09; the README's examples superseded by 0077
 
 ## Context
 

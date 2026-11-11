@@ -57,5 +57,5 @@ Follow the order. Do not write implementation code before step 4 is approved.
    output, paste the output in the session, and record the date in `validation.md`.
 8. **Record.** Set the requirement status to `implemented`, add the CHANGELOG line, and update
    `README.md`, the user documentation, if the behaviour is user-visible: its "Using it" list
-   and the section of the feature, in the words a user reads (ADR 0077); a design choice goes
-   in `docs/decisions/`, never in the README; then `/wrap-up`.
+   and the section of the feature, in the words a user reads and in plain sentences (ADR 0077,
+   ADR 0079); a design choice goes in `docs/decisions/`, never in the README; then `/wrap-up`.
