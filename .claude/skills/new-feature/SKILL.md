@@ -54,5 +54,6 @@ Follow the order. Do not write implementation code before step 4 is approved.
 7. **Measure.** If step 6 added a case, fill in the `validation.json` figures from real
    output, paste the output in the session, and record the date in `validation.md`.
 8. **Record.** Set the requirement status to `implemented`, add the CHANGELOG line, and update
-   `README.md`, the user documentation, if the behaviour is user-visible: its "Behaviour" list,
-   the section of the feature and the "Design decisions" table; then `/wrap-up`.
+   `README.md`, the user documentation, if the behaviour is user-visible: its "Using it" list
+   and the section of the feature, in the words a user reads (ADR 0077); a design choice goes
+   in `docs/decisions/`, never in the README; then `/wrap-up`.

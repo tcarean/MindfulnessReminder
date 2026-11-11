@@ -37,6 +37,12 @@ No runtime is declared in `Directory.Build.props`: ADR 0034 does not apply.
 
 ## Alternatives rejected
 
+(Restated 2026-11-11: "the one the README's "Deployment note" documents" no longer holds, nor
+"the framework-dependent publish the README already documents" below. The README has no
+deployment note and shows no `dotnet publish`; the application is built only by
+`scripts/release.ps1`, into `artifacts/X.Y.Z/` with a zip of that folder beside it (ADR 0076).
+The publish itself is unchanged: framework-dependent, with no extra arguments.)
+
 - **A self-contained `win-x64` publish.** It would carry the runtime with it, and needs the
   two lines of ADR 0034 and a sentence in the README's deployment note; the owner
   chose the framework-dependent publish the README already documents.

@@ -8,7 +8,7 @@
     <!-- The app version. Bumped MANUALLY, by hand, per feature or fix. MSBuild turns it
          into AssemblyInformationalVersion, which is where VersionInfo.Value reads it from
          and what Windows shows as the .exe's file version - so this is the only place to
-         change it. See "Versioning" in README.md (ADR 0045; ADR 0029). -->
+         change it. See docs/design/versioning-and-licence.md (ADR 0045; ADR 0029). -->
     <Version>1.5.0</Version>
 
     <!-- Copyright and licence, for every project in the solution at once. <Copyright>
