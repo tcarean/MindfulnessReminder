@@ -6,6 +6,12 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
 
 ## [Unreleased]
 
+### Fixed
+
+- Space no longer closes the reminder. A reminder that appears while you type stays open
+  through the spaces and the Enter that follow; Esc or a click on Close closes it (R-071;
+  ADR 0081).
+
 ### Internal
 
 - The project is the root of its own repository (ADR 0074), and the process it came with is
