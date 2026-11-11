@@ -11,25 +11,25 @@ reminder off, give each one its own message, and change the interval.
 You need the .NET 9 SDK, 9.0.318 or a later 9.0.3xx (the version `global.json` asks for), and
 the .NET 8 Desktop Runtime, because the app runs on .NET 8.
 
-From the repository folder, on `main`:
+From the repository folder:
 
 ```
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/release.ps1 -Version X.Y.Z
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/release.ps1 -Build
 ```
 
-`X.Y.Z` is the new version. The script runs the tests first, and if a check or a test fails
-it stops without changing anything. Then it writes the version into `Directory.Build.props`
-and `CHANGELOG.md` and builds the app into `artifacts\X.Y.Z\`, with
-`MindfulnessReminder-X.Y.Z-win-x64.zip` and its `.sha256` next to that folder. It does not
-commit anything.
+The script runs the tests first and builds nothing if one fails. Then it builds the app into
+`artifacts\X.Y.Z\`, where `X.Y.Z` is the version it prints at the end, and writes
+`MindfulnessReminder-X.Y.Z-win-x64.zip` and its `.sha256` next to that folder. It changes no
+file of the repository, so you can run it again after a `git pull`.
 
 Start `artifacts\X.Y.Z\MindfulnessReminder.exe`. On its first run it adds itself to Windows
 startup.
 
-Only one copy runs at a time, so close the old one with **Exit** in the tray menu before you
-start a new version. If the app runs at Windows startup, starting a copy makes Windows start
-that copy from then on, so after a new version, or after moving the folder, start it once by
-hand.
+Only one copy runs at a time. Close the running one with **Exit** in the tray menu before you
+build again or start a new version; the script stops, and deletes nothing, while the app runs
+from the folder it is about to replace. If the app runs at Windows startup, starting a copy
+makes Windows start that copy from then on, so after a new version, or after moving the
+folder, start it once by hand.
 
 ## Using it
 

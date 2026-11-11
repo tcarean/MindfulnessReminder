@@ -26,6 +26,10 @@
 #      empty "## [Unreleased]" above it.
 #   5. Publishes what process.json lists under release.publish into artifacts/<version>/, which
 #      it empties first, unless -NoPublish:
+#        - first, when a program runs from an executable under artifacts/<version>/, it stops
+#          and names it, deleting nothing: the application runs from its release folder (ADR
+#          0076), and emptying the folder would delete files until a locked one stopped it.
+#          Processes whose path this account may not read are not seen (ADR 0078);
 #        - each entry with its own extra `dotnet publish` arguments into a staging folder,
 #          artifacts/<version>/.stage/<n>/, then merged into artifacts/<version>/<output>/ by
 #          scripts/merge-publish.ps1, which copies nothing when a file already there has other
@@ -44,15 +48,28 @@
 #   It commits nothing and tags nothing. At the end it prints the commit and the tag to
 #   propose: the commit limited to Directory.Build.props and CHANGELOG.md, and the tag vX.Y.Z.
 #
+#   With -Build it releases nothing. It reads the version from <Version> in
+#   Directory.Build.props, runs scripts/verify.ps1 (the gate a commit passes, not -All), and
+#   when that is green, does step 5 for that version. None of the checks of step 1 apply and no
+#   file of the repository changes, so it runs on any branch, tag, clone or worktree, and again
+#   after a pull. It is how the README builds the application (ADR 0078).
+#
 # WHO CALLS IT
 #   - Claude, in the /release skill, in a session the owner opened in the project folder of
 #     the main checkout: first with -WhatIf, then for real; the skill then proposes the commit
 #     and the tag, which the owner runs (ADRs 0010, 0021 and 0029)
+#   - anyone who builds the application from a clone, as the README says, and the owner for
+#     their own copy between releases:
+#       powershell -NoProfile -ExecutionPolicy Bypass -File scripts/release.ps1 -Build
 #   - you, by hand:
 #       powershell -NoProfile -ExecutionPolicy Bypass -File scripts/release.ps1 -Version 0.2.0
 #
 # OPTIONS
-#   -Version X.Y.Z   the new version; required
+#   -Version X.Y.Z   the new version; required, except with -Build
+#   -Build           build the version in Directory.Build.props: verify, then step 5, with no
+#                    check of step 1 and no change to any file of the repository; it excludes
+#                    -Version, -PublishOnly and -NoPublish. With -WhatIf it says what it would
+#                    do, and stops
 #   -WhatIf          run the step 1 checks and show what would change; touch nothing
 #   -NoPublish       skip step 5
 #   -PublishOnly     run step 5 alone for -Version, with none of the checks and no change to
@@ -62,12 +79,14 @@
 #
 # RESULT
 #   exit 0  done, or the -WhatIf preview finished; it prints the files changed and the tag
-#   exit 1  a check failed or verify was red (nothing changed), or publish failed or two
-#           publishes collided. A failed publish or a collision comes after steps 3 and 4:
-#           Directory.Build.props and CHANGELOG.md are already changed at that point.
+#   exit 1  a check failed or verify was red (nothing changed), or publish failed, two
+#           publishes collided or a program runs from artifacts/<version>/. Any of the last
+#           three in a full release comes after steps 3 and 4: Directory.Build.props and
+#           CHANGELOG.md are already changed at that point. With -Build nothing changes.
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [Parameter(Mandatory = $true)][string]$Version,
+    [string]$Version,
+    [switch]$Build,
     [switch]$NoPublish,
     [switch]$PublishOnly
 )
@@ -82,6 +101,9 @@ $config = Read-ProcessConfig $root
 # heading to the next "## [" heading or the end of the file.
 $VersionPattern = '<Version>([^<]+)</Version>'
 $UnreleasedPattern = '(?ms)^## \[Unreleased\]\s*$(.*?)(?=^## \[|\z)'
+# MAJOR.MINOR.PATCH without leading zeros: the text goes into a heading, a tag and a folder
+# name, the number into comparisons.
+$VersionFormat = '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$'
 
 # git's standard output in $Dir as one string, or $null when git is not on PATH or fails; then
 # $script:GitError holds why, in git's own words. Only trailing white space is trimmed: the
@@ -181,20 +203,37 @@ function ConvertTo-JsonText([string]$Text) {
     return '"' + $sb.ToString() + '"'
 }
 
-# Step 5: stage and merge every publish, write release.json, zip. Throws on a failed publish
-# or a collision, with what to do next. -AfterVersionEdits: a full release, which has just
-# changed Directory.Build.props and CHANGELOG.md itself; they do not make this project unclean.
-function Publish-Release([switch]$AfterVersionEdits) {
+# Throws, naming each program, when a process runs an executable from under $Folder; $Rerun
+# says what to do once it is closed. Emptying the folder would delete files until a locked one
+# stopped it, and the application runs from its release folder (ADR 0076, ADR 0078). A process
+# whose path this account may not read has no Path and is not seen.
+function Assert-FolderNotInUse([string]$Folder, [string]$Rerun) {
+    if (-not (Test-Path -LiteralPath $Folder)) { return }
+    $prefix = [System.IO.Path]::GetFullPath($Folder).TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
+    $inUse = @(Get-Process | Where-Object { $_.Path -and $_.Path.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase) })
+    if ($inUse.Count -gt 0) {
+        $names = ($inUse | ForEach-Object { '{0} (process {1})' -f $_.ProcessName, $_.Id }) -join ', '
+        throw ("{0} is running from {1}; close it (Exit in its tray menu, for the application), then {2}" -f $names, $Folder, $Rerun)
+    }
+}
+
+# Step 5: stage and merge every publish, write release.json, zip. Throws on a failed publish,
+# a collision or a program running from the folder, with what to do next. -AfterVersionEdits:
+# a full release, which has just changed Directory.Build.props and CHANGELOG.md itself; they do
+# not make this project unclean. -Build: the build of the version in Directory.Build.props,
+# which changes nothing in the repository.
+function Publish-Release([switch]$AfterVersionEdits, [switch]$Build) {
     # Checked first: an entry outside the project stops before anything is built.
     Assert-PublishEntries
     $out = Join-Path (ConvertTo-LocalPath 'artifacts') $Version
+    $versionFiles = if ($AfterVersionEdits) { 'Directory.Build.props and CHANGELOG.md are already changed.' } elseif ($Build) { 'No file of the repository was changed (-Build).' } else { 'The version files were not touched (-PublishOnly).' }
+    $rerun = if ($Build) { "run -Build again. $versionFiles" } else { "re-run with -PublishOnly -Version $Version. $versionFiles" }
+    Assert-FolderNotInUse $out $rerun
     # A previous run's files would be compared with this run's and reported as collisions,
     # and would end up in the zip: the folder is rebuilt from nothing.
     if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }
     New-Item -ItemType Directory -Path $out -Force | Out-Null
     $stage = Join-Path $out '.stage'
-    $versionFiles = if ($AfterVersionEdits) { 'Directory.Build.props and CHANGELOG.md are already changed.' } else { 'The version files were not touched (-PublishOnly).' }
-    $rerun = "re-run with -PublishOnly -Version $Version. $versionFiles"
     $index = 0
     foreach ($p in $config.release.publish) {
         $index++
@@ -286,8 +325,35 @@ function Publish-Release([switch]$AfterVersionEdits) {
 
 Push-Location $root
 try {
+    # -Build: the gate, then step 5 for the version in Directory.Build.props; no check of step 1
+    # and no change to a file of the repository (ADR 0078).
+    if ($Build) {
+        if ($Version -or $PublishOnly -or $NoPublish) { throw '-Build takes the version from Directory.Build.props: it excludes -Version, -PublishOnly and -NoPublish.' }
+        $vm = [regex]::Match([System.IO.File]::ReadAllText((Join-Path $root 'Directory.Build.props')), $VersionPattern)
+        if (-not $vm.Success) { throw 'No <Version> element in Directory.Build.props.' }
+        $Version = $vm.Groups[1].Value
+        if ($Version -notmatch $VersionFormat) { throw "<Version> in Directory.Build.props must be MAJOR.MINOR.PATCH without leading zeros, got '$Version'." }
+        Write-Host ("== build {0}, the <Version> in Directory.Build.props: verify, then publish; no file of the repository changes" -f $Version) -ForegroundColor Cyan
+        # -WhatIf previews here, as for -PublishOnly: nothing of verify or of step 5 starts.
+        if ($WhatIfPreference) {
+            $targets = ($config.release.publish | ForEach-Object { $_.project }) -join ', '
+            $zipPlan = if ($config.release.zip) { ', zip ' + $config.release.zip.Replace('{version}', $Version) } else { '' }
+            Assert-PublishEntries
+            Write-Host ("WhatIf: would run verify, then publish {0} into artifacts/{1}/ after emptying it, write release.json{2}." -f $(if ($targets) { $targets } else { 'nothing' }), $Version, $zipPlan)
+            exit 0
+        }
+        # The gate a commit passes, not -All: the tests of the scripts run only when scripts/
+        # differs from main, as at a commit.
+        & (Get-ScriptShell) -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'verify.ps1')
+        if ($LASTEXITCODE -ne 0) { throw 'verify.ps1 failed; nothing was published, and no file of the repository changed.' }
+        Publish-Release -Build
+        Write-Host ("== built {0} into artifacts/{0}/. No file of the repository changed; nothing is committed or tagged." -f $Version) -ForegroundColor Green
+        exit 0
+    }
+    if (-not $Version) { throw 'Give -Version X.Y.Z to cut a release, or -Build to build the version in Directory.Build.props without one.' }
+
     # No leading zeros: the text goes into the heading and the tag, the number into comparisons.
-    if ($Version -notmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$') { throw "Version must be MAJOR.MINOR.PATCH without leading zeros, got '$Version'." }
+    if ($Version -notmatch $VersionFormat) { throw "Version must be MAJOR.MINOR.PATCH without leading zeros, got '$Version'." }
     # [version] compares numerically: 0.10.0 is greater than 0.9.0.
     $new = [version]$Version
     if ($PublishOnly -and $NoPublish) { throw '-PublishOnly and -NoPublish exclude each other.' }

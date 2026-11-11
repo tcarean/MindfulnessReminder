@@ -21,9 +21,12 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
   scripts or those tests (about three minutes instead of about 25 s), and CI, a release and
   `verify.ps1 -All` always do.
 - A release also writes `artifacts/MindfulnessReminder-X.Y.Z-win-x64.zip`, a zip of
-  `artifacts/X.Y.Z/`, with its SHA-256 beside it, and the release is the one way the README
-  builds the app (ADR 0076). The README is written for the people who use the app: no process,
-  no design rationale, no version history (ADR 0077).
+  `artifacts/X.Y.Z/`, with its SHA-256 beside it (ADR 0076). The README is written for the
+  people who use the app: no process, no design rationale, no version history (ADR 0077).
+- `scripts/release.ps1 -Build` builds the app the way the README says. It runs the gate, then
+  publishes and zips the version in `Directory.Build.props`, and changes no file of the
+  repository, so it works on any clone and again after a pull. Any publish now stops, deleting
+  nothing, while a program runs from `artifacts/<version>/` (ADR 0078).
 
 ## [1.5.0] - 2026-10-26
 

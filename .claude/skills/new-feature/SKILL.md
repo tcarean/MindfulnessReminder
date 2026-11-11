@@ -44,7 +44,9 @@ Follow the order. Do not write implementation code before step 4 is approved.
    the App. Anything else (the tray menu, Settings, About, the presenter, the timers, the
    session monitor) runs only in a full tray start, and a full start of a worktree build
    repairs the auto-start entry to that build (R-006): do not start one; list the change for
-   the owner to look at in their own copy after the merge.
+   the owner to look at in their own copy after the merge (**Exit**, `scripts/release.ps1
+   -Build` in the main checkout, then start `artifacts/<version>/MindfulnessReminder.exe`; ADR
+   0078).
 6. **Figures and golden files.** There is no numeric code, no validation case and no golden
    file (ADR 0039): skip, unless the feature measures something on a machine; then the first
    case and `ValidationTests` are written here, and `/validate` runs them. A golden file, if one

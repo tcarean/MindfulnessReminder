@@ -50,7 +50,9 @@ does not apply.
    `--preview`, one to the activity monitor with `--detect`, before the commit. Any other change
    under `src/MindfulnessReminder.App/` is listed in the wrap-up report for the owner to look at
    in their own copy after the merge: a full tray start of the worktree's build would repair
-   the auto-start entry to it (R-006).
+   the auto-start entry to it (R-006). The report says how that copy is refreshed: **Exit**,
+   `scripts/release.ps1 -Build` in the main checkout, then start
+   `artifacts/<version>/MindfulnessReminder.exe` (ADR 0078).
 10. `docs/design/`: in the project folder of the task's worktree, not the main checkout, run
     `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-design.ps1 -Since main`.
     It lists the notes whose `Covers:` sentences name a code or test file this branch changed
