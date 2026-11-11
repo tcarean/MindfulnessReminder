@@ -2,6 +2,7 @@
 
 Date: 2026-11-11
 Status: accepted 2026-11-11
+Supersedes: 0024 in part (the README's summary of the gate); 0059 in part (the README's examples)
 
 ## Context
 

@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -496,15 +497,257 @@ public sealed class ReleaseTests : IDisposable
         Assert.DoesNotContain("collides", output);
     }
 
+    /// <summary>
+    /// -Build builds the version in Directory.Build.props after the plain gate and changes no file
+    /// of the repository, so it runs where a release is refused (a task branch, an empty
+    /// [Unreleased] right after a release) and runs again (ADR 0078).
+    /// </summary>
+    [Fact]
+    public void Build_PublishesThePropsVersion_AfterVerify_AndChangesNoFile()
+    {
+        File.WriteAllText(Path.Combine(_project, "CHANGELOG.md"), "# Changelog\n\n## [Unreleased]\n\n## [2.3.0] - 2026-10-01\n\n- Released.\n");
+        File.WriteAllText(Path.Combine(_project, "scripts", "verify.ps1"),
+            "Set-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) 'ran.txt') -Value ('verify ' + ($args -join ' ')).Trim()\nexit 0\n");
+        Commit("Released 2.3.0");
+        Git("switch", "-q", "-c", "claude/Task");
+
+        (int exitCode, string output) = Build();
+        Assert.True(exitCode == 0, output);
+        Assert.Equal("verify", File.ReadAllText(Path.Combine(_project, "ran.txt")).Trim());
+        using (JsonDocument release = JsonDocument.Parse(File.ReadAllText(Path.Combine(_project, "artifacts", "2.3.0", "release.json"))))
+        {
+            Assert.Equal("2.3.0", release.RootElement.GetProperty("version").GetString());
+        }
+
+        (int _, string status) = ScriptRunner.Run(_project, gitDir: null, "git", "status", "--porcelain");
+        Assert.Equal(string.Empty, status.Trim());
+
+        (exitCode, output) = Build();
+        Assert.True(exitCode == 0, output);
+    }
+
+    /// <summary>A red gate stops -Build before anything is published.</summary>
+    [Fact]
+    public void Build_StopsWhenVerifyFails()
+    {
+        File.WriteAllText(Path.Combine(_project, "scripts", "verify.ps1"), "exit 1\n");
+        Commit("A red gate");
+
+        (int exitCode, string output) = Build();
+        Assert.Equal(1, exitCode);
+        Assert.Contains("verify.ps1 failed", output);
+        Assert.False(Directory.Exists(Path.Combine(_project, "artifacts", "2.3.0")), "artifacts/2.3.0 was written");
+    }
+
+    /// <summary>-Build takes its version from Directory.Build.props, so a -Version or another mode beside it is refused before the gate runs.</summary>
+    [Theory]
+    [InlineData("-Version", "2.3.0")]
+    [InlineData("-PublishOnly")]
+    [InlineData("-NoPublish")]
+    public void Build_WithAVersionOrAnotherMode_IsRefused(params string[] extra)
+    {
+        (int exitCode, string output) = Build(extra);
+        Assert.Equal(1, exitCode);
+        Assert.Contains("-Build takes the version from Directory.Build.props", output);
+        AssertNothingChanged();
+    }
+
+    /// <summary>
+    /// With neither -Version nor -Build the script says what it needs. Standard input is closed, so
+    /// a prompt for a mandatory parameter fails at once instead of waiting.
+    /// </summary>
+    [Fact]
+    public void NeitherVersionNorBuild_IsRefused()
+    {
+        (int exitCode, string output) = ScriptRunner.RunHook(_project, ReleaseScript, string.Empty, new Dictionary<string, string>());
+        Assert.Equal(1, exitCode);
+        Assert.Contains("-Version X.Y.Z", output);
+        Assert.Contains("-Build", output);
+        AssertNothingChanged();
+    }
+
+    /// <summary>-WhatIf with -Build says what it would do, and neither runs the gate nor publishes.</summary>
+    [Fact]
+    public void Build_WithWhatIf_ChangesNothing()
+    {
+        (int exitCode, string output) = Build("-WhatIf");
+        Assert.True(exitCode == 0, output);
+        Assert.Contains("WhatIf: would run verify, then publish", output);
+        Assert.False(File.Exists(Path.Combine(_project, "ran.txt")), "verify ran");
+        Assert.False(Directory.Exists(Path.Combine(_project, "artifacts")), "artifacts/ was written");
+    }
+
+    /// <summary>
+    /// A publish never empties a folder a program runs from: the application runs from its
+    /// release folder (ADR 0076), and emptying it deleted files until a locked one stopped the
+    /// script. A copy of ping.exe stands in for the application.
+    /// </summary>
+    [WindowsFact]
+    public void APublish_IntoAFolderAProgramRunsFrom_IsRefused()
+    {
+        string folder = Path.Combine(_project, "artifacts", "2.3.0");
+        Directory.CreateDirectory(folder);
+        File.WriteAllText(Path.Combine(folder, "LICENSE"), "kept\n");
+        string ping = Path.Combine(folder, "PING.EXE");
+        File.Copy(Path.Combine(Environment.SystemDirectory, "PING.EXE"), ping);
+        using Process running = Process.Start(new ProcessStartInfo(ping, "-n 60 127.0.0.1") { UseShellExecute = false, CreateNoWindow = true })
+            ?? throw new InvalidOperationException("Could not start the copy of ping.exe.");
+        try
+        {
+            (int exitCode, string output) = Release("2.3.0", "-PublishOnly");
+            Assert.Equal(1, exitCode);
+            Assert.Contains("is running from", output);
+            Assert.Contains("PING", output, StringComparison.OrdinalIgnoreCase);
+            Assert.True(File.Exists(Path.Combine(folder, "LICENSE")), "the folder was emptied");
+        }
+        finally
+        {
+            running.Kill();
+            running.WaitForExit();
+        }
+    }
+
+    /// <summary>
+    /// A full release looks for a program running from its folder with the checks of step 1, so
+    /// a refusal comes before the gate and before any file changes. The owner's tray copy runs
+    /// from that folder after a -Build of the version the release keeps (ADR 0078).
+    /// </summary>
+    [WindowsFact]
+    public void AFullRelease_IntoAFolderAProgramRunsFrom_IsRefusedBeforeAnythingRuns()
+    {
+        using Process running = StartPingIn(Path.Combine(_project, "artifacts", "2.3.0"));
+        try
+        {
+            (int exitCode, string output) = Release("2.3.0");
+            Assert.Equal(1, exitCode);
+            Assert.Contains("is running from", output);
+            AssertNothingChanged();
+        }
+        finally
+        {
+            Stop(running);
+        }
+    }
+
+    /// <summary>-Build looks for a program running from its folder before the gate runs.</summary>
+    [WindowsFact]
+    public void Build_IntoAFolderAProgramRunsFrom_IsRefusedBeforeVerify()
+    {
+        using Process running = StartPingIn(Path.Combine(_project, "artifacts", "2.3.0"));
+        try
+        {
+            (int exitCode, string output) = Build();
+            Assert.Equal(1, exitCode);
+            Assert.Contains("is running from", output);
+            Assert.False(File.Exists(Path.Combine(_project, "ran.txt")), "verify ran");
+        }
+        finally
+        {
+            Stop(running);
+        }
+    }
+
+    /// <summary>
+    /// Seen from 32-bit Windows PowerShell a 64-bit program has no path, and an elevated one has
+    /// none for anybody; its executable, which refuses to open for writing, still shows that it
+    /// runs. Nothing to check where Windows has no 32-bit PowerShell.
+    /// </summary>
+    [WindowsFact]
+    public void APublish_FindsAProgramItCannotSee_ByItsLockedExecutable()
+    {
+        string shell32 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.SystemX86), "WindowsPowerShell", "v1.0", "powershell.exe");
+        if (!Environment.Is64BitOperatingSystem || !File.Exists(shell32))
+        {
+            return;
+        }
+
+        string folder = Path.Combine(_project, "artifacts", "2.3.0");
+        using Process running = StartPingIn(folder);
+        try
+        {
+            (int exitCode, string output) = ScriptRunner.RunWith(_project, new Dictionary<string, string>(), shell32,
+                "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ReleaseScript, "-Version", "2.3.0", "-PublishOnly");
+            Assert.Equal(1, exitCode);
+            Assert.Contains("is running from", output);
+            Assert.Contains("PING.EXE", output, StringComparison.OrdinalIgnoreCase);
+            Assert.True(File.Exists(Path.Combine(folder, "PING.EXE")), "the folder was emptied");
+        }
+        finally
+        {
+            Stop(running);
+        }
+    }
+
+    /// <summary>
+    /// After the version edits, the message names only the files the release changed: with
+    /// &lt;Version&gt; already at 2.3.0, a collision in the publish leaves CHANGELOG.md alone changed.
+    /// </summary>
+    [Fact]
+    public void ACollisionAfterTheEdits_NamesOnlyTheFilesTheReleaseChanged()
+    {
+        WriteLibrary("src/A");
+        WriteLibrary("src/B", source: "namespace B;\n\npublic static class Marker\n{\n}\n");
+        WriteProcessJson("""{ "project": "src/A/Lib.csproj", "output": "" }, { "project": "src/B/Lib.csproj", "output": "" }""");
+        Commit("Two libraries named Lib");
+
+        (int exitCode, string output) = Release("2.3.0");
+        Assert.Equal(1, exitCode);
+        Assert.Contains("CHANGELOG.md is already changed", output);
+        Assert.DoesNotContain("Directory.Build.props and CHANGELOG.md are already changed", output);
+    }
+
+    /// <summary>A publish in a linked worktree names the project after the main checkout's folder, not after the worktree's.</summary>
+    [Fact]
+    public void APublishInALinkedWorktree_NamesTheProjectAfterTheMainCheckout()
+    {
+        Git("switch", "-q", "-c", "parked");
+        Git("worktree", "add", "-q", _worktree, "main");
+
+        (int exitCode, string output) = ScriptRunner.RunScript(_worktree, Path.Combine(_worktree, "scripts", "release.ps1"), "-Version", "2.3.0", "-PublishOnly");
+        Assert.True(exitCode == 0, output);
+        using JsonDocument release = JsonDocument.Parse(File.ReadAllText(Path.Combine(_worktree, "artifacts", "2.3.0", "release.json")));
+        Assert.Equal("Proj", release.RootElement.GetProperty("name").GetString());
+        JsonElement component = Assert.Single(release.RootElement.GetProperty("components").EnumerateArray());
+        Assert.Equal("Proj", component.GetProperty("name").GetString());
+    }
+
     public void Dispose()
     {
         ScriptRunner.DeleteTree(_worktree);
         ScriptRunner.DeleteTree(_repo);
     }
 
+    private string ReleaseScript => Path.Combine(_project, "scripts", "release.ps1");
+
     private (int ExitCode, string Output) Release(string version, params string[] args)
     {
-        return ScriptRunner.RunScript(_project, Path.Combine(_project, "scripts", "release.ps1"), ["-Version", version, .. args]);
+        return ScriptRunner.RunScript(_project, ReleaseScript, ["-Version", version, .. args]);
+    }
+
+    private (int ExitCode, string Output) Build(params string[] args)
+    {
+        return ScriptRunner.RunScript(_project, ReleaseScript, ["-Build", .. args]);
+    }
+
+    /// <summary>Starts a copy of ping.exe from <paramref name="folder"/>, created when absent, for about a minute: a program running from that folder.</summary>
+    private static Process StartPingIn(string folder)
+    {
+        Directory.CreateDirectory(folder);
+        string ping = Path.Combine(folder, "PING.EXE");
+        File.Copy(Path.Combine(Environment.SystemDirectory, "PING.EXE"), ping, overwrite: true);
+        return Process.Start(new ProcessStartInfo(ping, "-n 60 127.0.0.1") { UseShellExecute = false, CreateNoWindow = true })
+            ?? throw new InvalidOperationException("Could not start the copy of ping.exe.");
+    }
+
+    /// <summary>Ends a process a test started and waits for it, so that its files can be deleted.</summary>
+    private static void Stop(Process process)
+    {
+        if (!process.HasExited)
+        {
+            process.Kill();
+        }
+
+        process.WaitForExit();
     }
 
     private void WriteProps(string version)

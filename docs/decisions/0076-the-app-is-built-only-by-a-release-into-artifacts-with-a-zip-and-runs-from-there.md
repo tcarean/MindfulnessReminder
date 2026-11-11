@@ -1,7 +1,7 @@
-# 0076. The application is built only by a full release, into artifacts/X.Y.Z/ with a zip beside it, and runs from there
+# 0076. The README builds with the full release, into artifacts/X.Y.Z/ with a zip beside it, and the application runs from there
 
 Date: 2026-11-11
-Status: accepted 2026-11-11
+Status: accepted 2026-11-11; the README's line superseded by 0078
 
 ## Context
 
@@ -51,7 +51,10 @@ startup entry to it (R-006). The script is unchanged.
   version is started by hand, which the README says. A copy started while another runs exits at
   once (R-002), so the old one is closed first.
 - `artifacts/` is ignored by git: a `git clean -x` in the main checkout deletes the copy that
-  runs and leaves the startup entry pointing at nothing.
+  runs and leaves the startup entry pointing at nothing. (Corrected 2026-11-11: `git clean -x`
+  alone deletes nothing. Without `-f` it refuses to run, and without `-d` it leaves an
+  untracked folder such as `artifacts/` in place. The command that deletes the copy is
+  `git clean -fdx`.)
 - Guards: `ReleaseTests` (the zip, its entries and its `.sha256` in
   `PublishOnly_WritesReleaseJsonAndTheZip_FromAnyBranch`; the refusals before anything
   changes). Nothing checks the README's line.

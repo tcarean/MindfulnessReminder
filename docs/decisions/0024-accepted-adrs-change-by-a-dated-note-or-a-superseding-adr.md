@@ -1,7 +1,7 @@
 # 0024. An accepted ADR changes by a dated note or a superseding ADR; one header grammar, checked
 
 Date: 2026-09-30
-Status: accepted 2026-09-30; a kit ADR as a reference superseded by 0075
+Status: accepted 2026-09-30; a kit ADR as a reference superseded by 0075; the README's summary of the gate superseded by 0077
 Supersedes: 0001 in part ("not edited after acceptance"); 0003 in part (the list of steps)
 
 ## Context

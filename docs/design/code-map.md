@@ -74,7 +74,8 @@
     folder (ADR 0073).
   - `WindowPlacement.cs`, `Version.cs`, `LicenseInfo.cs`, `AutoStartStatus.cs`.
 - `src/MindfulnessReminder.App/` — `net8.0-windows`, `WinExe`, `AssemblyName` is
-  `MindfulnessReminder`, so the binary is `MindfulnessReminder.exe`. A **thin adapter layer**:
+  `MindfulnessReminder`, so the binary is `MindfulnessReminder.exe`, and `PlatformTarget` x64,
+  so that binary is x64 whatever SDK builds it (ADR 0080). A **thin adapter layer**:
   every file here is either a window or a Windows API behind a Core interface. Nothing here
   decides anything, which is why none of it is unit-tested.
   - `App.xaml.cs` — composition root. `ShutdownMode` is `OnExplicitShutdown`; there is no
