@@ -35,13 +35,15 @@ you propose one.
    `src/MindfulnessReminder.App`, no runtime, ADR 0036). It writes
    `artifacts/X.Y.Z/release.json` (the version, the commit, and this project's version, commit,
    unreleased flag and whether its folder was clean) and, when `process.json` sets `release.zip`,
-   the zip in `artifacts/` with its `.sha256` beside it (ADR 0071). Paste the last
+   as it does here (`MindfulnessReminder-X.Y.Z-win-x64.zip`, ADR 0076), the zip in
+   `artifacts/` with its `.sha256` beside it (ADR 0071). Paste the last
    lines. If it fails, report and stop; it changes nothing before verify passes. A collision
    (two entries publishing different bytes at one path) stops it after the version files
    changed: paste the collision lines and stop; the owner decides, usually an `output` subfolder
    for that entry in `process.json`, then `scripts/release.ps1 -Version X.Y.Z -PublishOnly` redoes
-   the publish alone. The README's "Deployment note" says where the owner publishes for their
-   own machine (`%LOCALAPPDATA%\MindfulnessReminder`); a release does not go there.
+   the publish alone. The README's "Build and run" says the application runs from
+   `artifacts/X.Y.Z/`, and that starting the new version, after **Exit** on the old one, moves
+   the Windows startup entry to it; the release itself starts nothing (ADR 0076).
 6. **Check, propose, then ask.** `git rev-parse HEAD` must still be the hash of step 1, and
    `git status --porcelain -- .` must list only `CHANGELOG.md` and, unless the owner had already
    set the version, `Directory.Build.props` (a publish that rewrote a lock file is ADR 0034).
@@ -55,6 +57,6 @@ you propose one.
    them decide.
 7. **After.** Add nothing else to the CHANGELOG; the fresh `[Unreleased]` is already there.
    Note the artifact path and size in the chat, and the zip and its `.sha256` when there is
-   one: uploading them anywhere is the owner's, by hand. The README's "Build and run" section
-   names the build and test commands and the two switches; `artifacts/` is what a release
-   produces.
+   one: uploading them anywhere is the owner's, by hand. The README's "Build and run" is this
+   release in one line, with `X.Y.Z` for the version and no number of its own, so a release
+   changes nothing in it.

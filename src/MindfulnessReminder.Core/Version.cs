@@ -22,7 +22,7 @@
 // what gets read. One place to edit, and the same value reaches the tray tooltip, About, the
 // crash dialog, and the executable's file properties.
 //
-// It is bumped MANUALLY, per feature or fix. See "Versioning" in README.md.
+// It is bumped MANUALLY, per feature or fix. See docs/design/versioning-and-licence.md.
 
 using System.Reflection;
 

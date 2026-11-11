@@ -58,7 +58,10 @@ tab "does not delete the value, it records a veto in Explorer\StartupApproved\Ru
   one click always restores the intended state" (`TrayIconHost`).
 - The Run value holds the path the application ran from when auto-start was switched on. After a
   move, "the first launch after a move has to happen manually", and that launch repairs the path;
-  the README's deployment note says to publish somewhere stable.
+  the README's deployment note says to publish somewhere stable. (Restated 2026-11-11: the README
+  has no deployment note any more. The application runs from `artifacts/X.Y.Z/`, a new folder
+  for each release, and the README says to start each new version once by hand, after **Exit**
+  on the old one; that start repairs the path (ADR 0076).)
 - The marker shares its key with the settings (ADR 0061).
 - Guards: `RegistryAutoStartManagerTests` (the quoted path; the approval flag's odd and even
   first byte; a veto with no Run value; `Enable` lifting a veto; the repairs, a veto kept through

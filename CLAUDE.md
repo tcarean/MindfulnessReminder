@@ -31,8 +31,9 @@ and `Screen`, both from the WindowsDesktop shared framework (ADR 0041).
 - Design notes a branch touched (the index and Covers paths are a gate step):
   `scripts/check-design.ps1 -Since main`
 - Mutation score of Core (minutes, not in the gate): `scripts/mutate.ps1 [-Mutate "**/IntervalSchedule.cs"]`
-- Release (verify with every test, version in `Directory.Build.props`, CHANGELOG, publish; no
-  commit, no tag): `scripts/release.ps1 -Version X.Y.Z [-WhatIf]`
+- Release (verify with every test, version in `Directory.Build.props`, CHANGELOG, publish,
+  zip; no commit, no tag): `scripts/release.ps1 -Version X.Y.Z [-WhatIf]`. It is also the one
+  way the README builds the app (ADR 0076)
 - Git hooks, once in every clone (sets `core.hooksPath` to `scripts/hooks`):
   `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-hooks.ps1`
 - There are no validation figures: `docs/validation.json` lists no case (ADR 0039), so
@@ -109,7 +110,10 @@ Mindfulness Reminder's own; one that extends a process rule names it.
 - **The tray tooltip fits 63 characters.** `TrayTooltip` is the pure function that proves it
   (ADR 0059).
 - **User documentation lives in `README.md`, and only there.** It is the single source for it;
-  `docs/` explains what the code does and why, for whoever maintains it (ADR 0068).
+  `docs/` explains what the code does and why, for whoever maintains it (ADR 0068). It is
+  written for the people who use the app: what it does, the one line that builds it, how to
+  use it, the licence. No process, no design rationale, no version history, no version number,
+  and no mention of Claude or of the owner (ADR 0077).
 
 ## Workflow
 
@@ -121,7 +125,9 @@ The workflow in `.claude/rules/process.md` applies. Mindfulness Reminder adds:
   start, which from a worktree build repairs the auto-start entry to that build (R-006), so it
   is listed for the owner to look at in their own copy after the merge (ADR 0042).
 - A release is tagged `vX.Y.Z`, the name `scripts/release.ps1` prints; it publishes the
-  application framework-dependent into `artifacts/X.Y.Z/` (ADR 0036, ADR 0074).
+  application framework-dependent into `artifacts/X.Y.Z/`, where the app runs from, and zips
+  that folder into `artifacts/MindfulnessReminder-X.Y.Z-win-x64.zip` with its `.sha256` (ADR
+  0036, ADR 0074, ADR 0076).
 
 ## Read before touching
 
