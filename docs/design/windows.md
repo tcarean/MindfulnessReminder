@@ -23,7 +23,8 @@ takes the focus, and the focused button answers both keys, so the next Enter or 
 on its way would both dismiss an unread reminder and be lost to whatever was being typed. It
 must be *Preview*: plain `KeyDown` bubbles up from the focused button, which would already have
 handled the key. A Space swallowed there never presses the button, so its key-up clicks nothing.
-Esc still closes it, and so does a click on Close; if another key ever turns out to be likely
-mid-sentence, the same handler is the place.
+Esc still closes it, and so does a click on Close; Alt+F4 and the system menu's Close, which
+nobody presses mid-sentence, close it as they close any window. If another key ever turns out
+to be likely mid-sentence, the same handler is the place.
 
 See ADR 0060 and ADR 0081; About's own reasons are ADR 0066.

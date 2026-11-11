@@ -23,7 +23,7 @@ reminder's window:
 ## Decision
 
 `OnPreviewKeyDown` marks Space handled as well as Enter, so the focused `Close` button sees
-neither. A Space swallowed there never presses the button, so its key-up clicks nothing. Esc (the
+neither (how that also keeps the key-up from clicking is in `docs/design/windows.md`). Esc (the
 button is `IsCancel`, and `OnKeyDown` closes on Escape) and a click on `Close` still close the
 reminder. The button keeps the focus (R-070).
 
@@ -37,7 +37,9 @@ reminder. The button keeps the focus (R-070).
 
 ## Consequences
 
-- From the keyboard, the reminder now closes only with Esc.
+- Of the keys pressed while typing, only Esc now closes the reminder. Alt+F4, and Close on the
+  system menu that Alt+Space opens, still close it, as they close any window; nobody presses
+  them mid-sentence.
 - R-071 says so, with an example. The note `docs/design/windows.md` and the rule in `CLAUDE.md`
   name Enter and Space.
 - Guards: none by test. The App is checked by launching it (ADR 0042): `--preview`, then Space,

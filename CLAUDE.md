@@ -102,8 +102,8 @@ Mindfulness Reminder's own; one that extends a process rule names it.
   for a reminder that is on (ADR 0056, ADR 0057).
 - **The reminder window is light and swallows Enter and Space.** `BreakWindow` takes no dark
   theme, its Close button is not `IsDefault`, and Enter and Space are handled in
-  `OnPreviewKeyDown`, so only Esc and a click close it; Settings and About are modeless, never
-  `ShowDialog` (ADR 0060, ADR 0064, ADR 0081).
+  `OnPreviewKeyDown`, so of the keys pressed while typing only Esc closes it; Settings and
+  About are modeless, never `ShowDialog` (ADR 0060, ADR 0064, ADR 0081).
 - **The dark theme is merged per window, never into `Application.Resources`.** Every template
   carries its own disabled trigger; the palette is repeated in `DarkMenuRenderer` and never
   moves into Core (ADR 0064, ADR 0065).
