@@ -18,10 +18,13 @@
 | `AboutWindow` | **modeless**, not topmost | ordinary | Same reasoning, and single-instance the same way. Its Close button *is* `IsDefault`, unlike the reminder's: this window was opened on purpose, so Enter closing it is what the user means. |
 
 `BreakWindow` is deliberately **not** `IsDefault` on its Close button, and it swallows Enter
-in `OnPreviewKeyDown`. Since the reminder became periodic it arrives mid-work and takes the
-focus, so the next Enter already on its way would both dismiss an unread reminder and be lost
-to whatever was being typed. It must be *Preview*: plain `KeyDown` bubbles up from the focused
-button, which would already have handled the key. Esc and Space still close it — both far
-less likely mid-sentence than Enter, but if that ever changes, the same handler is the place.
+and Space in `OnPreviewKeyDown`. Since the reminder became periodic it arrives mid-work and
+takes the focus, and the focused button answers both keys, so the next Enter or Space already
+on its way would both dismiss an unread reminder and be lost to whatever was being typed. It
+must be *Preview*: plain `KeyDown` bubbles up from the focused button, which would already have
+handled the key. A Space swallowed there never presses the button, so its key-up clicks nothing.
+Esc still closes it, and so does a click on Close; Alt+F4 and the system menu's Close, which
+nobody presses mid-sentence, close it as they close any window. If another key ever turns out
+to be likely mid-sentence, the same handler is the place.
 
-See ADR 0060; About's own reasons are ADR 0066.
+See ADR 0060 and ADR 0081; About's own reasons are ADR 0066.

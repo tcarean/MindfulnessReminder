@@ -27,7 +27,8 @@ namespace MindfulnessReminder.App;
 
 /// <summary>
 /// The reminder window: a light card with the message and a Close button, topmost, centred on
-/// the primary monitor's work area. The button, Esc and Space close it; Enter does not.
+/// the primary monitor's work area. A click on the button and Esc close it; Enter and Space do
+/// not (R-071).
 /// </summary>
 public partial class BreakWindow : Window
 {
@@ -106,23 +107,24 @@ public partial class BreakWindow : Window
     private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
 
     /// <summary>
-    /// Swallows Enter before anything can act on it.
+    /// Swallows Enter and Space before anything can act on them (R-071).
     ///
     /// Since the reminder became periodic it arrives while the user is working, and it takes
-    /// the focus when it does. Enter is the keystroke most likely to be already on its way,
-    /// and closing on it would both dismiss a reminder nobody read and lose the keypress from
+    /// the focus when it does. Enter and Space are the keystrokes most likely to be already on
+    /// their way, Space between any two words, and the focused Close button answers both:
+    /// closing on either would dismiss a reminder nobody read and lose the keypress from
     /// whatever was being typed. It has to be Preview: KeyDown bubbles up from the focused
     /// Close button, which would already have handled the key by the time the window saw it.
+    /// A Space swallowed here never presses the button, so its key-up clicks nothing either.
     ///
-    /// Esc and Space still close -- Esc deliberately, Space because a focused button responds
-    /// to it. Both are far less likely mid-sentence than Enter.
+    /// Esc still closes, on purpose: nobody types it mid-sentence.
     /// </summary>
-    /// <param name="e">The key; Enter is marked handled, and every other key goes on.</param>
+    /// <param name="e">The key; Enter and Space are marked handled, and every other key goes on.</param>
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
         base.OnPreviewKeyDown(e);
 
-        if (e.Key is Key.Enter)
+        if (e.Key is Key.Enter or Key.Space)
         {
             e.Handled = true;
         }
