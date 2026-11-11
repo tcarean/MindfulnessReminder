@@ -132,9 +132,10 @@ The workflow in `.claude/rules/process.md` applies. Mindfulness Reminder adds:
   is refreshed in three steps: **Exit** in the tray menu, `scripts/release.ps1 -Build` in the
   main checkout, then start `artifacts/<version>/MindfulnessReminder.exe` (ADR 0078).
 - A release is tagged `vX.Y.Z`, the name `scripts/release.ps1` prints; it publishes the
-  application framework-dependent for win-x64 (ADR 0080) into `artifacts/X.Y.Z/`, where the
-  app runs from, and zips that folder into `artifacts/MindfulnessReminder-X.Y.Z-win-x64.zip`
-  with its `.sha256` (ADR 0036, ADR 0074, ADR 0076).
+  application framework-dependent, with an x64 executable (ADR 0080), into
+  `artifacts/X.Y.Z/`, where the app runs from, and zips that folder into
+  `artifacts/MindfulnessReminder-X.Y.Z-win-x64.zip` with its `.sha256` (ADR 0036, ADR 0074,
+  ADR 0076).
 
 ## Read before touching
 

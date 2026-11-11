@@ -607,6 +607,110 @@ public sealed class ReleaseTests : IDisposable
         }
     }
 
+    /// <summary>
+    /// A full release looks for a program running from its folder with the checks of step 1, so
+    /// a refusal comes before the gate and before any file changes. The owner's tray copy runs
+    /// from that folder after a -Build of the version the release keeps (ADR 0078).
+    /// </summary>
+    [WindowsFact]
+    public void AFullRelease_IntoAFolderAProgramRunsFrom_IsRefusedBeforeAnythingRuns()
+    {
+        using Process running = StartPingIn(Path.Combine(_project, "artifacts", "2.3.0"));
+        try
+        {
+            (int exitCode, string output) = Release("2.3.0");
+            Assert.Equal(1, exitCode);
+            Assert.Contains("is running from", output);
+            AssertNothingChanged();
+        }
+        finally
+        {
+            Stop(running);
+        }
+    }
+
+    /// <summary>-Build looks for a program running from its folder before the gate runs.</summary>
+    [WindowsFact]
+    public void Build_IntoAFolderAProgramRunsFrom_IsRefusedBeforeVerify()
+    {
+        using Process running = StartPingIn(Path.Combine(_project, "artifacts", "2.3.0"));
+        try
+        {
+            (int exitCode, string output) = Build();
+            Assert.Equal(1, exitCode);
+            Assert.Contains("is running from", output);
+            Assert.False(File.Exists(Path.Combine(_project, "ran.txt")), "verify ran");
+        }
+        finally
+        {
+            Stop(running);
+        }
+    }
+
+    /// <summary>
+    /// Seen from 32-bit Windows PowerShell a 64-bit program has no path, and an elevated one has
+    /// none for anybody; its executable, which refuses to open for writing, still shows that it
+    /// runs. Nothing to check where Windows has no 32-bit PowerShell.
+    /// </summary>
+    [WindowsFact]
+    public void APublish_FindsAProgramItCannotSee_ByItsLockedExecutable()
+    {
+        string shell32 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.SystemX86), "WindowsPowerShell", "v1.0", "powershell.exe");
+        if (!Environment.Is64BitOperatingSystem || !File.Exists(shell32))
+        {
+            return;
+        }
+
+        string folder = Path.Combine(_project, "artifacts", "2.3.0");
+        using Process running = StartPingIn(folder);
+        try
+        {
+            (int exitCode, string output) = ScriptRunner.RunWith(_project, new Dictionary<string, string>(), shell32,
+                "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ReleaseScript, "-Version", "2.3.0", "-PublishOnly");
+            Assert.Equal(1, exitCode);
+            Assert.Contains("is running from", output);
+            Assert.Contains("PING.EXE", output, StringComparison.OrdinalIgnoreCase);
+            Assert.True(File.Exists(Path.Combine(folder, "PING.EXE")), "the folder was emptied");
+        }
+        finally
+        {
+            Stop(running);
+        }
+    }
+
+    /// <summary>
+    /// After the version edits, the message names only the files the release changed: with
+    /// &lt;Version&gt; already at 2.3.0, a collision in the publish leaves CHANGELOG.md alone changed.
+    /// </summary>
+    [Fact]
+    public void ACollisionAfterTheEdits_NamesOnlyTheFilesTheReleaseChanged()
+    {
+        WriteLibrary("src/A");
+        WriteLibrary("src/B", source: "namespace B;\n\npublic static class Marker\n{\n}\n");
+        WriteProcessJson("""{ "project": "src/A/Lib.csproj", "output": "" }, { "project": "src/B/Lib.csproj", "output": "" }""");
+        Commit("Two libraries named Lib");
+
+        (int exitCode, string output) = Release("2.3.0");
+        Assert.Equal(1, exitCode);
+        Assert.Contains("CHANGELOG.md is already changed", output);
+        Assert.DoesNotContain("Directory.Build.props and CHANGELOG.md are already changed", output);
+    }
+
+    /// <summary>A publish in a linked worktree names the project after the main checkout's folder, not after the worktree's.</summary>
+    [Fact]
+    public void APublishInALinkedWorktree_NamesTheProjectAfterTheMainCheckout()
+    {
+        Git("switch", "-q", "-c", "parked");
+        Git("worktree", "add", "-q", _worktree, "main");
+
+        (int exitCode, string output) = ScriptRunner.RunScript(_worktree, Path.Combine(_worktree, "scripts", "release.ps1"), "-Version", "2.3.0", "-PublishOnly");
+        Assert.True(exitCode == 0, output);
+        using JsonDocument release = JsonDocument.Parse(File.ReadAllText(Path.Combine(_worktree, "artifacts", "2.3.0", "release.json")));
+        Assert.Equal("Proj", release.RootElement.GetProperty("name").GetString());
+        JsonElement component = Assert.Single(release.RootElement.GetProperty("components").EnumerateArray());
+        Assert.Equal("Proj", component.GetProperty("name").GetString());
+    }
+
     public void Dispose()
     {
         ScriptRunner.DeleteTree(_worktree);
@@ -623,6 +727,27 @@ public sealed class ReleaseTests : IDisposable
     private (int ExitCode, string Output) Build(params string[] args)
     {
         return ScriptRunner.RunScript(_project, ReleaseScript, ["-Build", .. args]);
+    }
+
+    /// <summary>Starts a copy of ping.exe from <paramref name="folder"/>, created when absent, for about a minute: a program running from that folder.</summary>
+    private static Process StartPingIn(string folder)
+    {
+        Directory.CreateDirectory(folder);
+        string ping = Path.Combine(folder, "PING.EXE");
+        File.Copy(Path.Combine(Environment.SystemDirectory, "PING.EXE"), ping, overwrite: true);
+        return Process.Start(new ProcessStartInfo(ping, "-n 60 127.0.0.1") { UseShellExecute = false, CreateNoWindow = true })
+            ?? throw new InvalidOperationException("Could not start the copy of ping.exe.");
+    }
+
+    /// <summary>Ends a process a test started and waits for it, so that its files can be deleted.</summary>
+    private static void Stop(Process process)
+    {
+        if (!process.HasExited)
+        {
+            process.Kill();
+        }
+
+        process.WaitForExit();
     }
 
     private void WriteProps(string version)

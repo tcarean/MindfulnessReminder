@@ -1,7 +1,7 @@
 # 0036. The layout stays src/ and tests/; kit.json holds the values; a release publishes framework-dependent
 
 Date: 2026-10-09
-Status: accepted 2026-10-09; the kit value and the tag name superseded by 0074; a publish with no runtime superseded by 0080
+Status: accepted 2026-10-09; the kit value and the tag name superseded by 0074; the any-CPU publish superseded by 0080
 
 ## Context
 

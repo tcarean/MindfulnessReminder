@@ -8,8 +8,9 @@ reminder off, give each one its own message, and change the interval.
 
 ## Build and run
 
-You need the .NET 9 SDK, 9.0.318 or a later 9.0.3xx (the version `global.json` asks for), and
-the .NET 8 Desktop Runtime for x64, because the app runs on .NET 8.
+You need git, the .NET 9 SDK, 9.0.318 or a later 9.0.3xx (the version `global.json` asks
+for), and the .NET 8 Desktop Runtime for x64, because the app runs on .NET 8. Build from a clone
+of the repository: the tests the build runs first use git.
 
 From the repository folder:
 

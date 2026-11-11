@@ -26,11 +26,14 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
 - `scripts/release.ps1 -Build` builds the app the way the README says. It runs the gate, then
   publishes and zips the version in `Directory.Build.props`, and changes no file of the
   repository, so it works on any clone and again after a pull. Any publish now stops, deleting
-  nothing, while a program runs from `artifacts/<version>/` (ADR 0078).
-- The release publishes for win-x64 (`-r win-x64 --self-contained false`), so the zip's
-  `win-x64` holds whichever SDK builds it; App and Core declare the runtime, and their lock
-  files carry its section (ADR 0080). The README's rules gained their exceptions and its
-  writing rules (ADR 0079).
+  nothing, while a program runs from `artifacts/<version>/`. A release and `-Build` look before
+  the gate, and a program is also found by its locked executable or DLL, which catches an
+  elevated copy. `release.json` names the project after the main checkout's folder, also in a
+  linked worktree (ADR 0078).
+- The App's executable is x64 whatever SDK builds it (`<PlatformTarget>x64</PlatformTarget>`),
+  so the zip's `win-x64` is always true. No runtime is declared, so restore downloads no runtime
+  pack and the lock files are unchanged (ADR 0080). The README's rules gained their exceptions
+  and its writing rules (ADR 0079).
 
 ## [1.5.0] - 2026-10-26
 

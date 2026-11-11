@@ -17,7 +17,10 @@
 #        - CHANGELOG.md has something under [Unreleased];
 #        - this project is the root of its repository, and every release.publish entry is a
 #          project file inside it: the tag vX.Y.Z names a version of the whole repository;
-#        - the git tag for this version does not exist yet.
+#        - the git tag for this version does not exist yet;
+#        - unless -NoPublish, no program runs from artifacts/<version>/ (see step 5), so a tray
+#          copy started there after a -Build of this version stops the release before the gate
+#          and before any file changes (ADR 0078).
 #   2. Runs scripts/verify.ps1 -All, the process tests included. If it is red, it stops;
 #      still nothing changed.
 #   3. Writes the new version into <Version> in Directory.Build.props, unless it is already
@@ -28,8 +31,10 @@
 #      it empties first, unless -NoPublish:
 #        - first, when a program runs from an executable under artifacts/<version>/, it stops
 #          and names it, deleting nothing: the application runs from its release folder (ADR
-#          0076), and emptying the folder would delete files until a locked one stopped it.
-#          Processes whose path this account may not read are not seen (ADR 0078);
+#          0076), and emptying the folder would delete files until a locked one stopped it. A
+#          program is seen by its process's path or, where that cannot be read (an elevated
+#          copy, a 64-bit one from 32-bit PowerShell), by an executable or DLL under the folder
+#          that refuses to open for writing (ADR 0078);
 #        - each entry with its own extra `dotnet publish` arguments into a staging folder,
 #          artifacts/<version>/.stage/<n>/, then merged into artifacts/<version>/<output>/ by
 #          scripts/merge-publish.ps1, which copies nothing when a file already there has other
@@ -49,10 +54,11 @@
 #   propose: the commit limited to Directory.Build.props and CHANGELOG.md, and the tag vX.Y.Z.
 #
 #   With -Build it releases nothing. It reads the version from <Version> in
-#   Directory.Build.props, runs scripts/verify.ps1 (the gate a commit passes, not -All), and
-#   when that is green, does step 5 for that version. None of the checks of step 1 apply and no
-#   file of the repository changes, so it runs on any branch, tag, clone or worktree, and again
-#   after a pull. It is how the README builds the application (ADR 0078).
+#   Directory.Build.props, stops when a program runs from artifacts/<version>/, runs
+#   scripts/verify.ps1 (the gate a commit passes, not -All), and when that is green, does step 5
+#   for that version. None of the other checks of step 1 apply and no file of the repository
+#   changes, so it runs on any branch, tag, clone or worktree, and again after a pull. It is how
+#   the README builds the application (ADR 0078). It needs git, as verify does.
 #
 # WHO CALLS IT
 #   - Claude, in the /release skill, in a session the owner opened in the project folder of
@@ -79,10 +85,12 @@
 #
 # RESULT
 #   exit 0  done, or the -WhatIf preview finished; it prints the files changed and the tag
-#   exit 1  a check failed or verify was red (nothing changed), or publish failed, two
-#           publishes collided or a program runs from artifacts/<version>/. Any of the last
-#           three in a full release comes after steps 3 and 4: Directory.Build.props and
-#           CHANGELOG.md are already changed at that point. With -Build nothing changes.
+#   exit 1  a check failed or verify was red (nothing changed: a program running from
+#           artifacts/<version>/ is one of the checks), or publish failed, two publishes
+#           collided or a program started from that folder since. In a full release the last
+#           three come after steps 3 and 4: CHANGELOG.md, and Directory.Build.props unless
+#           <Version> was already the release's, are changed at that point, and the message
+#           says which. With -Build nothing changes.
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [string]$Version,
@@ -137,11 +145,20 @@ function Get-ProjectRoot {
 }
 
 # The project's name, the one release.json gives it: its folder as git resolves it, so that a
-# project reached through a junction keeps its own name; the folder this script sees outside git.
+# project reached through a junction keeps its own name; in a linked worktree, the folder of the
+# main checkout, which holds git's common directory, not the worktree's (ADR 0078); the folder
+# this script sees outside git.
 function Get-ProjectName {
     $top = Invoke-GitText $root @('rev-parse', '--show-toplevel')
-    if ($top) { return Split-Path $top -Leaf }
-    return Split-Path (Get-ProjectRoot) -Leaf
+    if (-not $top) { return Split-Path (Get-ProjectRoot) -Leaf }
+    # The test the main-checkout check of a release makes: a linked worktree has a git folder of
+    # its own, beside the common one.
+    $gitDir = Invoke-GitText $root @('rev-parse', '--absolute-git-dir')
+    $common = Invoke-GitText $root @('rev-parse', '--path-format=absolute', '--git-common-dir')
+    if ($gitDir -and $common -and [System.IO.Path]::GetFullPath($gitDir).TrimEnd('\', '/') -ne [System.IO.Path]::GetFullPath($common).TrimEnd('\', '/')) {
+        return Split-Path (Split-Path ([System.IO.Path]::GetFullPath($common).TrimEnd('\', '/')) -Parent) -Leaf
+    }
+    return Split-Path $top -Leaf
 }
 
 # Throws, with the entry and the folder named, when a release.publish entry is not a project
@@ -203,30 +220,49 @@ function ConvertTo-JsonText([string]$Text) {
     return '"' + $sb.ToString() + '"'
 }
 
-# Throws, naming each program, when a process runs an executable from under $Folder; $Rerun
-# says what to do once it is closed. Emptying the folder would delete files until a locked one
-# stopped it, and the application runs from its release folder (ADR 0076, ADR 0078). A process
-# whose path this account may not read has no Path and is not seen.
+# Whether $Path is open in a way that refuses writing, as the executable and the DLLs of a
+# running program are, whoever runs it. A file that is gone, or that this account may not
+# write (read-only), is not in use.
+function Test-FileLocked([string]$Path) {
+    try {
+        $stream = [System.IO.File]::Open($Path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+        $stream.Dispose()
+        return $false
+    }
+    catch [System.IO.FileNotFoundException] { return $false }
+    catch [System.IO.DirectoryNotFoundException] { return $false }
+    catch [System.IO.IOException] { return $true }
+    catch { return $false }
+}
+
+# Throws when a program runs from under $Folder, naming the processes whose path it can read and
+# the executables and DLLs that refuse writing; $Rerun says what to do once it is closed.
+# Emptying the folder would delete files until a locked one stopped it, and the application runs
+# from its release folder (ADR 0076, ADR 0078). The locked files find what a path cannot: an
+# elevated copy, and a 64-bit one when this is 32-bit Windows PowerShell, whose Path is empty.
 function Assert-FolderNotInUse([string]$Folder, [string]$Rerun) {
     if (-not (Test-Path -LiteralPath $Folder)) { return }
     $prefix = [System.IO.Path]::GetFullPath($Folder).TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
     $inUse = @(Get-Process | Where-Object { $_.Path -and $_.Path.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase) })
-    if ($inUse.Count -gt 0) {
-        $names = ($inUse | ForEach-Object { '{0} (process {1})' -f $_.ProcessName, $_.Id }) -join ', '
-        throw ("{0} is running from {1}; close it (Exit in its tray menu, for the application), then {2}" -f $names, $Folder, $Rerun)
+    $locked = @(Get-ChildItem -LiteralPath $Folder -Recurse -File -Force | Where-Object { $_.Extension -in '.exe', '.dll' -and (Test-FileLocked $_.FullName) })
+    if ($inUse.Count -gt 0 -or $locked.Count -gt 0) {
+        $what = if ($inUse.Count -gt 0) { ($inUse | ForEach-Object { '{0} (process {1})' -f $_.ProcessName, $_.Id }) -join ', ' } else { 'A program' }
+        $files = if ($locked.Count -gt 0) { ' ({0} in use)' -f (($locked | ForEach-Object { $_.Name }) -join ', ') } else { '' }
+        throw ("{0} is running from {1}{2}; close it (Exit in its tray menu, for the application), then {3}" -f $what, $Folder, $files, $Rerun)
     }
 }
 
 # Step 5: stage and merge every publish, write release.json, zip. Throws on a failed publish,
 # a collision or a program running from the folder, with what to do next. -AfterVersionEdits:
 # a full release, which has just changed Directory.Build.props and CHANGELOG.md itself; they do
-# not make this project unclean. -Build: the build of the version in Directory.Build.props,
-# which changes nothing in the repository.
-function Publish-Release([switch]$AfterVersionEdits, [switch]$Build) {
+# not make this project unclean. $Changed names, for the messages, the version files it changed
+# ("CHANGELOG.md is" when <Version> was already the release's). -Build: the build of the version
+# in Directory.Build.props, which changes nothing in the repository.
+function Publish-Release([switch]$AfterVersionEdits, [switch]$Build, [string]$Changed = 'Directory.Build.props and CHANGELOG.md are') {
     # Checked first: an entry outside the project stops before anything is built.
     Assert-PublishEntries
     $out = Join-Path (ConvertTo-LocalPath 'artifacts') $Version
-    $versionFiles = if ($AfterVersionEdits) { 'Directory.Build.props and CHANGELOG.md are already changed.' } elseif ($Build) { 'No file of the repository was changed (-Build).' } else { 'The version files were not touched (-PublishOnly).' }
+    $versionFiles = if ($AfterVersionEdits) { "$Changed already changed." } elseif ($Build) { 'No file of the repository was changed (-Build).' } else { 'The version files were not touched (-PublishOnly).' }
     $rerun = if ($Build) { "run -Build again. $versionFiles" } else { "re-run with -PublishOnly -Version $Version. $versionFiles" }
     Assert-FolderNotInUse $out $rerun
     # A previous run's files would be compared with this run's and reported as collisions,
@@ -334,6 +370,8 @@ try {
         $Version = $vm.Groups[1].Value
         if ($Version -notmatch $VersionFormat) { throw "<Version> in Directory.Build.props must be MAJOR.MINOR.PATCH without leading zeros, got '$Version'." }
         Write-Host ("== build {0}, the <Version> in Directory.Build.props: verify, then publish; no file of the repository changes" -f $Version) -ForegroundColor Cyan
+        # Before the gate: the owner's tray copy may run from this very folder (ADR 0078).
+        Assert-FolderNotInUse (Join-Path (ConvertTo-LocalPath 'artifacts') $Version) 'run -Build again; nothing was changed.'
         # -WhatIf previews here, as for -PublishOnly: nothing of verify or of step 5 starts.
         if ($WhatIfPreference) {
             $targets = ($config.release.publish | ForEach-Object { $_.project }) -join ', '
@@ -430,6 +468,11 @@ try {
     # A release publishes this project only.
     Assert-PublishEntries
 
+    # A program running from the release's folder, as the tray copy does after a -Build of the
+    # version this release keeps, stops it here, before the gate and the edits (ADR 0078); step 5
+    # looks again.
+    if (-not $NoPublish) { Assert-FolderNotInUse (Join-Path (ConvertTo-LocalPath 'artifacts') $Version) 'run the release again; nothing was changed.' }
+
     # --- tag name ---------------------------------------------------------------------
     $tag = "v$Version"
     if (git tag --list $tag) { throw "Tag $tag already exists." }
@@ -473,7 +516,8 @@ try {
 
     # --- artifacts ----------------------------------------------------------------------
     # artifacts/ is git-ignored.
-    if (-not $NoPublish) { Publish-Release -AfterVersionEdits }
+    $changed = if ($new -eq $current) { 'CHANGELOG.md is' } else { 'Directory.Build.props and CHANGELOG.md are' }
+    if (-not $NoPublish) { Publish-Release -AfterVersionEdits -Changed $changed }
 
     Write-Host ("== ready. Propose: git commit -m ""Release {0}"" -- Directory.Build.props CHANGELOG.md, then git tag -a {1} -m ""Release {0}"". Nothing is committed or tagged by this script." -f $Version, $tag) -ForegroundColor Green
     exit 0

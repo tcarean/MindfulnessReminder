@@ -28,8 +28,15 @@ gate rather than `-All`, before it publishes.
 version as step 5 of a release does: `artifacts/<version>/`, `release.json`, and the zip with
 its `.sha256`. It makes none of the release's checks and changes no file of the repository.
 
-Before step 5 empties `artifacts/<version>/`, in every mode, the script looks for a process
-that runs an executable from under that folder. If it finds one, it stops and deletes nothing.
+Before step 5 empties `artifacts/<version>/`, in every mode, the script looks for a program
+running from under that folder. If it finds one, it stops and deletes nothing. It sees a program
+by its process's path or, where the path cannot be read (an elevated copy, a 64-bit one from
+32-bit Windows PowerShell), by an executable or DLL under the folder that refuses to open for
+writing. A full release looks with the checks of its step 1, and `-Build` looks before the gate,
+so that neither runs the tests or edits a file before the refusal. Step 5 looks again.
+
+In a linked worktree, `release.json` names the project after the folder of the main checkout,
+which holds git's common directory, not after the worktree's folder.
 
 The full release, `-Version X.Y.Z`, stays the owner's, through `/release`. The application
 still runs from `artifacts/<version>/`, and the new copy is started by hand after **Exit** on
@@ -51,8 +58,9 @@ the old one (ADR 0076).
 
 ## Consequences
 
-- The line works on any clone, branch, tag or worktree, as often as needed. It needs git only
-  where `verify.ps1` does.
+- The line works on any clone, branch, tag or worktree, as often as needed. It needs git: when
+  `verify.ps1` cannot ask git what changed, it runs the tests of the scripts, which use git
+  themselves, so the README lists git.
 - A build of a version that is already released replaces that release's folder and zip in
   `artifacts/`. `release.json` records which commit it is and whether `[Unreleased]` had
   content.
@@ -60,8 +68,15 @@ the old one (ADR 0076).
   main checkout, then start `artifacts/<version>/MindfulnessReminder.exe` (CLAUDE.md and the
   skills).
 - Looking for the process takes about 2 s (measured on 2026-11-11, under
-  `$ErrorActionPreference = 'Stop'`). A process whose path the account may not read is not seen.
+  `$ErrorActionPreference = 'Stop'`), and a full release looks twice. A file that another
+  program holds open with no sharing, for a moment, reads as in use too, and the run is simply
+  repeated.
 - Guards: `ReleaseTests`, in `Build_PublishesThePropsVersion_AfterVerify_AndChangesNoFile`,
   `Build_StopsWhenVerifyFails`, `Build_WithAVersionOrAnotherMode_IsRefused`,
-  `NeitherVersionNorBuild_IsRefused`, `Build_WithWhatIf_ChangesNothing` and
-  `APublish_IntoAFolderAProgramRunsFrom_IsRefused`.
+  `NeitherVersionNorBuild_IsRefused`, `Build_WithWhatIf_ChangesNothing`,
+  `APublish_IntoAFolderAProgramRunsFrom_IsRefused`,
+  `AFullRelease_IntoAFolderAProgramRunsFrom_IsRefusedBeforeAnythingRuns`,
+  `Build_IntoAFolderAProgramRunsFrom_IsRefusedBeforeVerify`,
+  `APublish_FindsAProgramItCannotSee_ByItsLockedExecutable` (from 32-bit Windows PowerShell),
+  `ACollisionAfterTheEdits_NamesOnlyTheFilesTheReleaseChanged` and
+  `APublishInALinkedWorktree_NamesTheProjectAfterTheMainCheckout`.
