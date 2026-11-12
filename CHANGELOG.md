@@ -6,6 +6,8 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-11-12
+
 ### Fixed
 
 - Space no longer closes the reminder. A reminder that appears while you type stays open
