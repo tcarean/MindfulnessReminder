@@ -114,11 +114,12 @@ Mindfulness Reminder's own; one that extends a process rule names it.
   (ADR 0059).
 - **User documentation lives in `README.md`, and only there.** It is the single source for it;
   `docs/` explains what the code does and why, for whoever maintains it (ADR 0068). It is
-  written for the people who use the app: what it does, the one sentence that points to the
-  release zip (ADR 0082), the one line that builds it, how to use it, the licence. No process,
-  no design rationale, no version history, no number of the app's own version (examples write
-  `X.Y.Z`), no test, class or API names, and no mention of Claude or of the owner; the licence
-  notice keeps its copyright line (ADR 0077). Plain
+  written for the people who use the app: what it does, where to download it (a link to the
+  latest release, ADR 0083), the one line that builds it, how to use it, the licence. No
+  process, no design rationale, no version history, no number of the app's own version
+  (examples write `X.Y.Z`), no test, class or API names, and no mention of Claude or of the
+  owner (the repository's URL is not one); the licence notice keeps its copyright line
+  (ADR 0077). Plain
   sentences: no em-dash asides, no bold lead-in on every bullet, no "deliberately", "on
   purpose", "honest", "happily" or "the whole point" (ADR 0079).
 

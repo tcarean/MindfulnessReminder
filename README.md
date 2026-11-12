@@ -6,11 +6,14 @@ While you work, it reminds you again every 30 minutes. If you are on a call or i
 full-screen app, it does not interrupt you. In **Settings...** you can turn either
 reminder off, give each one its own message, and change the interval.
 
-## Build and run
+## Download
 
-If you do not want to build it, each release on the repository's Releases page has
-`MindfulnessReminder-X.Y.Z-win-x64.zip`: unzip it and start `MindfulnessReminder.exe`. You need
+The latest version is on the
+[Releases page](https://github.com/tcarean/MindfulnessReminder/releases/latest), as
+`MindfulnessReminder-X.Y.Z-win-x64.zip`. Unzip it and start `MindfulnessReminder.exe`. You need
 only the .NET 8 Desktop Runtime for x64.
+
+## Build and run
 
 You need git, the .NET 9 SDK, 9.0.318 or a later 9.0.3xx (the version `global.json` asks
 for), and the .NET 8 Desktop Runtime for x64, because the app runs on .NET 8. Build from a clone

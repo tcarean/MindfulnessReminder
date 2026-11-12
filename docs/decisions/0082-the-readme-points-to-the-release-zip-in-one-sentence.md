@@ -1,7 +1,7 @@
 # 0082. The README points to the release zip on GitHub in one sentence
 
 Date: 2026-11-12
-Status: accepted 2026-11-12
+Status: accepted 2026-11-12; where the sentence stands superseded by 0083
 
 ## Context
 
