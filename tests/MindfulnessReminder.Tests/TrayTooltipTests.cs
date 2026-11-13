@@ -62,37 +62,37 @@ public class TrayTooltipTests
     [Fact]
     public void R062_The_longest_tooltip_the_app_can_produce_fits_the_tray_limit()
     {
-        var candidates = new List<string>
+        var longestCountdown = TimeSpan.FromMinutes(ReminderSettings.MaxIntervalMinutes);
+        var shapes = new List<(TimeSpan? Remaining, ReminderSuppression Suppression)>
         {
-            TrayTooltip.Format(VersionInfo.Banner, null),
-            TrayTooltip.Format(VersionInfo.Banner, TimeSpan.FromMinutes(ReminderSettings.MaxIntervalMinutes)),
+            (null, ReminderSuppression.None),
         };
 
         foreach (var suppression in Enum.GetValues<ReminderSuppression>())
         {
-            candidates.Add(TrayTooltip.Format(
-                VersionInfo.Banner,
-                TimeSpan.FromMinutes(ReminderSettings.MaxIntervalMinutes),
-                suppression));
+            shapes.Add((longestCountdown, suppression));
         }
 
-        var longest = candidates.MaxBy(c => c.Length)!;
-
-        Assert.True(
-            longest.Length <= TrayTooltip.MaxLength,
-            $"tooltip is {longest.Length} characters: {longest}");
-
-        // The length alone proves nothing: Format cuts at the limit, so every candidate fits
-        // whatever its text. What R-062 promises is that none of them needed the cut, and a
-        // text that was not cut still has its last words (CR-11).
-        foreach (var candidate in candidates)
+        foreach (var (remaining, suppression) in shapes)
         {
+            var tooltip = TrayTooltip.Format(VersionInfo.Banner, remaining, suppression);
+
             Assert.True(
-                candidate == VersionInfo.Banner
-                || candidate.EndsWith(" min", StringComparison.Ordinal)
-                || candidate.EndsWith("mic is on", StringComparison.Ordinal)
-                || candidate.EndsWith("full screen", StringComparison.Ordinal),
-                $"tooltip was cut at {candidate.Length} characters: {candidate}");
+                tooltip.Length <= TrayTooltip.MaxLength,
+                $"tooltip is {tooltip.Length} characters: {tooltip}");
+
+            // The length alone proves nothing: Format cuts at the limit, so every shape fits
+            // whatever its text. What R-062 promises is that none of them needed the cut
+            // (CR-11). Behind a banner of one character the same shape is far below the
+            // limit and so comes out whole: what follows the banner there is what has to
+            // follow the real banner here, to the last character.
+            const string ShortBanner = "x";
+            var whole = VersionInfo.Banner
+                        + TrayTooltip.Format(ShortBanner, remaining, suppression)[ShortBanner.Length..];
+
+            Assert.True(
+                tooltip == whole,
+                $"tooltip was cut at {tooltip.Length} characters: {tooltip}; whole, it is {whole.Length}: {whole}");
         }
     }
 
