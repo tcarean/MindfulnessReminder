@@ -60,8 +60,8 @@ position before the queued placement runs was not looked at.
 
 **Raising a reminder that is already open.** `BreakWindow` is `Topmost` from its XAML, so its
 handle is created always-on-top, above everything open at that moment. A reminder left open
-can still end up under another always-on-top window opened later (Task Manager set to "Always
-on top", a picture-in-picture player). `WpfReminderPresenter.BringToFront` therefore sets
+can still end up under another always-on-top window opened later (a picture-in-picture
+player). `WpfReminderPresenter.BringToFront` therefore sets
 `Topmost` to false and then to true before it calls `Activate()`. Setting it to true alone
 does nothing: the property already holds that value, WPF sees no change and makes no call to
 Windows. And `Activate()` alone is not enough, since Windows grants the foreground only to a
@@ -69,3 +69,10 @@ process with recent input. Measured on 2026-11-13 with two always-on-top WPF win
 second covering the first: after `Topmost = true` on the first it was still under the second;
 after `false` then `true` it was above. Neither assignment takes the keyboard focus;
 `Activate()` asks for it, as it did before.
+
+The toggle reorders the window among the ordinary always-on-top windows and no further. Since
+Windows 8 there is a layer above all of them, which a window cannot enter by being `Topmost`;
+Task Manager set to "Always on top" restarts itself into that layer (Raymond Chen, "The Old New
+Thing", 2023-05-02), so it still covers a reminder, and it is not a way to check this.
+
+See ADR 0087.

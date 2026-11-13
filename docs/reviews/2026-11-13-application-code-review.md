@@ -262,8 +262,11 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   to false and then to true before `Activate()`; the no-op line in `OnSourceInitialized` is
   gone. Measured with two always-on-top WPF windows, the second covering the first: `Topmost =
   true` again left the first under, false then true put it above
-  (`docs/design/windows.md`). Left for the owner, in their copy: a 1-minute interval and a
-  reminder left open under Task Manager set to "Always on top".
+  (`docs/design/windows.md`, ADR 0087). The scenario's Task Manager example does not hold:
+  set to "Always on top" it sits in a layer above every ordinary always-on-top window, which
+  no `Topmost` reaches, so it still covers a reminder. Left for the owner, in their copy: a
+  1-minute interval and a reminder left open under another program's always-on-top window, a
+  picture-in-picture video for one.
 
 ### CR-07. A message cut at 50 can end in half a surrogate pair, and log lines carrying it are lost
 

@@ -15,12 +15,14 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
   ends the application through the crash dialog. The window stays open and says
   `The settings could not be saved: Windows refused the change.`, and nothing is applied
   (R-046; ADR 0085).
-- A reminder left open under another always-on-top window (Task Manager set to "Always on
-  top", a picture-in-picture player) is raised above it when the next reminder falls due or
-  the computer is unlocked; it used to stay covered (R-012, R-023).
-- On monitors set to different scales, the tray menu, Settings and About are drawn at the
-  scale of the monitor they are on instead of being stretched: the application is now
-  per-monitor DPI aware, which it was meant to be and was not (R-077; ADR 0086).
+- A reminder left open under another program's always-on-top window (a picture-in-picture
+  player) is raised above it when the next reminder falls due or the computer is unlocked; it
+  used to stay covered (R-012, R-023; ADR 0087). Task Manager set to "Always on top" still
+  covers it: Windows keeps that window in a layer above every ordinary one.
+- The application is now per-monitor DPI aware, which it was meant to be and was not: on
+  monitors set to different scales Windows no longer stretches its windows from another
+  scale, and the reminder is drawn at the primary monitor's scale and centred there. The tray
+  menu, Settings and About have not yet been looked at on such monitors (R-077; ADR 0086).
 
 ## [1.5.1] - 2026-11-12
 

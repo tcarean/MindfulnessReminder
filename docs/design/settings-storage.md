@@ -51,8 +51,11 @@ settings are never in force that the next start would not read back; on a write 
 (`RegistryRefusal.IsWriteRefusal`) it writes the log line, applies nothing and returns
 `false`, and the window shows its complaint and stays open with what was typed. Any other
 exception is not caught and ends in the crash handler. The eight values are written one by
-one with no rollback: a refusal is a matter of the key's permissions, so it comes at the
-first value, before anything is written.
+one with no rollback. A refusal that comes from the key's permissions comes at the first
+value, before anything is written: `WindowsRegistryStore.SetString` opens the key for writing
+at every value. A refusal that began between two values, or one aimed at a single value, would
+leave some of them written while the old settings stay in force; nothing guards against that,
+and `SettingsCommitTests` refuses every write, so it does not show it.
 
 See ADR 0085.
 

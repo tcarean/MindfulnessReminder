@@ -145,6 +145,19 @@ have their hashes:
 - The same mistake was made twice more while measuring: output cut short left three
   `--preview` processes open. They were closed by their path and arguments; the measuring loop
   now keeps the whole output.
+- The owner then had a subagent review the branch. It found no fault in the code and six in
+  the documents, corrected in one commit:
+  - Task Manager set to "Always on top" is no test of CR-06, here or under "Verification"
+    above: Windows keeps it in a layer no `Topmost` window reaches. The check is another
+    program's always-on-top window.
+  - ADR 0060 said two things the branch made false; ADR 0085 now supersedes one, and ADR 0087,
+    new, records the CR-06 choice and supersedes the other.
+  - R-077 and the CHANGELOG said the tray menu, Settings and About are drawn at each
+    monitor's scale, which nobody has looked at; both now say what was measured.
+  - R-077's row was outside its table.
+  - `settings-storage.md` said a refusal always comes before anything is written; that holds
+    for the key's permissions only.
+  - R-113 read as if the store wrote the refusal line; `SettingsCommit` does.
 - Not done here: the three things listed under "Verification" for the owner's copy are still
   to be looked at, and whether the reminder is drawn for a moment at its first position before
   the queued placement runs was not looked at.

@@ -101,9 +101,10 @@ internal sealed class WpfReminderPresenter : IReminderPresenter
     }
 
     /// <summary>
-    /// Restores the open window if it is minimized and brings it to the front, above any
-    /// other always-on-top window that came to cover it. Does nothing when no window is open,
-    /// which includes while one is still queued.
+    /// Restores the open window if it is minimized and brings it to the front, above an
+    /// ordinary always-on-top window that came to cover it; a window Windows keeps in a higher
+    /// layer, as Task Manager's "Always on top" is, stays above. Does nothing when no window is
+    /// open, which includes while one is still queued.
     /// </summary>
     public void BringToFront()
     {

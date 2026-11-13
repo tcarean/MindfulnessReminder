@@ -2,6 +2,7 @@
 
 Date: 2026-11-13
 Status: accepted 2026-11-13
+Supersedes: 0060 in part (Settings handing its result back through its Accepted event)
 
 ## Context
 
@@ -35,7 +36,11 @@ as a function that returns whether the settings were stored.
 ## Consequences
 
 - The window no longer raises an event: it takes the save as a function and closes only when
-  that returns `true`.
+  that returns `true`. ADR 0060 had Settings hand its result back through its `Accepted`
+  event; that sentence of it is superseded.
+- A refusal is what `RegistryRefusal.IsWriteRefusal` says, the two exceptions R-005 names for
+  the startup checkbox. An `IOException` on a `Save` is not one, though the registration at
+  start counts it (R-003), and ends in the crash handler.
 - The complaint stays until a box is edited or the next `Save`, as the other complaints do.
 - An error of a `Save` that is not a refusal still ends in the crash handler (R-076).
 - Guards: `SettingsCommitTests` pins the rule and the log line on `FakeRegistryStore`. The
