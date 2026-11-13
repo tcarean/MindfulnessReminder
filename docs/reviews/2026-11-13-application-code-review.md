@@ -33,11 +33,11 @@ fixes land.
 | CR-04 | S3 | The process is system-DPI-aware, not PerMonitorV2 as the code and ADR 0041 say | fixed in `1613376` and `a9ae321` |
 | CR-05 | S3 | A sign-out or restart that is cancelled still ends the tray copy, with no trace | open: to be observed first |
 | CR-06 | S3 | Assigning `Topmost = true` again does nothing, so an open reminder is raised by `Activate()` alone | fixed in `0abb279` |
-| CR-07 | S3 | A message cut at 50 can end in half a surrogate pair, and log lines carrying it are lost | open |
-| CR-08 | S3 | The text boxes of Settings open a light context menu in the dark window | open |
-| CR-09 | S3 | A carriage return on its own is not folded in a log line | open |
-| CR-10 | S3 | `--preview --restarted` shows `--restarted` as the message | open |
-| CR-11 | S4 | `R062_The_longest_tooltip...` cannot fail | open |
+| CR-07 | S3 | A message cut at 50 can end in half a surrogate pair, and log lines carrying it are lost | fixed in `3eb5736` |
+| CR-08 | S3 | The text boxes of Settings open a light context menu in the dark window | fixed in `d1d909d` |
+| CR-09 | S3 | A carriage return on its own is not folded in a log line | fixed in `cdab57e` |
+| CR-10 | S3 | `--preview --restarted` shows `--restarted` as the message | fixed in `3766c7f` |
+| CR-11 | S4 | `R062_The_longest_tooltip...` cannot fail | fixed in `234da8f` |
 | CR-12 | S4 | `R010_Start_twice_subscribes_only_once` cannot see a second subscription | open |
 | CR-13 | S4 | R-035's fresh reading after a save and after a lock is not pinned | open |
 | CR-14 | S4 | `R021_Dispose_stops_and_disposes_the_timer` does not pin the tick's unsubscription | open |
@@ -233,7 +233,9 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   file, and is worth its own requirement row whatever is decided.
 - Status: open. Passed over on 2026-11-13, when the owner had the first five bugs fixed and
   CR-06 was taken in its place: the scenario has to be observed in the owner's copy before
-  anything is decided, and the Restart it needs may close other programs.
+  anything is decided, and the Restart it needs may close other programs. Passed over again
+  the same day, for the same reason, when the owner had the next five fixed (CR-07 to CR-11).
+  It is the one S3 finding left, and it waits for the owner's observation, not for a session.
 
 ### CR-06. Assigning `Topmost = true` again does nothing, so an open reminder is raised by `Activate()` alone
 
@@ -290,7 +292,17 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   counts. Whether the log should also survive a text it cannot encode (an exception message
   could carry one) is a second, smaller question for the same task. The test is the first
   probe; no test today puts anything but `x`, `y` and a space at the cut.
-- Status: open
+- Status: fixed in `3eb5736`, 2026-11-13. `NormalizeMessage` cuts one unit earlier when the
+  cut would end on a high surrogate, and R-041 says the limit counts UTF-16 units. The owner
+  answered the second question with yes (ADR 0088): `FileDecisionLog` writes with an encoding
+  of its own, and half a pair becomes U+FFFD instead of costing the line (R-110). The tests
+  are `R041_A_message_cut_at_the_limit_does_not_end_in_half_a_character`,
+  `R041_A_character_of_two_units_that_ends_at_the_limit_is_kept` and
+  `R110_A_text_that_cannot_be_encoded_is_written_with_a_replacement_character`. Seen with
+  `--preview` and 49 letters, an emoji and more text: the window shows the 49 letters. Not
+  done: only the cut is guarded, so a stored message with half a pair anywhere else still
+  reaches the reminder window as written, and whether typing in Settings can leave half a
+  pair at the 50th unit is still not checked.
 
 ### CR-08. The text boxes of Settings open a light context menu in the dark window
 
@@ -304,7 +316,15 @@ No tray start was made from the worktree: it would repair the auto-start entry t
 - Direction: either a dark `ContextMenu` and `MenuItem` template in the theme, each with its
   disabled trigger (ADR 0065), or no context menu on these boxes; the keyboard shortcuts work
   either way. A choice for the owner when the task starts.
-- Status: open
+- Status: fixed in `d1d909d`, 2026-11-13. The owner chose the dark menu (ADR 0089). Implicit
+  `ContextMenu` and `MenuItem` styles in the theme were measured not to reach the menu WPF
+  builds (it stayed `#F5F5F5`), so `DarkTheme.xaml` declares a menu of its own, Cut, Copy and
+  Paste, and its `TextBox` style sets it on every text box. Measured on the worktree build's
+  `SettingsWindow`, opened by a throwaway program: all four boxes carry it, background
+  `#2A302E`, disabled items grey, the highlighted one on `#343B39`
+  (`docs/design/dark-theme.md`). Left for the owner, in their copy: Settings, a right-click
+  in a message box and in a number box, Shift+F10, and a Paste, which was disabled in every
+  run and so not seen enabled.
 
 ### CR-09. A carriage return on its own is not folded in a log line
 
@@ -318,7 +338,8 @@ No tray start was made from the worktree: it would repair the auto-start entry t
 - Confirmed by: a probe. `FormatLine(at, "first\rsecond")`: `Expected: "2026-08-28 10:00:00
   first | second"`, `Actual: "2026-08-28 10:00:00  first\rsecond"`.
 - Direction: fold `\r\n`, then `\n`, then `\r`. The test is the probe, in `DecisionLogTests`.
-- Status: open
+- Status: fixed in `cdab57e`, 2026-11-13, as the direction says; R-110 names the three forms
+  of a line break; the test is `R110_A_carriage_return_on_its_own_becomes_a_separator_too`.
 
 ### CR-10. `--preview --restarted` shows `--restarted` as the message
 
@@ -332,7 +353,12 @@ No tray start was made from the worktree: it would repair the auto-start entry t
 - Direction: the parsing is a rule, and it sits in App; `CommandLineSwitches` in Core is where
   a test can reach it (ADR 0042). Skip an argument that is one of the application's own
   switches.
-- Status: open
+- Status: fixed in `3766c7f`, 2026-11-13. `CommandLineSwitches.PreviewText` picks the text:
+  the first argument after `--preview` that is not `--preview`, `--detect`, `--detect=N` or
+  `--restarted`. A switch is passed over, not read as "no text", so
+  `--preview --restarted "Breathe"` shows `Breathe`. R-045 says so and is now `implemented`;
+  the tests are in `CommandLineSwitchesTests`. Seen with `--preview --restarted`: the window
+  shows `Ground yourself`. `--detect`'s own parsing stays in App, untouched.
 
 ## S4
 
@@ -353,7 +379,9 @@ then green against the code as it is.
 - Confirmed by: mutation 1.
 - Direction: assert that each candidate is uncut, for example that it ends with ` min`,
   `mic is on` or `full screen`, or equals the banner.
-- Status: open
+- Status: fixed in `234da8f`, 2026-11-13, as the direction says. Red against mutation 1
+  (`tooltip was cut at 63 characters: Mindfulness Reminder 1.5.1 - paused for as long as your
+  microph`), green against the code as it is.
 
 ### CR-12. `R010_Start_twice_subscribes_only_once` cannot see a second subscription
 
@@ -606,8 +634,9 @@ By severity, then by what unblocks what. Each line is one task.
 4. CR-05: observe it first; then a decision.
 5. CR-04: a design choice to measure; recheck the reminder's placement afterwards. Done.
 6. CR-06. Done.
-7. CR-07.
-8. CR-11, CR-16 and CR-19 together: three small tests, no code.
+7. CR-07. Done.
+8. CR-11, CR-16 and CR-19 together: three small tests, no code. CR-11 is done; CR-16 and
+   CR-19 remain.
 9. CR-17 with CR-18: the tests of R-113.
-10. CR-09, CR-10, CR-08, CR-20: small, any order.
+10. CR-09, CR-10, CR-08, CR-20: small, any order. The first three are done; CR-20 remains.
 11. Q2 to Q8 as the owner answers them; U1 to U6 as someone observes them.

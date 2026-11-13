@@ -135,3 +135,27 @@ have their hashes:
   emoji (CR-07), the whole output kept so no preview process is left open.
 - The WPF probe for CR-08, before and after.
 - `/wrap-up`; then the merge is proposed, not run.
+
+## What happened (2026-11-13)
+
+- Done as planned, one commit per fix: CR-09 in `cdab57e`, CR-07 in `3eb5736`, CR-10 in
+  `3766c7f`, CR-11 in `234da8f`, CR-08 in `d1d909d`; the review file was marked in the commit
+  after them.
+- CR-10: the tests were first run against today's parsing moved to Core unchanged, so that
+  the red was the behaviour and not a missing function: 7 of 15 failed, the cases with a
+  switch after `--preview`.
+- CR-08: route A did not work. With implicit `ContextMenu` and `MenuItem` styles in the theme
+  the probe still read `EditorContextMenu` and `#F5F5F5`, so route B was taken: the theme
+  declares the menu and the `TextBox` style sets it. Two things the plan did not foresee:
+  - The probe opens the menu without input, and WPF asks a command whether it can run only
+    after input, so Cut and Copy read as disabled with text selected until the probe asked
+    for the requery itself. That was the probe's fault, not the menu's.
+  - Without a command target the items stayed disabled in a window that was not the active
+    one, even after the requery; each item now names the box the menu was opened on.
+  The plan's PowerShell probe runs on WPF for .NET Framework 4, so a second throwaway
+  program, on .NET 8, opened the worktree build's `SettingsWindow` itself with a save function
+  that does nothing: no tray start, no registry. The figures in ADR 0089 are from that one.
+- A test written with the escape for U+FFFD was saved with the character itself; found when
+  the diff was read back, and put right before the commit.
+- Not done here: the things listed for the owner's copy (CR-08: a right-click, Shift+F10 and a
+  Paste in Settings), and CR-07's two leftovers, which the review entry names.
