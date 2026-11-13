@@ -25,9 +25,14 @@
 
   <application xmlns="urn:schemas-microsoft-com:asm.v3">
     <windowsSettings>
-      <!-- DPI awareness is NOT declared here: the Windows Forms analyzer (WFAC010) rejects
-           manifest DPI settings, so it comes from ApplicationHighDpiMode in the .csproj and
-           the explicit SetHighDpiMode call in App.OnStartup. -->
+      <!-- DPI awareness is declared HERE and nowhere else (R-077, ADR 0086). Windows applies
+           it before any code of the process runs. WPF declares the process system-aware as it
+           loads, which is before App.OnStartup, so a SetHighDpiMode call there came too late
+           and had no effect. The Windows Forms analyzer (WFAC010) objects to DPI settings in a
+           manifest; it is muted in the .csproj, with the reason. dpiAwareness is read by
+           Windows 10 1607 and later; dpiAware is what an older Windows reads. -->
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2, PerMonitor</dpiAwareness>
       <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
     </windowsSettings>
   </application>

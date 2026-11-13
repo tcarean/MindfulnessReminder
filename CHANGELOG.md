@@ -18,6 +18,9 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
 - A reminder left open under another always-on-top window (Task Manager set to "Always on
   top", a picture-in-picture player) is raised above it when the next reminder falls due or
   the computer is unlocked; it used to stay covered (R-012, R-023).
+- On monitors set to different scales, the tray menu, Settings and About are drawn at the
+  scale of the monitor they are on instead of being stretched: the application is now
+  per-monitor DPI aware, which it was meant to be and was not (R-077; ADR 0086).
 
 ## [1.5.1] - 2026-11-12
 

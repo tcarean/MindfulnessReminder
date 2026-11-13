@@ -68,6 +68,25 @@ public partial class BreakWindow : Window
     }
 
     /// <summary>
+    /// Centres the reminder again when the scale it is drawn at changes (R-070, R-077).
+    ///
+    /// The process is per-monitor DPI aware, so a window is measured at the scale of the
+    /// monitor it is on. The handle can be created on another monitor than the primary one
+    /// (Windows picks where a new window starts), and the first placement is then worked out
+    /// at that monitor's scale; moving onto the primary monitor changes the scale, and with it
+    /// the window's size in pixels and what its coordinates mean. The same happens when the
+    /// user changes the primary monitor's scale while a reminder is open.
+    /// </summary>
+    /// <param name="oldDpi">The scale before the change; not read.</param>
+    /// <param name="newDpi">The scale now in force; not read, the window's source has it.</param>
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi);
+
+        MoveToPrimaryScreen();
+    }
+
+    /// <summary>
     /// Puts the reminder on the primary monitor, always the same one.
     ///
     /// Following the mouse pointer instead sounds friendlier but is not reproducible: the

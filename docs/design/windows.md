@@ -5,7 +5,8 @@
 > `src/MindfulnessReminder.App/BreakWindow.xaml`, `src/MindfulnessReminder.App/BreakWindow.xaml.cs`,
 > `src/MindfulnessReminder.App/SettingsWindow.xaml.cs`,
 > `src/MindfulnessReminder.App/AboutWindow.xaml`,
-> `src/MindfulnessReminder.App/WpfReminderPresenter.cs`, `src/MindfulnessReminder.App/App.xaml.cs`.
+> `src/MindfulnessReminder.App/WpfReminderPresenter.cs`, `src/MindfulnessReminder.App/App.xaml.cs`,
+> `src/MindfulnessReminder.App/app.manifest`.
 > A change to the code this describes means this note is updated in the same task, or deleted with
 > the decision it explains.
 
@@ -28,6 +29,21 @@ nobody presses mid-sentence, close it as they close any window. If another key e
 to be likely mid-sentence, the same handler is the place.
 
 See ADR 0060 and ADR 0081; About's own reasons are ADR 0066.
+
+**The scale the windows are drawn at.** The process is per-monitor DPI aware, declared in
+`app.manifest` and nowhere in the code: WPF declares the process system-aware as it loads,
+before `App.OnStartup` runs, so a call there has no effect (ADR 0086). WPF then draws each window
+at the scale of the monitor it is on and handles a change of scale by itself; the one place
+that works in pixels is `BreakWindow.MoveToPrimaryScreen`. `Screen.WorkingArea` is in physical
+pixels and the window's `Left` and `Top` are in units of the window's own scale, so the
+placement converts with the window's `CompositionTarget.TransformFromDevice`. That transform is
+the scale of the monitor the handle was created on, which Windows picks and which is not always
+the primary one. Moving the window onto the primary monitor then changes its scale, its size
+in pixels and what `Left` and `Top` mean, and the first placement is left off-centre: measured
+on 2026-11-13 with the primary monitor at 150 % and the handle started on a second monitor at
+100 %, the reminder was at 1110, 570 instead of 630, 315. `OnDpiChanged` therefore calls
+`MoveToPrimaryScreen` again, with the transform that is then in force. The same override
+re-centres a reminder that is open while the user changes the primary monitor's scale.
 
 **Raising a reminder that is already open.** `BreakWindow` is `Topmost` from its XAML, so its
 handle is created always-on-top, above everything open at that moment. A reminder left open

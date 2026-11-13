@@ -15,7 +15,14 @@
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+
+    <!-- The DPI mode, PerMonitorV2, is declared in app.manifest (ADR 0086). WFAC010 asks for it
+         to be set through ApplicationHighDpiMode or Application.SetHighDpiMode instead, and is
+         muted here because neither works in this application: the property is read only by
+         Windows Forms' generated ApplicationConfiguration.Initialize(), which a WPF entry point
+         never calls, and the call comes after WPF has already declared the process
+         system-aware (measured on 2026-11-13: the process stayed system-aware). -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
 
     <!-- x64 whatever SDK builds it, so the release's zip is the win-x64 its name says: with
          PlatformTarget x64 the SDK takes win-x64 for the executable (DefaultAppHostRuntimeIdentifier),
