@@ -162,7 +162,8 @@ public sealed record ReminderSettings(bool PeriodicEnabled, int IntervalMinutes)
     /// surrounding space is dropped; nothing at all -- a wiped registry value, or a box the
     /// user cleared with that reminder switched off -- means the default; and anything past
     /// the limit is cut at it, so a hand-edited registry cannot hand the window a longer text
-    /// than the dialog lets anyone type.
+    /// than the dialog lets anyone type. The limit counts UTF-16 units, and the cut never
+    /// falls inside a character that takes two of them: that character is dropped whole.
     /// </summary>
     /// <param name="message">The text as written; <c>null</c> reads as the default.</param>
     /// <returns>
@@ -192,7 +193,14 @@ public sealed record ReminderSettings(bool PeriodicEnabled, int IntervalMinutes)
 
         if (trimmed.Length > MaxMessageLength)
         {
-            trimmed = trimmed[..MaxMessageLength].TrimEnd();
+            // The limit counts UTF-16 units, and a character outside the basic plane (an
+            // emoji) takes two. A cut between them would leave half a character, which no
+            // window can draw and no file can store, so the first half goes too.
+            var kept = char.IsHighSurrogate(trimmed[MaxMessageLength - 1])
+                ? MaxMessageLength - 1
+                : MaxMessageLength;
+
+            trimmed = trimmed[..kept].TrimEnd();
         }
 
         return trimmed.Length == message.Length && ReferenceEquals(text, message)

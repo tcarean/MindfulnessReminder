@@ -50,7 +50,11 @@ See ADR 0056.
 
 **Messages are normalized like numbers are clamped.** `NormalizeMessage` turns line breaks
 and tabs into spaces, trims, reads nothing at all as `DefaultMessage`, and cuts at
-`MaxMessageLength` (50). The registry goes through it silently; the dialog refuses a blank
+`MaxMessageLength` (50). The 50 are UTF-16 units, as the `TextBox` counts them, so the cut
+looks at the unit it would end on: a high surrogate there is the first half of a character
+that takes two, and it is dropped with its other half (ADR 0088). Only the cut is guarded: a
+stored message with half a pair anywhere else is passed on as it is. The registry goes
+through it silently; the dialog refuses a blank
 message with `IsMessageAcceptable` instead, but only for a reminder that is switched on --
 the same rule the numbers follow, for the same reason. The `TextBox` `MaxLength` reads the
 constant through `x:Static`, so the box and the clamp cannot drift apart.

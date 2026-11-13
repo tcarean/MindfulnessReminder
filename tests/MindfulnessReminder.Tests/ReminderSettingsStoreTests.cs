@@ -368,6 +368,27 @@ public class ReminderSettingsStoreTests
             ReminderSettings.NormalizeMessage(written));
     }
 
+    /// <summary>
+    /// The limit counts UTF-16 units, and a character outside the basic plane takes two: a
+    /// cut that falls between them must not leave the first half behind (CR-07).
+    /// </summary>
+    [Fact]
+    public void R041_A_message_cut_at_the_limit_does_not_end_in_half_a_character()
+    {
+        var letters = new string('x', ReminderSettings.MaxMessageLength - 1);
+
+        Assert.Equal(letters, ReminderSettings.NormalizeMessage(letters + "\U0001F600 and more"));
+    }
+
+    /// <summary>A pair that ends exactly at the limit is whole, and stays.</summary>
+    [Fact]
+    public void R041_A_character_of_two_units_that_ends_at_the_limit_is_kept()
+    {
+        var written = new string('x', ReminderSettings.MaxMessageLength - 2) + "\U0001F600";
+
+        Assert.Equal(written, ReminderSettings.NormalizeMessage(written + " and more"));
+    }
+
     [Theory]
     [InlineData(null, false)]
     [InlineData("", false)]

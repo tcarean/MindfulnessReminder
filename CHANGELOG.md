@@ -25,6 +25,10 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
   menu, Settings and About have not yet been looked at on such monitors (R-077; ADR 0086).
 - A carriage return on its own inside an event's text no longer splits its line of the
   decision log in two; it becomes ` | ` like the other line breaks (R-110).
+- A message longer than 50 characters whose 50th falls inside an emoji is now cut before the
+  emoji, not through it. The decision log no longer loses a line whose text holds such a half
+  character: it writes the line with a replacement character in its place (R-041, R-110;
+  ADR 0088).
 
 ## [1.5.1] - 2026-11-12
 

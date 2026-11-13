@@ -15,6 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+using System.Text;
+
 namespace MindfulnessReminder.Core;
 
 /// <summary>
@@ -31,6 +33,13 @@ public sealed class FileDecisionLog : IDecisionLog
 
     /// <summary>Where the file goes when it is rotated, replacing the previous one.</summary>
     public const string RotatedFileName = "log.1.txt";
+
+    /// <summary>
+    /// UTF-8 with no byte order mark, and with a replacement character (U+FFFD) for what has no
+    /// UTF-8 form, half a surrogate pair. The encoding <c>File.AppendAllText</c> uses when none
+    /// is named throws on that instead, and the line would be lost (R-110, ADR 0088).
+    /// </summary>
+    private static readonly UTF8Encoding Encoding = new(encoderShouldEmitUTF8Identifier: false);
 
     private readonly string _folder;
     private readonly string _path;
@@ -67,7 +76,10 @@ public sealed class FileDecisionLog : IDecisionLog
 
             // Stamped with the local clock, read directly: the time is for the owner's eyes,
             // in the owner's time, and no rule depends on it (ADR 0073).
-            File.AppendAllText(_path, DecisionLog.FormatLine(DateTimeOffset.Now, text) + Environment.NewLine);
+            File.AppendAllText(
+                _path,
+                DecisionLog.FormatLine(DateTimeOffset.Now, text) + Environment.NewLine,
+                Encoding);
         }
         catch (Exception)
         {
