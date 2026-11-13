@@ -32,6 +32,9 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
 - `--preview` no longer shows one of the application's own switches as the message:
   `--preview --restarted` shows `Ground yourself`, where it showed `--restarted` (R-045,
   R-102).
+- A right-click in a text box of Settings opens a dark Cut, Copy and Paste menu; it was a
+  light one over the dark window (R-075; ADR 0089). Measured on the Settings window opened
+  by a test program; not yet looked at in the tray copy.
 
 ## [1.5.1] - 2026-11-12
 

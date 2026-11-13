@@ -67,6 +67,29 @@ Rules that are easy to break:
 
 See ADR 0065.
 
+**The text boxes carry a context menu of the theme's own.** A `TextBox` with no
+`ContextMenu` gets one built by WPF on each right-click, Cut, Copy and Paste in the stock
+light templates, and implicit `ContextMenu` and `MenuItem` styles in the theme do not reach
+it (measured, ADR 0089). So the theme declares the menu, `TextBoxContextMenu`, and the
+implicit `TextBox` style sets it; a window that merges the theme gets it on every text box
+with nothing in its own XAML. The parts, in the order the file needs them (a `StaticResource`
+is resolved where it is read, so each sits above its first use):
+
+- `DarkContextMenuStyle` and `DarkMenuItemStyle`, keyed, not implicit. The item template is
+  for a plain item: a caption and a shortcut, no icon, tick or submenu. The shortcut is a
+  `TextBlock` inside the template, which the implicit `TextBlock` style is not relied on to
+  reach, so it has its colour set there and the disabled trigger greys it by name.
+- `TextBoxContextMenu`: the three items, each with `ApplicationCommands.Cut`, `Copy` or
+  `Paste` and with `CommandTarget` bound to the menu's `PlacementTarget`, the box it was
+  opened on. Without the target the commands were disabled in a window that was not the
+  active one. The menu is one object per window, shared by its boxes.
+- The setter in the `TextBox` style.
+
+A disabled box is expected to open no menu, as before: `ContextMenuService.ShowOnDisabled` is
+left at its default. Not looked at.
+
+See ADR 0089.
+
 **About is a window, not a `MessageBox`.** A Win32 dialog cannot be themed, and a white About
 box opening out of a dark tray menu reads as a different program. It shows
 `LicenseInfo.AboutText` in **one** `TextBlock` rather than laying the banner, the copyright
