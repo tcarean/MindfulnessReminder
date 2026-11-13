@@ -58,6 +58,21 @@ target.
   three items are disabled and grey (`#5E6A66`); with the text selected Cut and Copy are
   enabled (`#E6EAE8`) and the highlighted item is drawn on `#343B39`. Paste was disabled in
   every run, in WPF's menu as well; what the clipboard held was not looked at, so an enabled
-  Paste was not seen. The menu was opened by the program, not by a mouse or the keyboard, and
-  no command was run. Still to be looked at in the tray copy: a right-click in a message box
-  and in a number box, Shift+F10, and a Paste.
+  Paste was not seen. No command was run.
+- Measured again after the branch review, the menu opened by WPF's own opener (the method
+  behind a right-click and Shift+F10, `PopupControlService.RaiseContextMenuOpeningEvent`,
+  reached by reflection), not by the program setting the menu's properties: the menu's
+  `PlacementTarget` is the box without being set locally, each item's target is that box,
+  and after the menu closes and opens on another box the target is the other box. The items
+  take their enabled state from the previous opening until WPF next asks the commands, which
+  it does after a mouse button or a key goes up; the probe had no input and asked itself,
+  after which Cut and Copy were enabled. With real input that order was not seen.
+- The popup is a layered window with `AllowsTransparency` on and a transparent composition
+  background, so nothing opaque is expected outside the rounded border. It was not seen on
+  screen: the workstation was locked during the measurement, and a capture showed the lock
+  screen.
+- The font is set in the style because a menu does not take its window's: one with no font
+  set, opened on a box of the same window, was Segoe UI 12 from WPF's default style, beside
+  boxes at 13.
+- Still to be looked at in the tray copy: a right-click in a message box and in a number
+  box, Shift+F10, a Paste, and the menu's corners.

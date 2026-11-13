@@ -103,6 +103,10 @@
         <Setter Property="BorderBrush" Value="{StaticResource ControlBorderHoverBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="3" />
+
+        <!-- The windows' font, repeated because a menu does not take it from its window:
+             measured on 2026-11-13, one with no font set came out at 12, from WPF's own
+             default style, beside boxes at 13. -->
         <Setter Property="FontFamily" Value="Segoe UI" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="SnapsToDevicePixels" Value="True" />

@@ -167,12 +167,17 @@ have their hashes:
     pair (an attribute stores UTF-8), so the test got U+FFFD; the half is now added in the
     test's body, and the test was shown red against the code before the fix.
   - `--preview --detect 30` showed `30`: the value after a bare `--detect` is now passed over.
-- Left from that review, not fixed and not entered in the review file, since nobody but the
-  reviewer has followed them (ADR 0084):
-  - a real right-click reaches the menu's command target by another route than the probes
-    took, and the menu's corners on screen were not seen (both settle in the tray copy);
-  - `--detect --restarted 30` takes one reading (R-102), its parsing still in App;
-  - a character of several code points can still be cut between them;
-  - the tooltip test repeats three endings from `TrayTooltip`; the field `Encoding` in
-    `FileDecisionLog` hides the type of that name; the menu's font is written a third time;
-    `PreviewText` answers `null` for two cases, so App scans the arguments twice.
+- Asked whether the other eight were worth fixing, the owner had everything fixed that was:
+  - `--detect --restarted 30` took one reading. Its parsing moved from App to Core
+    (`TryGetDetectDuration`), tests first against the parsing as it was (two rows red), and
+    `--preview` got one call (`TryGetPreviewText`) in place of two scans. `84154e0`.
+  - The tooltip test compares each tooltip with its uncut text. `48421c2`.
+  - The field `Encoding` in `FileDecisionLog` is `Utf8WithReplacement`. `9192267`.
+  - The menu's command target, measured with WPF's own opener in place of the probe setting
+    the properties: it works. No code changed.
+  - The menu's font: measured, the two setters are needed, and now say why.
+  - The menu's corners: the popup is measured transparent, but a screen capture showed the
+    lock screen, the workstation being locked while the owner worked from another device.
+    Left for the tray copy.
+- Not fixed: a character of several code points can still be cut between them. It is Q9 in
+  the review file, with a recommendation to leave it.

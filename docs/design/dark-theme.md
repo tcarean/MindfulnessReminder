@@ -82,7 +82,11 @@ is resolved where it is read, so each sits above its first use):
 - `TextBoxContextMenu`: the three items, each with `ApplicationCommands.Cut`, `Copy` or
   `Paste` and with `CommandTarget` bound to the menu's `PlacementTarget`, the box it was
   opened on. Without the target the commands were disabled in a window that was not the
-  active one. The menu is one object per window, shared by its boxes.
+  active one. The menu is one object per window, shared by its boxes, so its items keep the
+  enabled state of the last opening until WPF asks the commands again, which it does after
+  the click or the key that opens the menu.
+- The menu's font is set in its style, the same Segoe UI 13 the two windows carry: a menu
+  takes its font from WPF's default style, not from its window (ADR 0089).
 - The setter in the `TextBox` style.
 
 A disabled box is expected to open no menu, as before: `ContextMenuService.ShowOnDisabled` is

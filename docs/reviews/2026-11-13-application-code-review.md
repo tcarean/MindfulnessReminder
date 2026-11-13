@@ -292,7 +292,7 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   counts. Whether the log should also survive a text it cannot encode (an exception message
   could carry one) is a second, smaller question for the same task. The test is the first
   probe; no test today puts anything but `x`, `y` and a space at the cut.
-- Status: fixed in `3eb5736`, 2026-11-13, and completed in the commit after `e370cec`.
+- Status: fixed in `3eb5736`, 2026-11-13, and completed in `3e9338a`.
   `NormalizeMessage` drops a high surrogate at the end of a message, whether the cut left it
   or the text was stored so (a value the old version had saved is 50 units and is not cut
   again; the first fix missed it, the branch review found it), and R-041 says the limit
@@ -306,8 +306,8 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   `--preview` and 49 letters, an emoji and more text: the window shows the 49 letters. Not
   done: only the end is guarded, so a stored message with half a pair in its middle still
   reaches the reminder window as written; a character made of several code points (a flag)
-  can still be cut between them; and whether typing in Settings can leave half a pair at
-  the 50th unit is still not checked.
+  can still be cut between them (Q9); and whether typing in Settings can leave half a pair
+  at the 50th unit is still not checked.
 
 ### CR-08. The text boxes of Settings open a light context menu in the dark window
 
@@ -327,9 +327,12 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   Paste, and its `TextBox` style sets it on every text box. Measured on the worktree build's
   `SettingsWindow`, opened by a throwaway program: all four boxes carry it, background
   `#2A302E`, disabled items grey, the highlighted one on `#343B39`
-  (`docs/design/dark-theme.md`). Left for the owner, in their copy: Settings, a right-click
-  in a message box and in a number box, Shift+F10, and a Paste, which was disabled in every
-  run and so not seen enabled.
+  (`docs/design/dark-theme.md`). Measured again after the branch review with the menu
+  opened by WPF's own opener, the method behind a right-click: the commands reach the box
+  the menu was opened on, and the popup is a transparent layered window (ADR 0089). Left for
+  the owner, in their copy: Settings, a right-click in a message box and in a number box,
+  Shift+F10, a Paste, which was disabled in every run and so not seen enabled, and the
+  menu's corners, which no capture could show while the workstation was locked.
 
 ### CR-09. A carriage return on its own is not folded in a log line
 
@@ -358,15 +361,17 @@ No tray start was made from the worktree: it would repair the auto-start entry t
 - Direction: the parsing is a rule, and it sits in App; `CommandLineSwitches` in Core is where
   a test can reach it (ADR 0042). Skip an argument that is one of the application's own
   switches.
-- Status: fixed in `3766c7f`, 2026-11-13. `CommandLineSwitches.PreviewText` picks the text:
-  the first argument after `--preview` that is not `--preview`, `--detect`, `--detect=N` or
-  `--restarted`, nor the value after a bare `--detect` (`--preview --detect 30` showed `30`
-  until the branch review found it; fixed in the commit after `e370cec`). A switch is passed over, not read as "no text", so
-  `--preview --restarted "Breathe"` shows `Breathe`. R-045 says so and is now `implemented`;
+- Status: fixed in `3766c7f`, 2026-11-13. `CommandLineSwitches.TryGetPreviewText` picks the
+  text: the first argument after `--preview` that is not `--preview`, `--detect`,
+  `--detect=N` or `--restarted`, nor the value after a bare `--detect` (`--preview --detect
+  30` showed `30` until the branch review found it; fixed in `3e9338a`). A switch is passed
+  over, not read as "no text", so `--preview --restarted "Breathe"` shows `Breathe`. R-045 says so and is now `implemented`;
   the tests are in `CommandLineSwitchesTests`. Seen with `--preview --restarted`: the window
-  shows `Ground yourself`. `--detect`'s own parsing stays in App, untouched, and still
-  reads `--restarted` as its seconds: `--detect --restarted 30` takes one reading, not a
-  30-second timeline, against R-102. Not fixed here.
+  shows `Ground yourself`. The branch review found the same fault in `--detect`, which read
+  `--restarted` as its seconds: fixed in `84154e0`, where its parsing moved to Core as
+  `CommandLineSwitches.TryGetDetectDuration` (R-081, R-082 now `implemented`, R-102). Seen
+  with `--detect --restarted 3`: the dialog comes after the three seconds and begins
+  `Watched for 3 seconds.`
 
 ## S4
 
@@ -389,7 +394,9 @@ then green against the code as it is.
   `mic is on` or `full screen`, or equals the banner.
 - Status: fixed in `234da8f`, 2026-11-13, as the direction says. Red against mutation 1
   (`tooltip was cut at 63 characters: Mindfulness Reminder 1.5.1 - paused for as long as your
-  microph`), green against the code as it is.
+  microph`), green against the code as it is. Rewritten in `48421c2` after the branch
+  review: each tooltip is compared with its uncut text, not with three endings copied from
+  `TrayTooltip`, so a reworded reason that fits no longer reads as a cut.
 
 ### CR-12. `R010_Start_twice_subscribes_only_once` cannot see a second subscription
 
@@ -539,6 +546,15 @@ Each comes with a recommendation (the rule "Questions to the owner"). None was d
 - **Q8. A complaint that outlives its cause.** After a refused Save, the complaint is cleared
   only by typing (`OnAnyTextChanged`). Unticking the reminder or the pause, which also resolves
   it, leaves it on screen until Save. Recommendation: clear it on the checkboxes too.
+- **Q9. A character made of several code points can still be cut in the middle.** After
+  CR-07 the cut at 50 never leaves half a surrogate pair, but a flag (two regional
+  indicators), a joined family or a letter with a skin tone is several whole pairs, and the
+  cut can fall between them: 48 letters and a flag keep the letters and one regional
+  indicator, drawn as a boxed letter. Found by the branch review of 2026-11-13, by reading;
+  no probe was run. Backing the cut off to a text-element boundary
+  (`StringInfo`) would cover it without changing what the limit counts. Recommendation: leave
+  it; it needs such a character exactly at the 50th unit of a message, and the result is one
+  odd symbol at the end.
 
 ## Unverified claims
 
@@ -647,4 +663,4 @@ By severity, then by what unblocks what. Each line is one task.
    CR-19 remain.
 9. CR-17 with CR-18: the tests of R-113.
 10. CR-09, CR-10, CR-08, CR-20: small, any order. The first three are done; CR-20 remains.
-11. Q2 to Q8 as the owner answers them; U1 to U6 as someone observes them.
+11. Q2 to Q9 as the owner answers them; U1 to U6 as someone observes them.
