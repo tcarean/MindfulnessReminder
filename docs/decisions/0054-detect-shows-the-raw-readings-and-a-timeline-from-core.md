@@ -67,7 +67,10 @@ run it means leaving full screen and destroying the state being measured" (`CLAU
   starting a new line, a reading that returns as a second run, what each line says, the count of
   held-back readings, the sentence for a run that held nothing back, runs over a minute). The
   switch, its parsing and clamp, the sampling and the message box are in `App.xaml.cs`, with no
-  test: launch the application with `--detect` and with `--detect 60`.
+  test: launch the application with `--detect` and with `--detect 60`. (Restated 2026-11-13:
+  the switch's parsing and clamp are now `CommandLineSwitches.TryGetDetectDuration` in Core,
+  tested under R-081, R-082 and R-102; the sampling and the message box stay in
+  `App.xaml.cs`, with no test.)
 
 Source: CLAUDE.md ("Pausing for what the user is doing", "Build & test"); README.md ("Checking
 it on your machine"); src/MindfulnessReminder.App/App.xaml.cs (`DetectSwitch`,

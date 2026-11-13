@@ -54,7 +54,10 @@
     refusal rather than an error.
   - `CommandLineSwitches.cs` — the three switches (`--preview`, `--detect`, `--restarted`) and
     the two ways of finding one in the arguments, so App parses and Core decides on the same
-    strings.
+    strings; `TryGetPreviewText`, which says whether `--preview` was given and picks the text
+    it shows; and `TryGetDetectDuration`, which reads how long `--detect` watches for, with
+    its fallback to one reading and its ten-minute cap (`MaxDetectDuration`). App asks these
+    two and parses nothing itself.
   - `ApplicationRestart.cs` — the values handed to `RegisterApplicationRestart` (the command
     line `--restarted`, `RESTART_NO_REBOOT`) and the two decisions around them: which start
     registers (the tray copy, never `--preview` or `--detect`) and which start is a restart,
@@ -71,7 +74,9 @@
     reminder gets one line at the start, one per change of reason and one, with the total, when
     it appears (ADR 0073).
   - `FileDecisionLog.cs` — the decision log as a file, in the folder App gives it: stamps each
-    text with `DecisionLog.FormatLine`, appends, moves the file to `log.1.txt` once it is past
+    text with `DecisionLog.FormatLine`, appends it as UTF-8 through an encoding of its own that
+    replaces what it cannot encode instead of throwing (ADR 0088), moves the file to
+    `log.1.txt` once it is past
     the cap (a move that fails is let go and the line is written anyway), and swallows every
     error, so a log can never take the tray down. In Core so the tests run it against a temp
     folder (ADR 0073).

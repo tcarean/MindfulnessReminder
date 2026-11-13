@@ -62,25 +62,38 @@ public class TrayTooltipTests
     [Fact]
     public void R062_The_longest_tooltip_the_app_can_produce_fits_the_tray_limit()
     {
-        var candidates = new List<string>
+        var longestCountdown = TimeSpan.FromMinutes(ReminderSettings.MaxIntervalMinutes);
+        var shapes = new List<(TimeSpan? Remaining, ReminderSuppression Suppression)>
         {
-            TrayTooltip.Format(VersionInfo.Banner, null),
-            TrayTooltip.Format(VersionInfo.Banner, TimeSpan.FromMinutes(ReminderSettings.MaxIntervalMinutes)),
+            (null, ReminderSuppression.None),
         };
 
         foreach (var suppression in Enum.GetValues<ReminderSuppression>())
         {
-            candidates.Add(TrayTooltip.Format(
-                VersionInfo.Banner,
-                TimeSpan.FromMinutes(ReminderSettings.MaxIntervalMinutes),
-                suppression));
+            shapes.Add((longestCountdown, suppression));
         }
 
-        var longest = candidates.MaxBy(c => c.Length)!;
+        foreach (var (remaining, suppression) in shapes)
+        {
+            var tooltip = TrayTooltip.Format(VersionInfo.Banner, remaining, suppression);
 
-        Assert.True(
-            longest.Length <= TrayTooltip.MaxLength,
-            $"tooltip is {longest.Length} characters: {longest}");
+            Assert.True(
+                tooltip.Length <= TrayTooltip.MaxLength,
+                $"tooltip is {tooltip.Length} characters: {tooltip}");
+
+            // The length alone proves nothing: Format cuts at the limit, so every shape fits
+            // whatever its text. What R-062 promises is that none of them needed the cut
+            // (CR-11). Behind a banner of one character the same shape is far below the
+            // limit and so comes out whole: what follows the banner there is what has to
+            // follow the real banner here, to the last character.
+            const string ShortBanner = "x";
+            var whole = VersionInfo.Banner
+                        + TrayTooltip.Format(ShortBanner, remaining, suppression)[ShortBanner.Length..];
+
+            Assert.True(
+                tooltip == whole,
+                $"tooltip was cut at {tooltip.Length} characters: {tooltip}; whole, it is {whole.Length}: {whole}");
+        }
     }
 
     /// <summary>

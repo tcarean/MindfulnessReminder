@@ -93,6 +93,121 @@
         </Style.Triggers>
     </Style>
 
+    <!--
+        The menu a right-click in a text box opens. WPF draws it with the stock templates,
+        light, whatever the window around it looks like (R-075).
+    -->
+    <Style x:Key="DarkContextMenuStyle" TargetType="ContextMenu">
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ControlBorderHoverBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="3" />
+
+        <!-- The windows' font, repeated because a menu does not take it from its window:
+             measured on 2026-11-13, one with no font set came out at 12, from WPF's own
+             default style, beside boxes at 13. -->
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="4">
+                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceDisabledBrush}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource ControlBorderDisabledBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        One template, for an item with no icon, no tick and no submenu, which is all the three
+        commands of a text box need. The shortcut is a TextBlock of the template, and the
+        implicit TextBlock style above is not relied on to reach it there: it carries its
+        colour here and the disabled trigger greys it by name.
+    -->
+    <Style x:Key="DarkMenuItemStyle" TargetType="MenuItem">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Chrome"
+                            Background="Transparent"
+                            CornerRadius="3"
+                            Padding="10,5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <ContentPresenter Grid.Column="0"
+                                              ContentSource="Header"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="True" />
+
+                            <TextBlock x:Name="Gesture"
+                                       Grid.Column="1"
+                                       Margin="28,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Text="{TemplateBinding InputGestureText}"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Disabled comes last, so a disabled item under the mouse stays flat. -->
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}" />
+                            <Setter TargetName="Gesture" Property="Foreground" Value="{StaticResource TextDisabledBrush}" />
+                            <Setter TargetName="Chrome" Property="Background" Value="Transparent" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        The menu itself, which the TextBox style below hands to every text box. The one WPF
+        builds when a box has none cannot be restyled from here: measured on 2026-11-13,
+        implicit ContextMenu and MenuItem styles in this dictionary left it light (ADR 0089).
+        So the theme supplies the same three commands in a menu it can paint.
+
+        Each command is sent to the box the menu was opened on. Without that target, measured
+        the same day in a window that was not the active one, Cut and Copy stayed disabled
+        with text selected in the box.
+    -->
+    <ContextMenu x:Key="TextBoxContextMenu" Style="{StaticResource DarkContextMenuStyle}">
+        <MenuItem Header="Cu_t"
+                  Command="ApplicationCommands.Cut"
+                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  Style="{StaticResource DarkMenuItemStyle}" />
+        <MenuItem Header="_Copy"
+                  Command="ApplicationCommands.Copy"
+                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  Style="{StaticResource DarkMenuItemStyle}" />
+        <MenuItem Header="_Paste"
+                  Command="ApplicationCommands.Paste"
+                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  Style="{StaticResource DarkMenuItemStyle}" />
+    </ContextMenu>
+
     <Style TargetType="TextBox">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
@@ -103,6 +218,9 @@
         <Setter Property="CaretBrush" Value="{StaticResource TextPrimaryBrush}" />
         <Setter Property="SelectionBrush" Value="{StaticResource AccentBrush}" />
         <Setter Property="SelectionOpacity" Value="0.5" />
+
+        <!-- The dark menu above, in place of the light one WPF builds for a box with none. -->
+        <Setter Property="ContextMenu" Value="{StaticResource TextBoxContextMenu}" />
 
         <Setter Property="Template">
             <Setter.Value>

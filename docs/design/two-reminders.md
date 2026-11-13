@@ -50,7 +50,14 @@ See ADR 0056.
 
 **Messages are normalized like numbers are clamped.** `NormalizeMessage` turns line breaks
 and tabs into spaces, trims, reads nothing at all as `DefaultMessage`, and cuts at
-`MaxMessageLength` (50). The registry goes through it silently; the dialog refuses a blank
+`MaxMessageLength` (50). The 50 are UTF-16 units, as the `TextBox` counts them, so a cut
+can fall between the two units of a character that takes two. After the cut, and also when
+there was none, the last unit is looked at: a high surrogate there is the first half of
+such a character, and it is dropped, and the look repeated, since a hand-written value
+can have another half before it (ADR 0088). It is asked whatever the length because the
+version that cut through a pair could save the result, 50 units that no cut touches again.
+Only the end is guarded: a stored message with half a pair in its middle is passed on as it
+is. The registry goes through it silently; the dialog refuses a blank
 message with `IsMessageAcceptable` instead, but only for a reminder that is switched on --
 the same rule the numbers follow, for the same reason. The `TextBox` `MaxLength` reads the
 constant through `x:Static`, so the box and the clamp cannot drift apart.
@@ -69,5 +76,13 @@ See ADR 0058.
 
 `--preview "some text"` shows a message without saving it, through the same normalization
 the saved one gets. It is the way to see what a candidate message looks like at the cap.
+Which argument is the text is Core's to say (`CommandLineSwitches.TryGetPreviewText`), so
+that a test reaches it: the first one after the switch that is not a switch of the
+application's own, nor the number of seconds of a bare `--detect`: the next argument after
+it that is not a switch, as `TryGetDetectDuration` reads it, wherever that `--detect`
+stands, before `--preview` as well. A switch is passed over, not read as "no text", because
+ignoring `--restarted` (R-102) means the command line reads as it would without it:
+`--preview --restarted "Breathe"` shows `Breathe`. The one call answers both whether the
+switch was given and what its text is, so `App.PreviewMessage` only normalizes the answer.
 
 See ADR 0057.

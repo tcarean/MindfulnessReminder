@@ -58,13 +58,21 @@ public static class DecisionLog
     /// Renders one line of the file: the time, two spaces, the text on one line.
     /// </summary>
     /// <param name="localTime">When the event happened, in the time the owner reads.</param>
-    /// <param name="text">The event's text; not null. Line breaks become <c> | </c>.</param>
+    /// <param name="text">
+    /// The event's text; not null. Each line break (a carriage return and a line feed together,
+    /// or either alone) becomes <c> | </c>.
+    /// </param>
     /// <returns><c>yyyy-MM-dd HH:mm:ss</c>, two spaces, the folded text.</returns>
     public static string FormatLine(DateTimeOffset localTime, string text)
     {
         ArgumentNullException.ThrowIfNull(text);
 
-        var folded = text.Replace("\r\n", BreakSeparator).Replace("\n", BreakSeparator);
+        // The pair first, so it is one break and not two; a carriage return left after that
+        // stands alone, and an editor shows it as a line break like the others.
+        var folded = text
+            .Replace("\r\n", BreakSeparator)
+            .Replace("\n", BreakSeparator)
+            .Replace("\r", BreakSeparator);
         return localTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + "  " + folded;
     }
 

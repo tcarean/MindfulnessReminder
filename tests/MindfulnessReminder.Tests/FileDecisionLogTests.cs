@@ -50,6 +50,21 @@ public sealed class FileDecisionLogTests : IDisposable
         Assert.Matches(@"^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d  Workstation locked$", lines[0]);
     }
 
+    /// <summary>
+    /// Half a surrogate pair has no UTF-8 form. An exception's message can carry one, and the
+    /// line that reports it is the one most worth having, so it is written with the
+    /// replacement character in that place instead of being lost (CR-07).
+    /// </summary>
+    [Fact]
+    public void R110_A_text_that_cannot_be_encoded_is_written_with_a_replacement_character()
+    {
+        new FileDecisionLog(_folder).Write("a\uD83Db");
+
+        var lines = File.ReadAllLines(LogPath);
+        Assert.Single(lines);
+        Assert.EndsWith("  a\uFFFDb", lines[0]);
+    }
+
     [Fact]
     public void R110_Lines_end_in_the_platform_newline_and_the_file_has_no_byte_order_mark()
     {

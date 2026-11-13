@@ -162,7 +162,9 @@ public sealed record ReminderSettings(bool PeriodicEnabled, int IntervalMinutes)
     /// surrounding space is dropped; nothing at all -- a wiped registry value, or a box the
     /// user cleared with that reminder switched off -- means the default; and anything past
     /// the limit is cut at it, so a hand-edited registry cannot hand the window a longer text
-    /// than the dialog lets anyone type.
+    /// than the dialog lets anyone type. The limit counts UTF-16 units, and a message
+    /// never ends in the first half of a character that takes two of them, whether the cut
+    /// left it there or it was written so: the half is dropped.
     /// </summary>
     /// <param name="message">The text as written; <c>null</c> reads as the default.</param>
     /// <returns>
@@ -193,6 +195,23 @@ public sealed record ReminderSettings(bool PeriodicEnabled, int IntervalMinutes)
         if (trimmed.Length > MaxMessageLength)
         {
             trimmed = trimmed[..MaxMessageLength].TrimEnd();
+        }
+
+        // The limit counts UTF-16 units, and a character outside the basic plane (an emoji)
+        // takes two. A high surrogate at the end is the first of two with the second missing,
+        // half a character, which no window can draw and no file can store, so it goes too.
+        // Asked whatever the length, not only after the cut above: the version that cut
+        // through a pair could also save the result, and that value is not over the limit.
+        // A loop, not one look: with the half gone, what stood before it is the end, and a
+        // hand-written value can have a half there too.
+        while (char.IsHighSurrogate(trimmed[^1]))
+        {
+            trimmed = trimmed[..^1].TrimEnd();
+
+            if (trimmed.IsEmpty)
+            {
+                return DefaultMessage;
+            }
         }
 
         return trimmed.Length == message.Length && ReferenceEquals(text, message)

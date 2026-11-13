@@ -368,6 +368,77 @@ public class ReminderSettingsStoreTests
             ReminderSettings.NormalizeMessage(written));
     }
 
+    /// <summary>
+    /// The limit counts UTF-16 units, and a character outside the basic plane takes two: a
+    /// cut that falls between them must not leave the first half behind (CR-07).
+    /// </summary>
+    [Fact]
+    public void R041_A_message_cut_at_the_limit_does_not_end_in_half_a_character()
+    {
+        var letters = new string('x', ReminderSettings.MaxMessageLength - 1);
+
+        Assert.Equal(letters, ReminderSettings.NormalizeMessage(letters + "\U0001F600 and more"));
+    }
+
+    /// <summary>
+    /// Half a character at the end is dropped whatever the length: the version that cut
+    /// through a pair could also save the result, 50 units ending in the first half, and a
+    /// value stored so is not over the limit and never reaches the cut.
+    /// </summary>
+    [Theory]
+    [InlineData(49, "")]
+    [InlineData(7, "")]
+    [InlineData(7, " ")]
+    public void R041_A_message_that_ends_in_half_a_character_loses_it_whatever_its_length(
+        int letters,
+        string before)
+    {
+        // The half is added here and not in the rows: an attribute stores its strings as
+        // UTF-8, which has no form for it, so a row would hand the test U+FFFD instead.
+        var written = new string('x', letters) + before + "\uD83D";
+
+        Assert.Equal(new string('x', letters), ReminderSettings.NormalizeMessage(written));
+    }
+
+    /// <summary>
+    /// "Never" holds for more than one: with the last half gone, what was before it is the
+    /// end, and it can be a half too. Without this a second pass would change the text again.
+    /// </summary>
+    [Theory]
+    [InlineData(7, false, false)]
+    [InlineData(7, true, false)]
+    [InlineData(48, false, true)]
+    public void R041_A_message_that_ends_in_several_halves_loses_them_all(
+        int letters,
+        bool spaceBetween,
+        bool wholeCharacterAfter)
+    {
+        const string Half = "\uD83D";
+        var written = new string('x', letters) + Half
+                      + (spaceBetween ? " " : string.Empty)
+                      + (wholeCharacterAfter ? "\U0001F600 and more" : Half);
+
+        var normalized = ReminderSettings.NormalizeMessage(written);
+
+        Assert.Equal(new string('x', letters), normalized);
+        Assert.Equal(normalized, ReminderSettings.NormalizeMessage(normalized));
+    }
+
+    [Fact]
+    public void R041_A_message_that_is_nothing_but_half_a_character_reads_as_the_default()
+    {
+        Assert.Equal(ReminderSettings.DefaultMessage, ReminderSettings.NormalizeMessage(" \uD83D "));
+    }
+
+    /// <summary>A pair that ends exactly at the limit is whole, and stays.</summary>
+    [Fact]
+    public void R041_A_character_of_two_units_that_ends_at_the_limit_is_kept()
+    {
+        var written = new string('x', ReminderSettings.MaxMessageLength - 2) + "\U0001F600";
+
+        Assert.Equal(written, ReminderSettings.NormalizeMessage(written + " and more"));
+    }
+
     [Theory]
     [InlineData(null, false)]
     [InlineData("", false)]

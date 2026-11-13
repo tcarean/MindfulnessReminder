@@ -61,6 +61,20 @@ public class DecisionLogTests
         Assert.Equal("2026-10-26 08:21:01  first | second | third |  | fifth", line);
     }
 
+    /// <summary>
+    /// A carriage return with no line feed after it is a line break to an editor and to
+    /// <c>File.ReadAllLines</c>, so it is folded like the other two (CR-09).
+    /// </summary>
+    [Fact]
+    public void R110_A_carriage_return_on_its_own_becomes_a_separator_too()
+    {
+        var at = new DateTimeOffset(2026, 8, 28, 10, 0, 0, TimeSpan.FromHours(3));
+
+        var line = DecisionLog.FormatLine(at, "first\rsecond\r\nthird\r");
+
+        Assert.Equal("2026-08-28 10:00:00  first | second | third | ", line);
+    }
+
     [Fact]
     public void R110_The_file_rotates_once_it_holds_more_than_the_cap()
     {
