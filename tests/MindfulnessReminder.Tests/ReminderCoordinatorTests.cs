@@ -52,6 +52,11 @@ public class ReminderCoordinatorTests
         Assert.True(_monitor.Started);
     }
 
+    /// <summary>
+    /// The number of windows cannot tell one subscription from two: a second handler finds the
+    /// first one's window open and raises it. So the raise and the log line are counted too
+    /// (CR-12 of the review of 2026-11-13).
+    /// </summary>
     [Fact]
     public void R010_Start_twice_subscribes_only_once()
     {
@@ -62,6 +67,8 @@ public class ReminderCoordinatorTests
         _monitor.RaiseUnlocked();
 
         Assert.Equal(1, _presenter.ShowCount);
+        Assert.Equal(0, _presenter.BringToFrontCount);
+        Assert.Single(_log.Lines, line => line == "Workstation unlocked");
     }
 
     [Fact]
