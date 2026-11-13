@@ -38,19 +38,6 @@ public partial class App : WpfApplication
     /// <summary>Name of the value under the Run key; also what Task Manager displays.</summary>
     private const string AutoStartValueName = "MindfulnessReminder";
 
-    /// <summary>
-    /// Reports what the activity monitor can see and quits. The two pause settings cannot be
-    /// exercised without a real call or a real game, so this is the only way to tell a signal
-    /// that is not arriving from a setting that is switched off.
-    ///
-    /// It takes an optional number of seconds to watch for. That is not a convenience: a
-    /// single reading taken as the switch runs is no use for the full-screen check, because
-    /// getting to a terminal to run it means leaving full screen and destroying the state
-    /// being measured. With a duration you start it, go and do the thing, and read the
-    /// timeline when you come back.
-    /// </summary>
-    private const string DetectSwitch = CommandLineSwitches.Detect;
-
     private Mutex? _singleInstanceMutex;
     private TrayIconHost? _tray;
     private ReminderCoordinator? _coordinator;
@@ -175,11 +162,11 @@ public partial class App : WpfApplication
     /// registry access, no session hook. An optional argument after it is the message, so a
     /// text can be tried against the window before it is saved, which is the only way to see
     /// what the length cap looks like without the registry being involved; without one it
-    /// shows the default text. Core says whether the switch was given
-    /// and picks the text among the arguments (<see cref="CommandLineSwitches.TryGetPreviewText"/>,
-    /// never one of the application's own switches); the text goes through the same
-    /// normalization the saved setting does, so the preview shows what the app would actually
-    /// show, and an empty or missing one is the default message.
+    /// shows the default text. Core says whether the switch was given and picks the text among
+    /// the arguments (<see cref="CommandLineSwitches.TryGetPreviewText"/>, never one of the
+    /// application's own switches); the text goes through the same normalization the saved
+    /// setting does, so the preview shows what the app would actually show, and an empty or
+    /// missing one is the default message.
     /// </summary>
     /// <param name="args">The command-line arguments, without the program's name.</param>
     /// <returns>The message, or <c>null</c> when the switch was not given.</returns>
@@ -198,9 +185,20 @@ public partial class App : WpfApplication
     }
 
     /// <summary>
-    /// Finds how long <c>--detect</c> should watch for. The reading of the arguments is
-    /// Core's (<see cref="CommandLineSwitches.TryGetDetectDuration"/>): the two forms of the
-    /// switch, the fallback to a single reading and the ten-minute cap.
+    /// Finds how long <c>--detect</c> should watch for. The switch reports what the activity
+    /// monitor can see and quits. The two pause settings cannot be exercised without a real
+    /// call or a real game, so this is the only way to tell a signal that is not arriving from
+    /// a setting that is switched off.
+    ///
+    /// It takes an optional number of seconds to watch for. That is not a convenience: a
+    /// single reading taken as the switch runs is no use for the full-screen check, because
+    /// getting to a terminal to run it means leaving full screen and destroying the state
+    /// being measured. With a duration you start it, go and do the thing, and read the
+    /// timeline when you come back.
+    ///
+    /// The reading of the arguments is Core's
+    /// (<see cref="CommandLineSwitches.TryGetDetectDuration"/>): the two forms of the switch,
+    /// the fallback to a single reading and the ten-minute cap.
     /// </summary>
     /// <param name="args">The command-line arguments, without the program's name.</param>
     /// <returns>
@@ -211,7 +209,7 @@ public partial class App : WpfApplication
         => CommandLineSwitches.TryGetDetectDuration(args, out var duration) ? duration : null;
 
     /// <summary>
-    /// The diagnostic behind <see cref="DetectSwitch"/>. A WinExe has no console to print on,
+    /// The diagnostic behind <c>--detect</c>. A WinExe has no console to print on,
     /// so it goes in a message box -- the same reasoning that puts the version in the crash
     /// dialog. The raw shell state is shown alongside the reading taken from it, because the
     /// number is what tells a state Windows has stopped reporting from one this build does

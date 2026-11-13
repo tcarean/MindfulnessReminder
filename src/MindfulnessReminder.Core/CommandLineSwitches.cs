@@ -90,7 +90,7 @@ public static class CommandLineSwitches
     /// <summary>
     /// Finds whether <c>--preview</c> was given, and the text given with it: the first
     /// argument after the switch that is neither one of the application's own switches nor
-    /// the number of seconds that follows a bare <c>--detect</c> (R-045). Windows adds
+    /// the number of seconds of a bare <c>--detect</c>, wherever that switch stands (R-045). Windows adds
     /// <c>--restarted</c> to a copy it starts again, and a switch is never what the reminder
     /// should say (R-102).
     /// </summary>
@@ -111,18 +111,17 @@ public static class CommandLineSwitches
         var found = false;
         var detectSecondsPending = false;
 
+        // Every argument is looked at, those before "--preview" too: a bare "--detect" there
+        // still has its seconds to come, perhaps after "--preview" ("--detect --preview 30"),
+        // and TryGetDetectDuration would read them so.
         foreach (var argument in args)
         {
-            if (!found)
-            {
-                found = argument.Equals(Preview, StringComparison.OrdinalIgnoreCase);
-                continue;
-            }
-
             if (IsSwitch(argument))
             {
+                found |= argument.Equals(Preview, StringComparison.OrdinalIgnoreCase);
+
                 // "--detect 30": the bare switch is followed by its seconds, perhaps behind
-                // other switches, as TryGetDetectDuration reads it. "--detect=30" has them.
+                // other switches. "--detect=30" has them with it.
                 detectSecondsPending |= argument.Equals(Detect, StringComparison.OrdinalIgnoreCase);
                 continue;
             }
@@ -133,8 +132,11 @@ public static class CommandLineSwitches
                 continue;
             }
 
-            text = argument;
-            break;
+            if (found)
+            {
+                text = argument;
+                break;
+            }
         }
 
         return found;
@@ -143,9 +145,9 @@ public static class CommandLineSwitches
     /// <summary>
     /// Finds how long <c>--detect</c> should watch for: <c>--detect 30</c> and
     /// <c>--detect=30</c> both mean thirty seconds (R-081). After the bare switch the seconds
-    /// are the next argument that is not one of the application's own switches. A value that is not a whole number
-    /// above zero is the single reading, not a complaint: a diagnostic that refuses to run
-    /// because its argument was mistyped is no help to anybody (R-082).
+    /// are the next argument that is not one of the application's own switches. A value that
+    /// is not a whole number above zero is the single reading, not a complaint: a diagnostic
+    /// that refuses to run because its argument was mistyped is no help to anybody (R-082).
     /// </summary>
     /// <param name="args">The command-line arguments, without the program's name; not null.</param>
     /// <param name="duration">

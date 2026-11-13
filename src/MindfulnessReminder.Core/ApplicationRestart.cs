@@ -46,8 +46,10 @@ public static class ApplicationRestart
     /// <param name="args">The command-line arguments, without the program's name; not null.</param>
     /// <returns>
     /// <c>false</c> when the arguments carry <c>--preview</c> as an argument of its own, or
-    /// <c>--detect</c> alone or with <c>=</c> and a value, in any case: the shapes App reads
-    /// them in, so that what App treats as the tray copy is what registers.
+    /// <c>--detect</c> alone or with <c>=</c> and a value, in any case: the shapes
+    /// <see cref="CommandLineSwitches.TryGetPreviewText"/> and
+    /// <see cref="CommandLineSwitches.TryGetDetectDuration"/> read them in for App, so that
+    /// what App treats as the tray copy is what registers.
     /// </returns>
     public static bool ShouldRegister(IReadOnlyList<string> args)
     {

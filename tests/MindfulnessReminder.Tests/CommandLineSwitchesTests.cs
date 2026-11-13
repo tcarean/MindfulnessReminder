@@ -40,6 +40,11 @@ public class CommandLineSwitchesTests
     [InlineData(null, "--preview", "--detect=30")]
     [InlineData(null, "--preview", "--detect", "30")]
     [InlineData(null, "--preview", "--DETECT", "Breathe")]
+    [InlineData(null, "--detect", "--preview", "30")]
+    [InlineData(null, "--detect", "--restarted", "--preview", "30")]
+    [InlineData("Breathe", "--detect", "--preview", "30", "Breathe")]
+    [InlineData("Breathe", "--detect", "30", "--preview", "Breathe")]
+    [InlineData("Breathe", "--detect=30", "--preview", "Breathe")]
     [InlineData(null, "--preview", "--preview")]
     [InlineData(null, "Breathe", "--preview")]
     public void R045_The_preview_text_is_the_first_argument_after_the_switch_that_is_not_a_switch(
