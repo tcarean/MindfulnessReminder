@@ -160,6 +160,21 @@ public class ReminderSettingsStoreTests
         Assert.Equal(inRange, ReminderSettings.IsIntervalInRange(minutes));
     }
 
+    /// <summary>
+    /// The retry gap's check has the interval's four rows. Looser than the clamp, the dialog
+    /// would save a gap of 1 that <c>Normalize</c> then turns into 5 without telling the user
+    /// (CR-16 of the review of 2026-11-13).
+    /// </summary>
+    [Theory]
+    [InlineData(ReminderSettings.MinRetrySeconds - 1, false)]
+    [InlineData(ReminderSettings.MinRetrySeconds, true)]
+    [InlineData(ReminderSettings.MaxRetrySeconds, true)]
+    [InlineData(ReminderSettings.MaxRetrySeconds + 1, false)]
+    public void R043_The_dialog_retry_range_check_matches_the_clamp(int seconds, bool inRange)
+    {
+        Assert.Equal(inRange, ReminderSettings.IsRetryInRange(seconds));
+    }
+
     // ------------------------------------------------------------------- the two pauses
 
     [Fact]
