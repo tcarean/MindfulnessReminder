@@ -54,8 +54,9 @@ public class ReminderCoordinatorTests
 
     /// <summary>
     /// The number of windows cannot tell one subscription from two: a second handler finds the
-    /// first one's window open and raises it. So the raise and the log line are counted too
-    /// (CR-12 of the review of 2026-11-13).
+    /// first one's window open and raises it. So the raise and the log lines are counted too
+    /// (CR-12 of the review of 2026-11-13), and each of the three events is raised once: a
+    /// tick heard twice raises the countdown event twice, a lock heard twice writes two lines.
     /// </summary>
     [Fact]
     public void R010_Start_twice_subscribes_only_once()
@@ -64,11 +65,20 @@ public class ReminderCoordinatorTests
         coordinator.Start();
         coordinator.Start();
 
+        var changes = 0;
+        coordinator.CountdownChanged += (_, _) => changes++;
+
+        _timer.RaiseTick();
+        Assert.Equal(1, changes);
+
+        _monitor.RaiseLocked();
         _monitor.RaiseUnlocked();
 
         Assert.Equal(1, _presenter.ShowCount);
         Assert.Equal(0, _presenter.BringToFrontCount);
-        Assert.Single(_log.Lines, line => line == "Workstation unlocked");
+        Assert.Equal(
+            ["Workstation locked", "Workstation unlocked", "Unlock reminder shown: Ground yourself"],
+            _log.Lines);
     }
 
     [Fact]
@@ -155,6 +165,10 @@ public class ReminderCoordinatorTests
         Assert.Equal(0, _presenter.ShowCount);
     }
 
+    /// <summary>
+    /// Both session events are raised after Dispose, and the log is the witness for the lock,
+    /// which shows no window whether it is heard or not.
+    /// </summary>
     [Fact]
     public void R010_Dispose_unsubscribes_and_disposes_the_monitor()
     {
@@ -163,8 +177,10 @@ public class ReminderCoordinatorTests
         coordinator.Dispose();
 
         _monitor.RaiseUnlocked();
+        _monitor.RaiseLocked();
 
         Assert.Equal(0, _presenter.ShowCount);
+        Assert.Empty(_log.Lines);
         Assert.True(_monitor.Disposed);
     }
 

@@ -158,12 +158,17 @@ public class ReminderSettingsStoreTests
     public void R043_The_dialog_range_check_matches_the_clamp(int minutes, bool inRange)
     {
         Assert.Equal(inRange, ReminderSettings.IsIntervalInRange(minutes));
+
+        // The clamp itself is asked too: a check and a clamp that only share two constants
+        // today would otherwise be free to part.
+        var clamped = new ReminderSettings(true, minutes).Normalize().IntervalMinutes;
+        Assert.Equal(inRange, clamped == minutes);
     }
 
     /// <summary>
     /// The retry gap's check has the interval's four rows. Looser than the clamp, the dialog
     /// would save a gap of 1 that <c>Normalize</c> then turns into 5 without telling the user
-    /// (CR-16 of the review of 2026-11-13).
+    /// (CR-16 of the review of 2026-11-13). In range is also what the clamp leaves alone.
     /// </summary>
     [Theory]
     [InlineData(ReminderSettings.MinRetrySeconds - 1, false)]
@@ -173,6 +178,9 @@ public class ReminderSettingsStoreTests
     public void R043_The_dialog_retry_range_check_matches_the_clamp(int seconds, bool inRange)
     {
         Assert.Equal(inRange, ReminderSettings.IsRetryInRange(seconds));
+
+        var clamped = (ReminderSettings.Default with { RetrySeconds = seconds }).Normalize().RetrySeconds;
+        Assert.Equal(inRange, clamped == seconds);
     }
 
     // ------------------------------------------------------------------- the two pauses
