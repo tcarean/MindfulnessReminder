@@ -414,6 +414,12 @@ then green against the code as it is.
 - Status: fixed in `86578f3`, 2026-11-13. The test asserts both: no raise, and one
   `Workstation unlocked` line. Red against mutation 2 (`Assert.Equal() Failure: Values differ.
   Expected: 0, Actual: 1`, the raise by the second handler), green against the code as it is.
+  The branch review found the test still blind to a tick or a lock heard twice; since
+  `4f87cfb` it raises all three events and expects the countdown event once for the tick and
+  the three log lines of one lock and one unlock. Red against a second `_timer.Tick += OnTick`
+  (`Expected: 1, Actual: 3`) and against a second `_monitor.Locked += OnLocked` (three
+  `Workstation locked` lines where one was expected), each put before the guard. Not pinned:
+  that a second `Start` leaves the countdown where it was, which no requirement row says.
 
 ### CR-13. R-035's fresh reading after a save and after a lock is not pinned
 
@@ -446,7 +452,12 @@ then green against the code as it is.
 - Direction: advance the clock by the interval before `RaiseTick`.
 - Status: fixed in `7858357`, 2026-11-13, as the direction says. Red against mutation 6
   (`Assert.Equal() Failure: Values differ. Expected: 0, Actual: 1`, the reminder a coordinator
-  still subscribed shows), green against the code as it is.
+  still subscribed shows), green against the code as it is. The branch review found the same
+  gap beside it: nothing raised a lock after `Dispose`, so `_monitor.Locked -= OnLocked` could
+  go with the suite green. Since `4f87cfb`
+  `R010_Dispose_unsubscribes_and_disposes_the_monitor` raises both session events and expects
+  an empty log; red with that line removed (`Assert.Empty() Failure: Collection was not
+  empty`).
 
 ### CR-15. `CountdownChanged` on `ApplySettings` is not pinned
 
@@ -477,7 +488,11 @@ then green against the code as it is.
 - Status: fixed in `da8c69f`, 2026-11-13, as the direction says:
   `R043_The_dialog_retry_range_check_matches_the_clamp` in `ReminderSettingsStoreTests`. Red
   against mutation 7 in the two rows outside the range, 4 and 301 (`Expected: False, Actual:
-  True`), green against the code as it is.
+  True`), green against the code as it is. The branch review found that the theory, like the
+  interval's beside it, compared the check with the two constants and never with the clamp
+  its name cites. Since `4f87cfb` both also expect `Normalize` to leave a number alone exactly
+  when the check accepts it; red with the lower clamp of `Normalize` moved to 10 for the retry
+  gap and to 5 for the interval (the row of the minimum, `Expected: True, Actual: False`).
 
 ### CR-17. R-113's order of lines after a refused registration is not pinned
 

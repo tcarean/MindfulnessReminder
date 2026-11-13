@@ -113,3 +113,25 @@ section at wrap-up.
   save, or before the lock, did read the monitor (`ReadCount == 1`), so that neither can go
   back to starting from a state with no stamp, which was the fault the review found.
 - The suite went from 388 to 394 tests: two new facts, and a theory of four rows.
+- The owner then ran `/code-review` on the branch. It reported seven findings, none severe and
+  none in the application's code, and the owner had the first three fixed, in `4f87cfb`, each
+  assertion shown red against a fault of its own and green against the code as it is:
+  - `R010_Start_twice_subscribes_only_once` saw a second subscription to the unlock only. It
+    now raises a tick, a lock and an unlock, and expects each to be heard once.
+  - Nothing raised a lock after `Dispose`.
+    `R010_Dispose_unsubscribes_and_disposes_the_monitor` now does, and expects an empty log.
+  - The two range theories of R-043 never asked the clamp. Both now expect `Normalize` to
+    leave a number alone exactly when the check accepts it; the interval's theory, on `main`
+    before this task, was strengthened with the retry gap's.
+  The review file says so in the entries of CR-12, CR-14 and CR-16.
+- Not fixed, the four the owner was told were minor:
+  - the two CR-13 tests step the clock by a literal second and rely on it being shorter than
+    `ReminderCoordinator.DefaultActivityRefresh`;
+  - the save that switches pausing on from both pauses off is no longer the state any test
+    starts from;
+  - `CountdownChanged` is pinned for a save that switches the periodic reminder off, not for
+    one that only changes the interval;
+  - the opening sentence of the review file's S4 section still says of every test it names
+    that it cannot fail.
+- Also not pinned: that a second `Start` leaves the countdown where it was. No requirement row
+  says it, so a test for it would need the row first.
