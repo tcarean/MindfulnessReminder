@@ -292,17 +292,22 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   counts. Whether the log should also survive a text it cannot encode (an exception message
   could carry one) is a second, smaller question for the same task. The test is the first
   probe; no test today puts anything but `x`, `y` and a space at the cut.
-- Status: fixed in `3eb5736`, 2026-11-13. `NormalizeMessage` cuts one unit earlier when the
-  cut would end on a high surrogate, and R-041 says the limit counts UTF-16 units. The owner
+- Status: fixed in `3eb5736`, 2026-11-13, and completed in the commit after `e370cec`.
+  `NormalizeMessage` drops a high surrogate at the end of a message, whether the cut left it
+  or the text was stored so (a value the old version had saved is 50 units and is not cut
+  again; the first fix missed it, the branch review found it), and R-041 says the limit
+  counts UTF-16 units. The owner
   answered the second question with yes (ADR 0088): `FileDecisionLog` writes with an encoding
   of its own, and half a pair becomes U+FFFD instead of costing the line (R-110). The tests
   are `R041_A_message_cut_at_the_limit_does_not_end_in_half_a_character`,
+  `R041_A_message_that_ends_in_half_a_character_loses_it_whatever_its_length`,
   `R041_A_character_of_two_units_that_ends_at_the_limit_is_kept` and
   `R110_A_text_that_cannot_be_encoded_is_written_with_a_replacement_character`. Seen with
   `--preview` and 49 letters, an emoji and more text: the window shows the 49 letters. Not
-  done: only the cut is guarded, so a stored message with half a pair anywhere else still
-  reaches the reminder window as written, and whether typing in Settings can leave half a
-  pair at the 50th unit is still not checked.
+  done: only the end is guarded, so a stored message with half a pair in its middle still
+  reaches the reminder window as written; a character made of several code points (a flag)
+  can still be cut between them; and whether typing in Settings can leave half a pair at
+  the 50th unit is still not checked.
 
 ### CR-08. The text boxes of Settings open a light context menu in the dark window
 
@@ -355,10 +360,13 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   switches.
 - Status: fixed in `3766c7f`, 2026-11-13. `CommandLineSwitches.PreviewText` picks the text:
   the first argument after `--preview` that is not `--preview`, `--detect`, `--detect=N` or
-  `--restarted`. A switch is passed over, not read as "no text", so
+  `--restarted`, nor the value after a bare `--detect` (`--preview --detect 30` showed `30`
+  until the branch review found it; fixed in the commit after `e370cec`). A switch is passed over, not read as "no text", so
   `--preview --restarted "Breathe"` shows `Breathe`. R-045 says so and is now `implemented`;
   the tests are in `CommandLineSwitchesTests`. Seen with `--preview --restarted`: the window
-  shows `Ground yourself`. `--detect`'s own parsing stays in App, untouched.
+  shows `Ground yourself`. `--detect`'s own parsing stays in App, untouched, and still
+  reads `--restarted` as its seconds: `--detect --restarted 30` takes one reading, not a
+  30-second timeline, against R-102. Not fixed here.
 
 ## S4
 

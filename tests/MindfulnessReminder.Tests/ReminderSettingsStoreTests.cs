@@ -380,6 +380,32 @@ public class ReminderSettingsStoreTests
         Assert.Equal(letters, ReminderSettings.NormalizeMessage(letters + "\U0001F600 and more"));
     }
 
+    /// <summary>
+    /// Half a character at the end is dropped whatever the length: the version that cut
+    /// through a pair could also save the result, 50 units ending in the first half, and a
+    /// value stored so is not over the limit and never reaches the cut.
+    /// </summary>
+    [Theory]
+    [InlineData(49, "")]
+    [InlineData(7, "")]
+    [InlineData(7, " ")]
+    public void R041_A_message_that_ends_in_half_a_character_loses_it_whatever_its_length(
+        int letters,
+        string before)
+    {
+        // The half is added here and not in the rows: an attribute stores its strings as
+        // UTF-8, which has no form for it, so a row would hand the test U+FFFD instead.
+        var written = new string('x', letters) + before + "\uD83D";
+
+        Assert.Equal(new string('x', letters), ReminderSettings.NormalizeMessage(written));
+    }
+
+    [Fact]
+    public void R041_A_message_that_is_nothing_but_half_a_character_reads_as_the_default()
+    {
+        Assert.Equal(ReminderSettings.DefaultMessage, ReminderSettings.NormalizeMessage(" \uD83D "));
+    }
+
     /// <summary>A pair that ends exactly at the limit is whole, and stays.</summary>
     [Fact]
     public void R041_A_character_of_two_units_that_ends_at_the_limit_is_kept()

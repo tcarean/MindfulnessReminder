@@ -159,3 +159,20 @@ have their hashes:
   the diff was read back, and put right before the commit.
 - Not done here: the things listed for the owner's copy (CR-08: a right-click, Shift+F10 and a
   Paste in Settings), and CR-07's two leftovers, which the review entry names.
+- The owner then ran `/code-review` on the branch. It reported ten findings, none severe,
+  and the owner had the two that were faults in the new code fixed, each test first:
+  - CR-07's guard sat inside the cut, so a value the old version had already saved, 50 units
+    ending in half a pair, was never repaired. The end is now looked at whatever the length.
+    The first test for it was red for the wrong reason: a row of a theory cannot carry half a
+    pair (an attribute stores UTF-8), so the test got U+FFFD; the half is now added in the
+    test's body, and the test was shown red against the code before the fix.
+  - `--preview --detect 30` showed `30`: the value after a bare `--detect` is now passed over.
+- Left from that review, not fixed and not entered in the review file, since nobody but the
+  reviewer has followed them (ADR 0084):
+  - a real right-click reaches the menu's command target by another route than the probes
+    took, and the menu's corners on screen were not seen (both settle in the tray copy);
+  - `--detect --restarted 30` takes one reading (R-102), its parsing still in App;
+  - a character of several code points can still be cut between them;
+  - the tooltip test repeats three endings from `TrayTooltip`; the field `Encoding` in
+    `FileDecisionLog` hides the type of that name; the menu's font is written a third time;
+    `PreviewText` answers `null` for two cases, so App scans the arguments twice.

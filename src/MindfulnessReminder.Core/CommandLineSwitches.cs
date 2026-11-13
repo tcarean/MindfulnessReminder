@@ -81,19 +81,22 @@ public static class CommandLineSwitches
 
     /// <summary>
     /// Finds the text <c>--preview</c> was given: the first argument after the switch that is
-    /// not one of the application's own switches (R-045). Windows adds <c>--restarted</c> to a
-    /// copy it starts again, and a switch is never what the reminder should say (R-102).
+    /// not one of the application's own switches, nor the value that follows a bare
+    /// <c>--detect</c> (R-045). Windows adds <c>--restarted</c> to a copy it starts again, and
+    /// a switch is never what the reminder should say (R-102).
     /// </summary>
     /// <param name="args">The command-line arguments, without the program's name; not null.</param>
     /// <returns>
     /// The text as written, not normalized; it can be empty. <c>null</c> when the switch is not
-    /// among the arguments or nothing but switches follows it; the comparison ignores case.
+    /// among the arguments or nothing but switches and their values follows it; the comparison
+    /// ignores case.
     /// </returns>
     public static string? PreviewText(IReadOnlyList<string> args)
     {
         ArgumentNullException.ThrowIfNull(args);
 
         var afterSwitch = false;
+        var isDetectValue = false;
 
         foreach (var argument in args)
         {
@@ -103,10 +106,20 @@ public static class CommandLineSwitches
                 continue;
             }
 
+            // "--detect 30": the argument after the bare switch is its number of seconds,
+            // whatever it is, as App reads it. "--detect=30" carries its value with it.
+            if (isDetectValue)
+            {
+                isDetectValue = false;
+                continue;
+            }
+
             if (!IsSwitch(argument))
             {
                 return argument;
             }
+
+            isDetectValue = argument.Equals(Detect, StringComparison.OrdinalIgnoreCase);
         }
 
         return null;
