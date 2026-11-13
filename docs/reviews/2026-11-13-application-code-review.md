@@ -367,8 +367,8 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   `--detect=N` or `--restarted`, nor the value after a bare `--detect` (`--preview --detect
   30` showed `30` until the branch review found it; fixed in `3e9338a`). A switch is passed
   over, not read as "no text", so `--preview --restarted "Breathe"` shows `Breathe`. R-045
-  says so and is now `implemented`; the tests are in `CommandLineSwitchesTests`. Seen with `--preview --restarted`: the window
-  shows `Ground yourself`. The branch review found the same fault in `--detect`, which read
+  says so and is now `implemented`; the tests are in `CommandLineSwitchesTests`. Seen with
+  `--preview --restarted`: the window shows `Ground yourself`. The branch review found the same fault in `--detect`, which read
   `--restarted` as its seconds: fixed in `84154e0`, where its parsing moved to Core as
   `CommandLineSwitches.TryGetDetectDuration` (R-081; R-082, now `implemented`; R-102). Seen
   with `--detect --restarted 3`: the dialog comes after the three seconds and begins

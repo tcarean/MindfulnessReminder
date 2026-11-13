@@ -24,10 +24,11 @@ message in the `Crashed:` line, an argument in the `Started` line). The owner an
 - The limit goes on counting UTF-16 units, the unit the `TextBox` of Settings counts with its
   `MaxLength`. A message never ends in a high surrogate, the first half of a character that
   takes two units: it is dropped, and so is any other that then stands at the end, whether
-  a cut left it there or the text was stored ending so (R-041). The second case is the value the fault itself could leave behind: the version
-  that cut through a pair could accept the result in Settings and save it, 50 units that are
-  not over the limit. The branch review of 2026-11-13 found the first version of this fix
-  guarding the cut alone.
+  a cut left it there or the text was stored ending so (R-041). The second case is the value
+  the fault itself could leave behind: the version that cut through a pair could accept the
+  result in Settings and save it, 50 units that are not over the limit. The branch review of
+  2026-11-13 found the first version of this fix guarding the cut alone, and the review of
+  that fix found it dropping one half where several can stand.
 - `FileDecisionLog` writes with a `UTF8Encoding` of its own: no byte order mark, and U+FFFD in
   place of what has no UTF-8 form. The line is kept (R-110).
 
