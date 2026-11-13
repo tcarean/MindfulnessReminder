@@ -296,7 +296,8 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   `NormalizeMessage` drops a high surrogate at the end of a message, whether the cut left it
   or the text was stored so (a value the old version had saved is 50 units and is not cut
   again; the first fix missed it, the branch review found it), and R-041 says the limit
-  counts UTF-16 units. The owner
+  counts UTF-16 units. A second review, of those fixes, found the guard dropping one half
+  where a hand-written value can end in several: `9b38106` drops them all. The owner
   answered the second question with yes (ADR 0088): `FileDecisionLog` writes with an encoding
   of its own, and half a pair becomes U+FFFD instead of costing the line (R-110). The tests
   are `R041_A_message_cut_at_the_limit_does_not_end_in_half_a_character`,
@@ -365,13 +366,14 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   text: the first argument after `--preview` that is not `--preview`, `--detect`,
   `--detect=N` or `--restarted`, nor the value after a bare `--detect` (`--preview --detect
   30` showed `30` until the branch review found it; fixed in `3e9338a`). A switch is passed
-  over, not read as "no text", so `--preview --restarted "Breathe"` shows `Breathe`. R-045 says so and is now `implemented`;
-  the tests are in `CommandLineSwitchesTests`. Seen with `--preview --restarted`: the window
+  over, not read as "no text", so `--preview --restarted "Breathe"` shows `Breathe`. R-045
+  says so and is now `implemented`; the tests are in `CommandLineSwitchesTests`. Seen with `--preview --restarted`: the window
   shows `Ground yourself`. The branch review found the same fault in `--detect`, which read
   `--restarted` as its seconds: fixed in `84154e0`, where its parsing moved to Core as
-  `CommandLineSwitches.TryGetDetectDuration` (R-081, R-082 now `implemented`, R-102). Seen
+  `CommandLineSwitches.TryGetDetectDuration` (R-081; R-082, now `implemented`; R-102). Seen
   with `--detect --restarted 3`: the dialog comes after the three seconds and begins
-  `Watched for 3 seconds.`
+  `Watched for 3 seconds.` The second review found `--detect --preview 30` still showing
+  `30`, a `--detect` before `--preview` not being counted: fixed in `7116d61`.
 
 ## S4
 

@@ -181,3 +181,16 @@ have their hashes:
     Left for the tray copy.
 - Not fixed: a character of several code points can still be cut between them. It is Q9 in
   the review file, with a recommendation to leave it.
+- The owner then had a subagent review those fixes (`e370cec..890d185`), with a clean
+  context and the code, not this session's conclusions. It found nothing severe, no test that
+  cannot fail and no rule broken, and:
+  - `NormalizeMessage` dropped one half pair at the end where a hand-written value can end in
+    several, against "never" in R-041 and ADR 0088. A loop now. `9b38106`.
+  - `--detect --preview 30` showed `30`: the fault of `3e9338a` with the switches the other
+    way round. A `--detect` before `--preview` is counted now. `7116d61`.
+  - Four texts: `two-reminders.md` still had App reading `--detect`'s seconds; the review file
+    had R-081 become `implemented` when only R-082 did; ADR 0054, on `main`, placed the
+    parsing in App with no test, and got a dated note (ADR 0024); and a message of nothing but
+    half a pair is accepted by the dialog and saved as the default, against R-043's wording,
+    which ADR 0088 now names as a consequence, the check unchanged.
+  - The constant `DetectSwitch` in App, left only for a comment, is gone.

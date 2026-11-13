@@ -23,8 +23,8 @@ message in the `Crashed:` line, an argument in the `Started` line). The owner an
 
 - The limit goes on counting UTF-16 units, the unit the `TextBox` of Settings counts with its
   `MaxLength`. A message never ends in a high surrogate, the first half of a character that
-  takes two units: it is dropped, whether a cut left it there or the text was stored ending
-  so (R-041). The second case is the value the fault itself could leave behind: the version
+  takes two units: it is dropped, and so is any other that then stands at the end, whether
+  a cut left it there or the text was stored ending so (R-041). The second case is the value the fault itself could leave behind: the version
   that cut through a pair could accept the result in Settings and save it, 50 units that are
   not over the limit. The branch review of 2026-11-13 found the first version of this fix
   guarding the cut alone.
@@ -54,9 +54,13 @@ message in the `Crashed:` line, an argument in the `Started` line). The owner an
   without the half, since saving normalizes.
 - A character made of several code points (a flag, a joined family) can still be cut between
   them: each part is whole, the character is not.
+- A message that is nothing but half a pair is accepted by `IsMessageAcceptable` and then
+  saved as the default, where R-043 has the dialog's checks agree with the clamp. It takes
+  half a pair pasted into the box, and was not seen; the check is unchanged.
 - A reader of the log sees U+FFFD where the text had half a pair, not the original unit.
 - Guards: `R041_A_message_cut_at_the_limit_does_not_end_in_half_a_character`,
   `R041_A_message_that_ends_in_half_a_character_loses_it_whatever_its_length`,
+  `R041_A_message_that_ends_in_several_halves_loses_them_all`,
   `R041_A_message_that_is_nothing_but_half_a_character_reads_as_the_default`,
   `R041_A_character_of_two_units_that_ends_at_the_limit_is_kept`,
   `R110_A_text_that_cannot_be_encoded_is_written_with_a_replacement_character`, and
