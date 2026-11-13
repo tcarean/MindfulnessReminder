@@ -168,6 +168,11 @@ public class ReminderCoordinatorTests
         Assert.True(_monitor.Disposed);
     }
 
+    /// <summary>
+    /// The tick after Dispose comes with the interval gone, so a coordinator still subscribed
+    /// to the timer would show a reminder: a tick before the deadline shows nothing either
+    /// way and proves no unsubscription (CR-14 of the review of 2026-11-13).
+    /// </summary>
     [Fact]
     public void R021_Dispose_stops_and_disposes_the_timer()
     {
@@ -175,6 +180,7 @@ public class ReminderCoordinatorTests
         coordinator.Start();
         coordinator.Dispose();
 
+        _clock.Advance(TimeSpan.FromMinutes(ReminderSettings.DefaultIntervalMinutes));
         _timer.RaiseTick();
 
         Assert.True(_timer.Disposed);
