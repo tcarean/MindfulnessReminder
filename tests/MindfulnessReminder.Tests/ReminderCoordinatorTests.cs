@@ -1024,27 +1024,61 @@ public class ReminderCoordinatorTests
         Assert.Equal(ReminderSuppression.MicrophoneInUse, coordinator.Suppression);
     }
 
-    /// <summary>Switching a pause on has to show in the tooltip at once, not a refresh later.</summary>
+    /// <summary>
+    /// Switching a pause on has to show in the tooltip at once, not a refresh later. The
+    /// full-screen pause is on from the start, so that the tick before the save takes a
+    /// reading and stamps it: with both pauses off nothing is ever stamped, and the save would
+    /// have no stamp to forget (CR-13 of the review of 2026-11-13).
+    /// </summary>
     [Fact]
     public void R035_Applying_settings_takes_a_fresh_reading_on_the_next_tick()
     {
-        var off = ReminderSettings.Default with
+        var microphoneOff = ReminderSettings.Default with
         {
             PauseWhileMicrophoneInUse = false,
-            PauseWhileFullScreen = false,
+            PauseWhileFullScreen = true,
         };
 
-        using var coordinator = CreateCoordinator(settings: off);
+        using var coordinator = CreateCoordinator(settings: microphoneOff);
         coordinator.Start();
 
         _activity.Snapshot = ActivitySnapshot.Idle with { MicrophoneInUse = true };
 
         _clock.Advance(TimeSpan.FromSeconds(1));
         _timer.RaiseTick();
+        Assert.Equal(1, _activity.ReadCount);
         Assert.Equal(ReminderSuppression.None, coordinator.Suppression);
 
         coordinator.ApplySettings(ReminderSettings.Default);
 
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        _timer.RaiseTick();
+
+        Assert.Equal(ReminderSuppression.MicrophoneInUse, coordinator.Suppression);
+    }
+
+    /// <summary>
+    /// Nothing is read behind a lock, so a reading from before it is not trusted after the
+    /// unlock: the first tick reads again, however recent the old stamp. The unlock reminder
+    /// is off so that the unlock itself reads nothing and the tick is the one that has to
+    /// (CR-13 of the review of 2026-11-13).
+    /// </summary>
+    [Fact]
+    public void R035_A_lock_takes_a_fresh_reading_on_the_first_tick_after_the_unlock()
+    {
+        using var coordinator = CreateCoordinator(
+            settings: ReminderSettings.Default with { UnlockEnabled = false });
+        coordinator.Start();
+
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        _timer.RaiseTick();
+        Assert.Equal(1, _activity.ReadCount);
+
+        _monitor.RaiseLocked();
+        _monitor.RaiseUnlocked();
+        Assert.Equal(1, _activity.ReadCount);
+
+        _activity.Snapshot = ActivitySnapshot.Idle with { MicrophoneInUse = true };
         _clock.Advance(TimeSpan.FromSeconds(1));
         _timer.RaiseTick();
 
