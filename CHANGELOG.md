@@ -29,6 +29,9 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
   emoji, not through it. The decision log no longer loses a line whose text holds such a half
   character: it writes the line with a replacement character in its place (R-041, R-110;
   ADR 0088).
+- `--preview` no longer shows one of the application's own switches as the message:
+  `--preview --restarted` shows `Ground yourself`, where it showed `--restarted` (R-045,
+  R-102).
 
 ## [1.5.1] - 2026-11-12
 

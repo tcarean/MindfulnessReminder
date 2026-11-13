@@ -183,26 +183,18 @@ public partial class App : WpfApplication
     }
 
     /// <summary>
-    /// Finds the message <c>--preview</c> should show. The argument after the switch is the
-    /// text; it goes through the same normalization the saved setting does, so the preview
-    /// shows what the app would actually show, and an empty or missing one is the default
-    /// message.
+    /// Finds the message <c>--preview</c> should show. Core picks the text among the arguments
+    /// (<see cref="CommandLineSwitches.PreviewText"/>, never one of the application's own
+    /// switches); it goes through the same normalization the saved setting does, so the
+    /// preview shows what the app would actually show, and an empty or missing one is the
+    /// default message.
     /// </summary>
     /// <param name="args">The command-line arguments, without the program's name.</param>
     /// <returns>The message, or <c>null</c> when the switch was not given.</returns>
     private static string? PreviewMessage(string[] args)
-    {
-        var index = Array.FindIndex(
-            args,
-            argument => argument.Equals(PreviewSwitch, StringComparison.OrdinalIgnoreCase));
-
-        if (index < 0)
-        {
-            return null;
-        }
-
-        return ReminderSettings.NormalizeMessage(index + 1 < args.Length ? args[index + 1] : null);
-    }
+        => CommandLineSwitches.HasExactly(args, PreviewSwitch)
+            ? ReminderSettings.NormalizeMessage(CommandLineSwitches.PreviewText(args))
+            : null;
 
     /// <summary>Shows the reminder window, and quits when it is closed.</summary>
     /// <param name="message">What the window says, already normalized.</param>

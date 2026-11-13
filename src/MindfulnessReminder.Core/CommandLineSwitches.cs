@@ -78,4 +78,52 @@ public static class CommandLineSwitches
 
         return false;
     }
+
+    /// <summary>
+    /// Finds the text <c>--preview</c> was given: the first argument after the switch that is
+    /// not one of the application's own switches (R-045). Windows adds <c>--restarted</c> to a
+    /// copy it starts again, and a switch is never what the reminder should say (R-102).
+    /// </summary>
+    /// <param name="args">The command-line arguments, without the program's name; not null.</param>
+    /// <returns>
+    /// The text as written, not normalized; it can be empty. <c>null</c> when the switch is not
+    /// among the arguments or nothing but switches follows it; the comparison ignores case.
+    /// </returns>
+    public static string? PreviewText(IReadOnlyList<string> args)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        var afterSwitch = false;
+
+        foreach (var argument in args)
+        {
+            if (!afterSwitch)
+            {
+                afterSwitch = argument.Equals(Preview, StringComparison.OrdinalIgnoreCase);
+                continue;
+            }
+
+            if (!IsSwitch(argument))
+            {
+                return argument;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Whether an argument is one of the application's own switches, in any form the
+    /// application reads it in; the comparison ignores case.
+    /// </summary>
+    /// <param name="argument">One command-line argument; not null.</param>
+    /// <returns>
+    /// <c>true</c> for <c>--preview</c>, <c>--restarted</c>, <c>--detect</c> and
+    /// <c>--detect=</c> with a value.
+    /// </returns>
+    private static bool IsSwitch(string argument)
+        => argument.Equals(Preview, StringComparison.OrdinalIgnoreCase)
+           || argument.Equals(Restarted, StringComparison.OrdinalIgnoreCase)
+           || argument.Equals(Detect, StringComparison.OrdinalIgnoreCase)
+           || argument.StartsWith(Detect + "=", StringComparison.OrdinalIgnoreCase);
 }
