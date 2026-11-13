@@ -400,6 +400,30 @@ public class ReminderSettingsStoreTests
         Assert.Equal(new string('x', letters), ReminderSettings.NormalizeMessage(written));
     }
 
+    /// <summary>
+    /// "Never" holds for more than one: with the last half gone, what was before it is the
+    /// end, and it can be a half too. Without this a second pass would change the text again.
+    /// </summary>
+    [Theory]
+    [InlineData(7, false, false)]
+    [InlineData(7, true, false)]
+    [InlineData(48, false, true)]
+    public void R041_A_message_that_ends_in_several_halves_loses_them_all(
+        int letters,
+        bool spaceBetween,
+        bool wholeCharacterAfter)
+    {
+        const string Half = "\uD83D";
+        var written = new string('x', letters) + Half
+                      + (spaceBetween ? " " : string.Empty)
+                      + (wholeCharacterAfter ? "\U0001F600 and more" : Half);
+
+        var normalized = ReminderSettings.NormalizeMessage(written);
+
+        Assert.Equal(new string('x', letters), normalized);
+        Assert.Equal(normalized, ReminderSettings.NormalizeMessage(normalized));
+    }
+
     [Fact]
     public void R041_A_message_that_is_nothing_but_half_a_character_reads_as_the_default()
     {

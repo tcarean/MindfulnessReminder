@@ -202,7 +202,9 @@ public sealed record ReminderSettings(bool PeriodicEnabled, int IntervalMinutes)
         // half a character, which no window can draw and no file can store, so it goes too.
         // Asked whatever the length, not only after the cut above: the version that cut
         // through a pair could also save the result, and that value is not over the limit.
-        if (char.IsHighSurrogate(trimmed[^1]))
+        // A loop, not one look: with the half gone, what stood before it is the end, and a
+        // hand-written value can have a half there too.
+        while (char.IsHighSurrogate(trimmed[^1]))
         {
             trimmed = trimmed[..^1].TrimEnd();
 
