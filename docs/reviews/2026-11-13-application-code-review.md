@@ -27,12 +27,12 @@ fixes land.
 
 | ID | Severity | Finding | Status |
 | --- | --- | --- | --- |
-| CR-01 | S2 | A settings save the registry refuses ends the application through the crash dialog | open |
-| CR-02 | S2 | After the clock moves back, every unlock reminder is skipped until the clock catches up | open |
-| CR-03 | S3 | After the clock moves back, the tooltip stops following a call or full screen | open |
+| CR-01 | S2 | A settings save the registry refuses ends the application through the crash dialog | fixed in `e7cc5ae` |
+| CR-02 | S2 | After the clock moves back, every unlock reminder is skipped until the clock catches up | fixed in `c17fc03` |
+| CR-03 | S3 | After the clock moves back, the tooltip stops following a call or full screen | fixed in `c17fc03` |
 | CR-04 | S3 | The process is system-DPI-aware, not PerMonitorV2 as the code and ADR 0041 say | open |
-| CR-05 | S3 | A sign-out or restart that is cancelled still ends the tray copy, with no trace | open |
-| CR-06 | S3 | Assigning `Topmost = true` again does nothing, so an open reminder is raised by `Activate()` alone | open |
+| CR-05 | S3 | A sign-out or restart that is cancelled still ends the tray copy, with no trace | open: to be observed first |
+| CR-06 | S3 | Assigning `Topmost = true` again does nothing, so an open reminder is raised by `Activate()` alone | fixed in `0abb279` |
 | CR-07 | S3 | A message cut at 50 can end in half a surrogate pair, and log lines carrying it are lost | open |
 | CR-08 | S3 | The text boxes of Settings open a light context menu in the dark window | open |
 | CR-09 | S3 | A carriage return on its own is not folded in a log line | open |
@@ -47,6 +47,10 @@ fixes land.
 | CR-18 | S4 | R-113's combined suffixes are not pinned | open |
 | CR-19 | S4 | `R032_The_full_screen_switch...` does not show the switch turning anything off | open |
 | CR-20 | S4 | `IDecisionLog`'s comment places its implementation in App | open |
+
+A status of `fixed in` names the commit of the fix, on `main` once its branch is merged; the
+entry below says what was done and what is left for the owner to look at. The entries not
+marked are open, and the next fix session takes the first of them in "Suggested order".
 
 No S1 was found: for a clock that only moves forward, with a registry that accepts writes, the
 reviewers and the probes found the reminders appearing and being held back as
@@ -110,7 +114,10 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   refusal; the coordinator must not be given settings that were not stored. The Core half can be
   tested on `FakeRegistryStore` refusing writes; if the decision is "the window says so and
   stays open", the window needs a way to be told, which is App and is looked at by hand.
-- Status: open
+- Status: fixed in `e7cc5ae`, 2026-11-13. The owner answered Q1 (ADR 0085): the window stays
+  open and says so, nothing is applied. The rule is `SettingsCommit.TrySaveAndApply` in Core,
+  the row is R-046, the tests are `SettingsCommitTests`. Left for the owner, in their copy:
+  deny "Set Value" on the key in regedit, click Save, and see the line in the window.
 
 ### CR-02. After the clock moves back, every unlock reminder is skipped until the clock catches up
 
@@ -134,7 +141,9 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   `JumpRestartedCountdown`, which alone would not cover the periodic reminder being off). The
   test is the probe, in `ReminderCoordinatorTests`, whose `MutableClock.Advance` takes a
   negative span. One fix task with CR-03.
-- Status: open
+- Status: fixed in `c17fc03`, 2026-11-13. `ReminderCoordinator.IsWithin` treats a stamp ahead
+  of the clock as stale; R-011 says so; the test is
+  `R011_An_unlock_after_the_clock_moved_back_shows_the_reminder_again`.
 
 ## S3
 
@@ -152,7 +161,8 @@ No tray start was made from the worktree: it would repair the auto-start entry t
 - Confirmed by: a probe. `Start`, tick at +1 s, clock back one hour, tick, microphone live,
   +10 s, tick: `Assert.Equal() Failure: Values differ. Expected: MicrophoneInUse, Actual: None`.
 - Direction: with CR-02, one rule for both comparisons: a stamp ahead of the clock is stale.
-- Status: open
+- Status: fixed in `c17fc03`, 2026-11-13, with CR-02 and by the same function; R-034 says so;
+  the test is `R034_The_tooltip_follows_a_call_after_the_clock_moved_back`.
 
 ### CR-04. The process is system-DPI-aware, not PerMonitorV2 as the code and ADR 0041 say
 
@@ -211,7 +221,9 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   messages on a window of the application's own instead of leaving them to `Application`. A
   line in the decision log on every exit (`OnExit`) is cheap, would have settled this from the
   file, and is worth its own requirement row whatever is decided.
-- Status: open
+- Status: open. Passed over on 2026-11-13, when the owner had the first five bugs fixed and
+  CR-06 was taken in its place: the scenario has to be observed in the owner's copy before
+  anything is decided, and the Restart it needs may close other programs.
 
 ### CR-06. Assigning `Topmost = true` again does nothing, so an open reminder is raised by `Activate()` alone
 
@@ -236,7 +248,12 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   the smallest; a `SetWindowPos` to the top of the topmost band without activation is the
   direct one), and correct the comment. Check that it does not take the keyboard focus more
   than today (R-071 is about keys already on their way).
-- Status: open
+- Status: fixed in `0abb279`, 2026-11-13. `WpfReminderPresenter.BringToFront` sets `Topmost`
+  to false and then to true before `Activate()`; the no-op line in `OnSourceInitialized` is
+  gone. Measured with two always-on-top WPF windows, the second covering the first: `Topmost =
+  true` again left the first under, false then true put it above
+  (`docs/design/windows.md`). Left for the owner, in their copy: a 1-minute interval and a
+  reminder left open under Task Manager set to "Always on top".
 
 ### CR-07. A message cut at 50 can end in half a surrogate pair, and log lines carrying it are lost
 
@@ -438,7 +455,8 @@ Each comes with a recommendation (the rule "Questions to the owner"). None was d
 - **Q1. What does a Save do when the registry refuses it (CR-01)?** There is no requirement
   row. Recommendation: the Settings window stays open and says so in its error line, nothing is
   applied, and the application goes on; a new row beside R-044. A balloon as in R-005 is the
-  alternative, with the window closed and the edit lost.
+  alternative, with the window closed and the edit lost. **Answered 2026-11-13:** the
+  recommendation, recorded as ADR 0085 and R-046.
 - **Q2. R-025's first sentence is wider than the guard.** "A clock moved backwards does not
   postpone the reminder" holds only when the jump is larger than the time gone since the
   deadline was armed (`IntervalSchedule.TryConsumeDue`, `due - now > _armedSpan`). A 30-minute
@@ -568,13 +586,13 @@ match its requirement rows; not probed further.
 
 By severity, then by what unblocks what. Each line is one task.
 
-1. CR-01, after Q1 is answered: it needs a requirement row first.
-2. CR-02 with CR-03: one cause, one guard, two tests.
+1. CR-01, after Q1 is answered: it needs a requirement row first. Done.
+2. CR-02 with CR-03: one cause, one guard, two tests. Done.
 3. CR-12, CR-13, CR-14 and CR-15 together: four tests of `ReminderCoordinatorTests`, no code.
    Doing them before any further change to the coordinator makes that change safer.
 4. CR-05: observe it first; then a decision.
 5. CR-04: a design choice to measure; recheck the reminder's placement afterwards.
-6. CR-06.
+6. CR-06. Done.
 7. CR-07.
 8. CR-11, CR-16 and CR-19 together: three small tests, no code.
 9. CR-17 with CR-18: the tests of R-113.
