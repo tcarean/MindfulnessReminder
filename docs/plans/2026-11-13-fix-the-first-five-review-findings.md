@@ -117,3 +117,21 @@ have their hashes:
     top";
   - CR-04: Settings, About and the tray menu on a monitor at another scale, if one is at hand.
 - `/wrap-up`, then the merge is proposed, not run.
+
+## What happened (2026-11-13)
+
+- Done as planned, one commit per fix: CR-02 with CR-03 in `c17fc03`, CR-01 in `e7cc5ae`,
+  CR-06 in `0abb279`, CR-04 in `1613376`. The review file was marked in `a98fd0f` for the
+  first four and in the commit after `1613376` for CR-04.
+- CR-01: the Core type is `SettingsCommit`, and it takes the apply step as a function, not the
+  coordinator, so its tests need no coordinator.
+- CR-04: both routes reached per-monitor v2; the owner chose the manifest (ADR 0086). The owner
+  also set the primary monitor to 150 % for the measurement, which the plan had left for after
+  the merge. That showed something the plan did not foresee: with the handle started on the
+  monitor at 100 %, the reminder was off-centre (1110, 570 instead of 630, 315). `BreakWindow`
+  centres itself again in `OnDpiChanged`, in the same commit. R-077 is new.
+- A measuring run cut short left one `--preview` process of the worktree build open, which
+  made the next build keep the old executable; it was found by the copy warning, the process
+  closed and the measurement repeated. The owner's tray copy was not touched.
+- Not done here: a primary monitor at a lower scale than the other one was not measured, and
+  the three things listed under "Verification" for the owner's copy are still to be looked at.

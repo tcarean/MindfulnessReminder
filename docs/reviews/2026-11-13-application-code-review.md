@@ -30,7 +30,7 @@ fixes land.
 | CR-01 | S2 | A settings save the registry refuses ends the application through the crash dialog | fixed in `e7cc5ae` |
 | CR-02 | S2 | After the clock moves back, every unlock reminder is skipped until the clock catches up | fixed in `c17fc03` |
 | CR-03 | S3 | After the clock moves back, the tooltip stops following a call or full screen | fixed in `c17fc03` |
-| CR-04 | S3 | The process is system-DPI-aware, not PerMonitorV2 as the code and ADR 0041 say | open |
+| CR-04 | S3 | The process is system-DPI-aware, not PerMonitorV2 as the code and ADR 0041 say | fixed in `1613376` |
 | CR-05 | S3 | A sign-out or restart that is cancelled still ends the tray copy, with no trace | open: to be observed first |
 | CR-06 | S3 | Assigning `Topmost = true` again does nothing, so an open reminder is raised by `Activate()` alone | fixed in `0abb279` |
 | CR-07 | S3 | A message cut at 50 can end in half a surrogate pair, and log lines carrying it are lost | open |
@@ -193,7 +193,15 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   conditions it has never been checked under: look at `--preview` on the primary monitor at a
   scale other than the sign-in one. Log or assert the result of the call so that a refusal is
   seen.
-- Status: open
+- Status: fixed in `1613376`, 2026-11-13. The owner chose the manifest (ADR 0086, R-077):
+  `app.manifest` declares `PerMonitorV2`, WFAC010 is muted in the csproj with its reason, and
+  the call and `ApplicationHighDpiMode` are gone, so there is no call left whose result could
+  be refused. Measured with `--preview`: the process went from system-aware to per-monitor v2.
+  With the primary monitor at 150 % and the second at 100 %, a reminder whose handle started
+  on the second monitor was at 1110, 570 instead of 630, 315, so `BreakWindow` now centres
+  itself again in `OnDpiChanged`; it is at 630, 315 wherever the handle starts. Not measured: a
+  primary monitor at a lower scale than the other one. Left for the owner, in their copy: the
+  tray menu, Settings and About on a monitor at another scale.
 
 ### CR-05. A sign-out or restart that is cancelled still ends the tray copy, with no trace
 
@@ -591,7 +599,7 @@ By severity, then by what unblocks what. Each line is one task.
 3. CR-12, CR-13, CR-14 and CR-15 together: four tests of `ReminderCoordinatorTests`, no code.
    Doing them before any further change to the coordinator makes that change safer.
 4. CR-05: observe it first; then a decision.
-5. CR-04: a design choice to measure; recheck the reminder's placement afterwards.
+5. CR-04: a design choice to measure; recheck the reminder's placement afterwards. Done.
 6. CR-06. Done.
 7. CR-07.
 8. CR-11, CR-16 and CR-19 together: three small tests, no code.
