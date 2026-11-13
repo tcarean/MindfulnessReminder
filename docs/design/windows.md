@@ -37,13 +37,26 @@ at the scale of the monitor it is on and handles a change of scale by itself; th
 that works in pixels is `BreakWindow.MoveToPrimaryScreen`. `Screen.WorkingArea` is in physical
 pixels and the window's `Left` and `Top` are in units of the window's own scale, so the
 placement converts with the window's `CompositionTarget.TransformFromDevice`. That transform is
-the scale of the monitor the handle was created on, which Windows picks and which is not always
-the primary one. Moving the window onto the primary monitor then changes its scale, its size
-in pixels and what `Left` and `Top` mean, and the first placement is left off-centre: measured
-on 2026-11-13 with the primary monitor at 150 % and the handle started on a second monitor at
-100 %, the reminder was at 1110, 570 instead of 630, 315. `OnDpiChanged` therefore calls
-`MoveToPrimaryScreen` again, with the transform that is then in force. The same override
-re-centres a reminder that is open while the user changes the primary monitor's scale.
+the scale of the monitor the handle is on, which Windows picks and which is not always the
+primary one. Assigning `Left` then carries the window onto the primary monitor, and the change
+of scale arrives inside that assignment, before `Top` is assigned: the size in pixels and what
+`Left` and `Top` mean change under a placement worked out for the other monitor, and it is
+left off-centre. `OnDpiChanged` therefore places the window again, and it queues that
+placement on the dispatcher instead of making it: made from inside the change, it is
+overwritten when the first placement resumes. The same override re-centres a reminder that is
+open while the user changes the primary monitor's scale.
+
+Measured on 2026-11-13 with `--preview`, the handle made to start on the second monitor, and a
+trace of what the window saw (taken out again):
+
+| Primary, second monitor | No second placement | Placed again inside the change | Queued | Centred is |
+| --- | --- | --- | --- | --- |
+| 150 %, 100 % | 1110, 570 | not traced | 630, 315 | 630, 315 |
+| 100 %, 125 % | 548, 286 | 685, 286 | 740, 390 | 740, 390 |
+
+Windows honours the start position in about one run in three, so a run proves something only
+when the trace shows a change of scale. Whether the window is drawn for a moment at its first
+position before the queued placement runs was not looked at.
 
 **Raising a reminder that is already open.** `BreakWindow` is `Topmost` from its XAML, so its
 handle is created always-on-top, above everything open at that moment. A reminder left open

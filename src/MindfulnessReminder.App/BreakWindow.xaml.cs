@@ -76,6 +76,12 @@ public partial class BreakWindow : Window
     /// at that monitor's scale; moving onto the primary monitor changes the scale, and with it
     /// the window's size in pixels and what its coordinates mean. The same happens when the
     /// user changes the primary monitor's scale while a reminder is open.
+    ///
+    /// The placement is queued, not made here. The change of scale arrives in the middle of
+    /// the first placement, as it assigns <c>Left</c> and before it assigns <c>Top</c>, and a
+    /// placement made from inside it is overwritten when the first one resumes: measured on
+    /// 2026-11-13, the window ended at 685, 286 instead of 740, 390. Queued, it runs once the
+    /// change is over.
     /// </summary>
     /// <param name="oldDpi">The scale before the change; not read.</param>
     /// <param name="newDpi">The scale now in force; not read, the window's source has it.</param>
@@ -83,7 +89,7 @@ public partial class BreakWindow : Window
     {
         base.OnDpiChanged(oldDpi, newDpi);
 
-        MoveToPrimaryScreen();
+        Dispatcher.BeginInvoke(MoveToPrimaryScreen);
     }
 
     /// <summary>
