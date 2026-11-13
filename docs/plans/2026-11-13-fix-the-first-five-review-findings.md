@@ -158,6 +158,19 @@ have their hashes:
   - `settings-storage.md` said a refusal always comes before anything is written; that holds
     for the key's permissions only.
   - R-113 read as if the store wrote the refusal line; `SettingsCommit` does.
+- A second subagent reviewed that commit alone. It found the corrections true against the code
+  and the ADR headers right, and three texts still claiming more than was measured, corrected
+  in a further commit:
+  - that Task Manager "still covers" a reminder: the source says only that being `Topmost` is
+    not enough for it, and nobody measured it, so the texts now say "expected";
+  - that the raise works against another program's window: the measurement was two windows of
+    one test process, and the CHANGELOG and ADR 0087 now say so;
+  - R-077 and `windows.md` on what WPF does for every window: only the reminder was looked at.
+    The reminder's measured size and work area are now recorded with the table.
+  ADR 0086 and ADR 0087 now point to the note for the figures instead of repeating them.
+- Left to the owner from that review: `README.md` says the reminder appears "above every other
+  window", which Task Manager set to "Always on top" is expected to be an exception to; and
+  the CHANGELOG's "not yet looked at" lines want the look before the release that prints them.
 - Not done here: the three things listed under "Verification" for the owner's copy are still
   to be looked at, and whether the reminder is drawn for a moment at its first position before
   the queued placement runs was not looked at.

@@ -74,8 +74,9 @@ public partial class BreakWindow : Window
     /// monitor it is on. The handle can be created on another monitor than the primary one
     /// (Windows picks where a new window starts), and the first placement is then worked out
     /// at that monitor's scale; moving onto the primary monitor changes the scale, and with it
-    /// the window's size in pixels and what its coordinates mean. The same happens when the
-    /// user changes the primary monitor's scale while a reminder is open.
+    /// the window's size in pixels and what its coordinates mean. The same is expected when
+    /// the user changes the primary monitor's scale while a reminder is open; that case was
+    /// not measured.
     ///
     /// The placement is queued, not made here. The change of scale arrives in the middle of
     /// the first placement, as it assigns <c>Left</c> and before it assigns <c>Top</c>, and a

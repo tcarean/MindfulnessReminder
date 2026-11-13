@@ -102,9 +102,9 @@ internal sealed class WpfReminderPresenter : IReminderPresenter
 
     /// <summary>
     /// Restores the open window if it is minimized and brings it to the front, above an
-    /// ordinary always-on-top window that came to cover it; a window Windows keeps in a higher
-    /// layer, as Task Manager's "Always on top" is, stays above. Does nothing when no window is
-    /// open, which includes while one is still queued.
+    /// ordinary always-on-top window that came to cover it. A window that Windows keeps above
+    /// those, as Task Manager set to "Always on top" is said to be, is not expected to give
+    /// way. Does nothing when no window is open, which includes while one is still queued.
     /// </summary>
     public void BringToFront()
     {
@@ -120,8 +120,8 @@ internal sealed class WpfReminderPresenter : IReminderPresenter
 
         // Off and on again, not just on: the window is topmost already, and assigning a
         // property the value it has changes nothing, so WPF would make no call to Windows.
-        // Leaving the topmost band and entering it again puts the window at the top of it,
-        // above another always-on-top window opened since. That matters because Activate
+        // Leaving the always-on-top windows and joining them again puts the window above the
+        // others, one opened since included. That matters because Activate
         // alone cannot be relied on: Windows grants foreground activation only to a process
         // with recent input. Neither assignment takes the focus.
         window.Topmost = false;

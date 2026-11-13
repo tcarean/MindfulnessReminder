@@ -32,9 +32,10 @@ See ADR 0060 and ADR 0081; About's own reasons are ADR 0066.
 
 **The scale the windows are drawn at.** The process is per-monitor DPI aware, declared in
 `app.manifest` and nowhere in the code: WPF declares the process system-aware as it loads,
-before `App.OnStartup` runs, so a call there has no effect (ADR 0086). WPF then draws each window
-at the scale of the monitor it is on and handles a change of scale by itself; the one place
-that works in pixels is `BreakWindow.MoveToPrimaryScreen`. `Screen.WorkingArea` is in physical
+before `App.OnStartup` runs, so a call there has no effect (ADR 0086). WPF has its own
+per-monitor support, which is expected to draw each window at the scale of its monitor and to
+follow a change of scale; of the application's windows only the reminder was looked at. The one
+place that works in pixels is `BreakWindow.MoveToPrimaryScreen`. `Screen.WorkingArea` is in physical
 pixels and the window's `Left` and `Top` are in units of the window's own scale, so the
 placement converts with the window's `CompositionTarget.TransformFromDevice`. That transform is
 the scale of the monitor the handle is on, which Windows picks and which is not always the
@@ -43,8 +44,9 @@ of scale arrives inside that assignment, before `Top` is assigned: the size in p
 `Left` and `Top` mean change under a placement worked out for the other monitor, and it is
 left off-centre. `OnDpiChanged` therefore places the window again, and it queues that
 placement on the dispatcher instead of making it: made from inside the change, it is
-overwritten when the first placement resumes. The same override re-centres a reminder that is
-open while the user changes the primary monitor's scale.
+overwritten when the first placement resumes. The same override is expected to re-centre a
+reminder that is open while the user changes the primary monitor's scale; that was not
+measured.
 
 Measured on 2026-11-13 with `--preview`, the handle made to start on the second monitor, and a
 trace of what the window saw (taken out again):
@@ -54,25 +56,31 @@ trace of what the window saw (taken out again):
 | 150 %, 100 % | 1110, 570 | not traced | 630, 315 | 630, 315 |
 | 100 %, 125 % | 548, 286 | 685, 286 | 740, 390 | 740, 390 |
 
+The figures are the window's top-left corner in pixels. With the primary monitor at 150 % the
+reminder measured 660 x 390 pixels in a work area of 1920 x 1020; at 100 %, 440 x 260 in
+1920 x 1040. The system-aware 1.5.1 was centred in both rows.
+
 Windows honours the start position in about one run in three, so a run proves something only
 when the trace shows a change of scale. Whether the window is drawn for a moment at its first
 position before the queued placement runs was not looked at.
 
 **Raising a reminder that is already open.** `BreakWindow` is `Topmost` from its XAML, so its
 handle is created always-on-top, above everything open at that moment. A reminder left open
-can still end up under another always-on-top window opened later (a picture-in-picture
-player). `WpfReminderPresenter.BringToFront` therefore sets
+can still end up under another always-on-top window opened later (a browser's
+picture-in-picture video). `WpfReminderPresenter.BringToFront` therefore sets
 `Topmost` to false and then to true before it calls `Activate()`. Setting it to true alone
 does nothing: the property already holds that value, WPF sees no change and makes no call to
 Windows. And `Activate()` alone is not enough, since Windows grants the foreground only to a
 process with recent input. Measured on 2026-11-13 with two always-on-top WPF windows, the
 second covering the first: after `Topmost = true` on the first it was still under the second;
 after `false` then `true` it was above. Neither assignment takes the keyboard focus;
-`Activate()` asks for it, as it did before.
+`Activate()` asks for it, as it did before. Both windows belonged to one test process: the
+raise has not yet been seen against another program's window, nor in the tray copy.
 
-The toggle reorders the window among the ordinary always-on-top windows and no further. Since
-Windows 8 there is a layer above all of them, which a window cannot enter by being `Topmost`;
-Task Manager set to "Always on top" restarts itself into that layer (Raymond Chen, "The Old New
-Thing", 2023-05-02), so it still covers a reminder, and it is not a way to check this.
+The toggle reorders the window among the ordinary always-on-top windows and no further. Task
+Manager set to "Always on top" is not one of them: since Windows 8 being `Topmost` "isn't good
+enough any more" for it, and it restarts itself to get above (Raymond Chen, "The Old New
+Thing", 2023-05-02). It is therefore expected to go on covering a reminder, which was not
+measured, and it is not a way to check the raise.
 
 See ADR 0087.

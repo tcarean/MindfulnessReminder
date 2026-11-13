@@ -29,14 +29,10 @@ The same day the owner set the two monitors to different scales, and the reminde
 made to start on the second monitor (`STARTF_USEPOSITION`, which Windows honoured in about one
 run in three; a trace in the window, taken out again, showed which runs). The first placement
 is worked out at the scale of the monitor the handle is on, and the change of scale arrives
-while that placement assigns `Left`:
-
-| Primary, second monitor | No second placement | Placed again inside the change | Placed again, queued | Centred is |
-| --- | --- | --- | --- | --- |
-| 150 %, 100 % | 1110, 570 | not traced | 630, 315 | 630, 315 |
-| 100 %, 125 % | 548, 286 | 685, 286 | 740, 390 | 740, 390 |
-
-The system-aware 1.5.1 was centred in both. The first version of this fix placed the window
+while that placement assigns `Left`. With no second placement the per-monitor build left the
+reminder off-centre in both directions tried (150 % and 100 %, 100 % and 125 %), where the
+system-aware 1.5.1 was centred; with a second placement queued it was centred in both. The
+figures are in `docs/design/windows.md`. The first version of this fix placed the window
 again inside `OnDpiChanged` and was committed as centred on a run that had not started on the
 second monitor; the trace showed it wrong, and the queued placement replaced it.
 
