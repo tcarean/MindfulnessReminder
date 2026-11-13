@@ -68,7 +68,8 @@ and `Screen`, both from the WindowsDesktop shared framework (ADR 0041).
 - `docs/requirements.md` - the behaviour, with IDs. `docs/decisions/` - the decision records,
   one sequence numbered by date (ADR 0075). `docs/validation.md` + `.json` - no figures, and
   why. `docs/design/` - the explanations, per area, read on demand. `docs/plans/` - approved
-  plans. `README.md` - the user documentation.
+  plans. `docs/reviews/` - the findings of each code review, closed one task at a time (ADR
+  0084). `README.md` - the user documentation.
 - The project is the root of its own repository (ADR 0074). `.github/workflows/ci.yml` runs
   the gate, every test included, on every push to `main` and every pull request.
 
