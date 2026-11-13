@@ -23,6 +23,8 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
   monitors set to different scales Windows no longer stretches its windows from another
   scale. The reminder stays centred on the primary monitor, at that monitor's scale. The tray
   menu, Settings and About have not yet been looked at on such monitors (R-077; ADR 0086).
+- A carriage return on its own inside an event's text no longer splits its line of the
+  decision log in two; it becomes ` | ` like the other line breaks (R-110).
 
 ## [1.5.1] - 2026-11-12
 
