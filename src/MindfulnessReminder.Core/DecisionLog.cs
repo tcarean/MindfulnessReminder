@@ -232,6 +232,15 @@ public static class DecisionLog
     /// <returns><c>Settings saved: &lt;summary&gt;</c>.</returns>
     public static string SettingsSaved(ReminderSettings settings) => "Settings saved: " + Summary(settings);
 
+    /// <summary>The registry refused the write of a Save in the Settings window (R-046).</summary>
+    /// <param name="refusal">The exception the registry threw; not null.</param>
+    /// <returns><c>Settings not saved: the registry refused (&lt;type name&gt;)</c>.</returns>
+    public static string SettingsSaveRefused(Exception refusal)
+    {
+        ArgumentNullException.ThrowIfNull(refusal);
+        return "Settings not saved: the registry refused (" + refusal.GetType().Name + ")";
+    }
+
     /// <summary>The first run registered the application for Windows startup (R-003).</summary>
     /// <param name="command">The quoted path written to the Run key; not null.</param>
     /// <returns><c>Auto-start registered: &lt;command&gt;</c>.</returns>

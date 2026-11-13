@@ -6,6 +6,7 @@
 > `src/MindfulnessReminder.Core/IRegistryStore.cs`,
 > `src/MindfulnessReminder.Core/StartupRegistrar.cs`,
 > `src/MindfulnessReminder.Core/ReminderSettings.cs`,
+> `src/MindfulnessReminder.Core/SettingsCommit.cs`,
 > `src/MindfulnessReminder.App/SettingsWindow.xaml.cs`. A change to the code this describes means
 > this note is updated in the same task, or deleted with the decision it explains.
 
@@ -41,6 +42,19 @@ there is a user standing there to tell. Clamping silently is for the registry, w
 is not.
 
 See ADR 0061.
+
+Writing can be refused too (a policy, security software), and `RegistrySettingsStore.Save`
+throws then, as `ISettingsStore` says. The Settings window does not call it: it is given one
+function, `SettingsCommit.TrySaveAndApply` bound by `App.ShowSettings` to the store, the
+coordinator's `ApplySettings` and the log. That function writes first and applies second, so
+settings are never in force that the next start would not read back; on a write refusal
+(`RegistryRefusal.IsWriteRefusal`) it writes the log line, applies nothing and returns
+`false`, and the window shows its complaint and stays open with what was typed. Any other
+exception is not caught and ends in the crash handler. The eight values are written one by
+one with no rollback: a refusal is a matter of the key's permissions, so it comes at the
+first value, before anything is written.
+
+See ADR 0085.
 
 Silently towards the user, not towards the log: `Load` writes one line with every setting it
 ended up with, the names of the values that were missing or unreadable and fell back, and each

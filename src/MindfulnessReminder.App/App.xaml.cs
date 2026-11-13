@@ -353,15 +353,16 @@ public partial class App : WpfApplication
             return;
         }
 
-        var window = new SettingsWindow(coordinator.Settings);
-
-        window.Accepted += (_, settings) =>
+        if (_settingsStore is not { } store)
         {
-            // Saved first: if the write fails, the app has not started behaving in a way the
-            // next launch will contradict.
-            _settingsStore?.Save(settings);
-            coordinator.ApplySettings(settings);
-        };
+            return;
+        }
+
+        // The rule is Core's: written, then applied, and a write the registry refuses leaves
+        // the window open to say so instead of ending the application (R-046).
+        var window = new SettingsWindow(
+            coordinator.Settings,
+            settings => SettingsCommit.TrySaveAndApply(store, settings, coordinator.ApplySettings, _log));
 
         window.Closed += (_, _) => _settingsWindow = null;
 

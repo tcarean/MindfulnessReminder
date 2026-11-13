@@ -27,21 +27,39 @@ namespace MindfulnessReminder.App;
 /// <summary>
 /// The Settings window, opened from the tray menu.
 ///
-/// It edits a <see cref="ReminderSettings"/> and hands it back through
-/// <see cref="Accepted"/> rather than exposing a result property, because it is modeless:
-/// there is no ShowDialog call to return to. Saving is refused, with the reason spelled out
-/// in the window, rather than silently clamping a number the user typed -- clamping happens
-/// on the way out of the registry, where there is nobody to tell.
+/// It edits a <see cref="ReminderSettings"/> and hands it to the save function it was given
+/// rather than exposing a result property, because it is modeless: there is no ShowDialog
+/// call to return to. Saving is refused, with the reason spelled out in the window, rather
+/// than silently clamping a number the user typed -- clamping happens on the way out of the
+/// registry, where there is nobody to tell.
 /// </summary>
 public partial class SettingsWindow : Window
 {
     /// <summary>
+    /// What the window says when the save function reports that the settings were not stored
+    /// (R-046).
+    /// </summary>
+    private const string SaveRefusedComplaint = "The settings could not be saved: Windows refused the change.";
+
+    /// <summary>Stores and applies the settings Save read; <c>false</c> when they were not stored.</summary>
+    private readonly Func<ReminderSettings, bool> _save;
+
+    /// <summary>
     /// A Settings window filled in from <paramref name="current"/>, not yet shown.
     /// </summary>
     /// <param name="current">The settings in force, which the boxes start from.</param>
-    public SettingsWindow(ReminderSettings current)
+    /// <param name="save">
+    /// Called by Save with the edited settings, normalized, and never on Cancel; not null. It
+    /// stores and applies them and returns <c>true</c>, after which the window closes, or
+    /// returns <c>false</c> when they could not be stored, after which the window says so and
+    /// stays open (R-046).
+    /// </param>
+    public SettingsWindow(ReminderSettings current, Func<ReminderSettings, bool> save)
     {
         ArgumentNullException.ThrowIfNull(current);
+        ArgumentNullException.ThrowIfNull(save);
+
+        _save = save;
 
         InitializeComponent();
 
@@ -59,9 +77,6 @@ public partial class SettingsWindow : Window
         SyncRetryAvailability();
     }
 
-    /// <summary>Raised with the edited settings when Save succeeds. Never raised on Cancel.</summary>
-    public event EventHandler<ReminderSettings>? Accepted;
-
     /// <summary>
     /// The title bar is the one part of this window WPF does not paint, so the dark theme
     /// merged in the XAML stops at the client area and the caption has to be asked for
@@ -77,8 +92,9 @@ public partial class SettingsWindow : Window
     }
 
     /// <summary>
-    /// Reads every box and, when what is needed is usable, raises <see cref="Accepted"/> with
-    /// the settings, normalized, and closes. Otherwise says what is wrong and stays open.
+    /// Reads every box and, when what is needed is usable, hands the settings, normalized, to
+    /// the save function and closes. When a box does not read, or the save function reports
+    /// that the settings were not stored, says what is wrong and stays open.
     /// </summary>
     /// <param name="sender">The Save button; not read.</param>
     /// <param name="e">The click; not read.</param>
@@ -165,7 +181,14 @@ public partial class SettingsWindow : Window
             RetrySeconds = seconds,
         };
 
-        Accepted?.Invoke(this, settings.Normalize());
+        if (!_save(settings.Normalize()))
+        {
+            // No box is at fault, so none is focused: what was typed stays, for another try
+            // or for Cancel.
+            ShowError(SaveRefusedComplaint);
+            return;
+        }
+
         Close();
     }
 

@@ -11,6 +11,10 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
 - After the clock is set back (by hand, or by a time sync), the unlock reminder appears again
   at the next unlock, and the tray tooltip goes on following a call or full screen. Both
   stopped until the clock had caught up with the time it was moved back from (R-011, R-034).
+- A Save in Settings that Windows refuses to store (a policy, security software) no longer
+  ends the application through the crash dialog. The window stays open and says
+  `The settings could not be saved: Windows refused the change.`, and nothing is applied
+  (R-046; ADR 0085).
 
 ## [1.5.1] - 2026-11-12
 
