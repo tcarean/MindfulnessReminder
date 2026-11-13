@@ -98,3 +98,18 @@ section at wrap-up.
 - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1` green before each
   commit; `scripts/check-design.ps1 -Since main` at the end.
 - `/wrap-up`; then the merge is proposed, not run.
+
+## What happened (2026-11-13)
+
+- Done as planned, one commit per finding: CR-12 in `86578f3`, CR-13 in `59971f4`, CR-14 in
+  `7858357`, CR-15 in `a839b6d`, CR-16 in `da8c69f`; the review file was marked in the commit
+  after them. Nothing under `src/` changed: every strengthened test was green against the code
+  as it is.
+- Each test was red against its mutation, and the failure is quoted in its entry of the review
+  file. Mutations 3 and 4 (CR-13) were put in together and the two tests run in one go, not one
+  run per mutation as planned: the save's test never locks and the lock's test never saves, so
+  each failure still belongs to one mutation.
+- Two assertions the plan did not name: both CR-13 tests first assert that the tick before the
+  save, or before the lock, did read the monitor (`ReadCount == 1`), so that neither can go
+  back to starting from a state with no stamp, which was the fault the review found.
+- The suite went from 388 to 394 tests: two new facts, and a theory of four rows.

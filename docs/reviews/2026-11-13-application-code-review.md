@@ -38,11 +38,11 @@ fixes land.
 | CR-09 | S3 | A carriage return on its own is not folded in a log line | fixed in `cdab57e` |
 | CR-10 | S3 | `--preview --restarted` shows `--restarted` as the message | fixed in `3766c7f` |
 | CR-11 | S4 | `R062_The_longest_tooltip...` cannot fail | fixed in `234da8f` |
-| CR-12 | S4 | `R010_Start_twice_subscribes_only_once` cannot see a second subscription | open |
-| CR-13 | S4 | R-035's fresh reading after a save and after a lock is not pinned | open |
-| CR-14 | S4 | `R021_Dispose_stops_and_disposes_the_timer` does not pin the tick's unsubscription | open |
-| CR-15 | S4 | `CountdownChanged` on `ApplySettings` is not pinned | open |
-| CR-16 | S4 | `IsRetryInRange` has no test, though R-043 names it | open |
+| CR-12 | S4 | `R010_Start_twice_subscribes_only_once` cannot see a second subscription | fixed in `86578f3` |
+| CR-13 | S4 | R-035's fresh reading after a save and after a lock is not pinned | fixed in `59971f4` |
+| CR-14 | S4 | `R021_Dispose_stops_and_disposes_the_timer` does not pin the tick's unsubscription | fixed in `7858357` |
+| CR-15 | S4 | `CountdownChanged` on `ApplySettings` is not pinned | fixed in `a839b6d` |
+| CR-16 | S4 | `IsRetryInRange` has no test, though R-043 names it | fixed in `da8c69f` |
 | CR-17 | S4 | R-113's order of lines after a refused registration is not pinned | open |
 | CR-18 | S4 | R-113's combined suffixes are not pinned | open |
 | CR-19 | S4 | `R032_The_full_screen_switch...` does not show the switch turning anything off | open |
@@ -234,8 +234,9 @@ No tray start was made from the worktree: it would repair the auto-start entry t
 - Status: open. Passed over on 2026-11-13, when the owner had the first five bugs fixed and
   CR-06 was taken in its place: the scenario has to be observed in the owner's copy before
   anything is decided, and the Restart it needs may close other programs. Passed over again
-  the same day, for the same reason, when the owner had the next five fixed (CR-07 to CR-11).
-  It is the one S3 finding left, and it waits for the owner's observation, not for a session.
+  the same day, for the same reason, when the owner had the next five fixed (CR-07 to CR-11),
+  and a third time when the five after those were fixed (CR-12 to CR-16). It is the one S3
+  finding left, and it waits for the owner's observation, not for a session.
 
 ### CR-06. Assigning `Topmost = true` again does nothing, so an open reminder is raised by `Activate()` alone
 
@@ -410,7 +411,9 @@ then green against the code as it is.
 - Confirmed by: mutation 2.
 - Direction: also assert `BringToFrontCount == 0`, or one `Workstation unlocked` line in the
   log.
-- Status: open
+- Status: fixed in `86578f3`, 2026-11-13. The test asserts both: no raise, and one
+  `Workstation unlocked` line. Red against mutation 2 (`Assert.Equal() Failure: Values differ.
+  Expected: 0, Actual: 1`, the raise by the second handler), green against the code as it is.
 
 ### CR-13. R-035's fresh reading after a save and after a lock is not pinned
 
@@ -425,7 +428,12 @@ then green against the code as it is.
   pause off and full-screen pause on, microphone live, tick at +1 s, `ApplySettings(Default)`,
   tick at +2 s, expect `MicrophoneInUse`. For the lock: unlock reminder off, tick at +1 s, lock,
   unlock, microphone live, tick at +2 s, expect `MicrophoneInUse`.
-- Status: open
+- Status: fixed in `59971f4`, 2026-11-13, as the direction says.
+  `R035_Applying_settings_takes_a_fresh_reading_on_the_next_tick` starts with the full-screen
+  pause on and asserts that the tick before the save took a reading; the lock's half is the
+  new `R035_A_lock_takes_a_fresh_reading_on_the_first_tick_after_the_unlock`. Red against
+  mutations 3 and 4, put in together, each test on its own path (`Expected: MicrophoneInUse,
+  Actual: None`, twice), green against the code as it is.
 
 ### CR-14. `R021_Dispose_stops_and_disposes_the_timer` does not pin the tick's unsubscription
 
@@ -436,7 +444,9 @@ then green against the code as it is.
   assertions; the unsubscription is not proven.
 - Confirmed by: mutation 6.
 - Direction: advance the clock by the interval before `RaiseTick`.
-- Status: open
+- Status: fixed in `7858357`, 2026-11-13, as the direction says. Red against mutation 6
+  (`Assert.Equal() Failure: Values differ. Expected: 0, Actual: 1`, the reminder a coordinator
+  still subscribed shows), green against the code as it is.
 
 ### CR-15. `CountdownChanged` on `ApplySettings` is not pinned
 
@@ -448,7 +458,11 @@ then green against the code as it is.
   timer and leave the tooltip saying `next in N min` with no later tick to repair it.
 - Confirmed by: mutation 5.
 - Direction: count the event around `ApplySettings(new ReminderSettings(false, 30))`.
-- Status: open
+- Status: fixed in `a839b6d`, 2026-11-13. A test of its own,
+  `R021_A_save_that_switches_the_periodic_reminder_off_raises_the_countdown_change_event`,
+  expects the event once from that save, with `Remaining` already null when it is raised; the
+  four-step test is as it was. Red against mutation 5 (`Assert.Equal() Failure: Collections
+  differ. Expected: [null], Actual: []`), green against the code as it is.
 
 ### CR-16. `IsRetryInRange` has no test, though R-043 names it
 
@@ -460,7 +474,10 @@ then green against the code as it is.
 - Confirmed by: mutation 7.
 - Direction: the same four-row theory as the interval's: `MinRetrySeconds - 1`, `Min`, `Max`,
   `Max + 1`.
-- Status: open
+- Status: fixed in `da8c69f`, 2026-11-13, as the direction says:
+  `R043_The_dialog_retry_range_check_matches_the_clamp` in `ReminderSettingsStoreTests`. Red
+  against mutation 7 in the two rows outside the range, 4 and 301 (`Expected: False, Actual:
+  True`), green against the code as it is.
 
 ### CR-17. R-113's order of lines after a refused registration is not pinned
 
@@ -657,13 +674,13 @@ By severity, then by what unblocks what. Each line is one task.
 1. CR-01, after Q1 is answered: it needs a requirement row first. Done.
 2. CR-02 with CR-03: one cause, one guard, two tests. Done.
 3. CR-12, CR-13, CR-14 and CR-15 together: four tests of `ReminderCoordinatorTests`, no code.
-   Doing them before any further change to the coordinator makes that change safer.
+   Doing them before any further change to the coordinator makes that change safer. Done.
 4. CR-05: observe it first; then a decision.
 5. CR-04: a design choice to measure; recheck the reminder's placement afterwards. Done.
 6. CR-06. Done.
 7. CR-07. Done.
-8. CR-11, CR-16 and CR-19 together: three small tests, no code. CR-11 is done; CR-16 and
-   CR-19 remain.
+8. CR-11, CR-16 and CR-19 together: three small tests, no code. CR-11 and CR-16 are done;
+   CR-19 remains.
 9. CR-17 with CR-18: the tests of R-113.
 10. CR-09, CR-10, CR-08, CR-20: small, any order. The first three are done; CR-20 remains.
 11. Q2 to Q9 as the owner answers them; U1 to U6 as someone observes them.
