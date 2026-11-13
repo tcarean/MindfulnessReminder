@@ -133,5 +133,18 @@ have their hashes:
 - A measuring run cut short left one `--preview` process of the worktree build open, which
   made the next build keep the old executable; it was found by the copy warning, the process
   closed and the measurement repeated. The owner's tray copy was not touched.
-- Not done here: a primary monitor at a lower scale than the other one was not measured, and
-  the three things listed under "Verification" for the owner's copy are still to be looked at.
+- After the wrap-up the owner set the second monitor to 125 % with the primary at 100 %, the
+  direction not measured until then. A trace put into the window for the measurement showed
+  two things. The start position asked of Windows is honoured in about one run in three, so
+  the run that had "confirmed" the re-centring of `1613376` at 150 % had not started on the
+  second monitor and proved nothing. And that re-centring was wrong: made from inside the
+  change of scale, it left the window at 685, 286 instead of 740, 390. `a9ae321` queues the
+  placement on the dispatcher instead. With the trace showing a real start on the second
+  monitor, both directions end centred (three runs at 100 % and 125 %, two at 150 % and 100 %,
+  after the owner switched the scales back for it); the table is in `docs/design/windows.md`.
+- The same mistake was made twice more while measuring: output cut short left three
+  `--preview` processes open. They were closed by their path and arguments; the measuring loop
+  now keeps the whole output.
+- Not done here: the three things listed under "Verification" for the owner's copy are still
+  to be looked at, and whether the reminder is drawn for a moment at its first position before
+  the queued placement runs was not looked at.

@@ -30,7 +30,7 @@ fixes land.
 | CR-01 | S2 | A settings save the registry refuses ends the application through the crash dialog | fixed in `e7cc5ae` |
 | CR-02 | S2 | After the clock moves back, every unlock reminder is skipped until the clock catches up | fixed in `c17fc03` |
 | CR-03 | S3 | After the clock moves back, the tooltip stops following a call or full screen | fixed in `c17fc03` |
-| CR-04 | S3 | The process is system-DPI-aware, not PerMonitorV2 as the code and ADR 0041 say | fixed in `1613376` |
+| CR-04 | S3 | The process is system-DPI-aware, not PerMonitorV2 as the code and ADR 0041 say | fixed in `1613376` and `a9ae321` |
 | CR-05 | S3 | A sign-out or restart that is cancelled still ends the tray copy, with no trace | open: to be observed first |
 | CR-06 | S3 | Assigning `Topmost = true` again does nothing, so an open reminder is raised by `Activate()` alone | fixed in `0abb279` |
 | CR-07 | S3 | A message cut at 50 can end in half a surrogate pair, and log lines carrying it are lost | open |
@@ -197,11 +197,13 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   `app.manifest` declares `PerMonitorV2`, WFAC010 is muted in the csproj with its reason, and
   the call and `ApplicationHighDpiMode` are gone, so there is no call left whose result could
   be refused. Measured with `--preview`: the process went from system-aware to per-monitor v2.
-  With the primary monitor at 150 % and the second at 100 %, a reminder whose handle started
-  on the second monitor was at 1110, 570 instead of 630, 315, so `BreakWindow` now centres
-  itself again in `OnDpiChanged`; it is at 630, 315 wherever the handle starts. Not measured: a
-  primary monitor at a lower scale than the other one. Left for the owner, in their copy: the
-  tray menu, Settings and About on a monitor at another scale.
+  With the two monitors at different scales, a reminder whose handle started on the second
+  monitor was off-centre (1110, 570 instead of 630, 315 with the primary at 150 %), so
+  `BreakWindow` centres itself again when its scale changes. The first version of that, in
+  `1613376`, placed the window from inside the change and was wrong in the other direction;
+  `a9ae321` queues the placement instead, and both directions are measured centred (the table
+  is in `docs/design/windows.md` and ADR 0086). Left for the owner, in their copy: the tray
+  menu, Settings and About on a monitor at another scale.
 
 ### CR-05. A sign-out or restart that is cancelled still ends the tray copy, with no trace
 
