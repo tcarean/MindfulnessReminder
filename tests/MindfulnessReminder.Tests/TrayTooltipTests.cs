@@ -81,6 +81,19 @@ public class TrayTooltipTests
         Assert.True(
             longest.Length <= TrayTooltip.MaxLength,
             $"tooltip is {longest.Length} characters: {longest}");
+
+        // The length alone proves nothing: Format cuts at the limit, so every candidate fits
+        // whatever its text. What R-062 promises is that none of them needed the cut, and a
+        // text that was not cut still has its last words (CR-11).
+        foreach (var candidate in candidates)
+        {
+            Assert.True(
+                candidate == VersionInfo.Banner
+                || candidate.EndsWith(" min", StringComparison.Ordinal)
+                || candidate.EndsWith("mic is on", StringComparison.Ordinal)
+                || candidate.EndsWith("full screen", StringComparison.Ordinal),
+                $"tooltip was cut at {candidate.Length} characters: {candidate}");
+        }
     }
 
     /// <summary>
