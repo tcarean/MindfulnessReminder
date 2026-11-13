@@ -295,7 +295,7 @@ public sealed class ReminderCoordinator : IDisposable
         }
 
         var now = _clock.UtcNow;
-        if (_lastShownAt is { } last && now - last < _debounce)
+        if (_lastShownAt is { } last && IsWithin(now, last, _debounce))
         {
             _log.Write(DecisionLog.UnlockSkippedRecent(now - last));
             return;
@@ -471,13 +471,29 @@ public sealed class ReminderCoordinator : IDisposable
             return;
         }
 
-        if (_lastActivityReadAt is { } last && now - last < _activityRefresh)
+        if (_lastActivityReadAt is { } last && IsWithin(now, last, _activityRefresh))
         {
             return;
         }
 
         Evaluate();
     }
+
+    /// <summary>
+    /// Whether something stamped at <paramref name="stamp"/> happened less than
+    /// <paramref name="window"/> ago. A stamp ahead of the clock is not recent: the clock was
+    /// moved back since, and how long ago the stamp was taken is no longer known, so it is
+    /// treated as stale rather than as fresh until the clock catches up with it (R-011, R-034).
+    /// </summary>
+    /// <param name="now">The current time.</param>
+    /// <param name="stamp">When the thing happened, on the clock as it was then.</param>
+    /// <param name="window">How long counts as recent; positive.</param>
+    /// <returns>
+    /// <c>true</c> when <paramref name="stamp"/> is at or before <paramref name="now"/> and
+    /// less than <paramref name="window"/> before it.
+    /// </returns>
+    private static bool IsWithin(DateTimeOffset now, DateTimeOffset stamp, TimeSpan window)
+        => stamp <= now && now - stamp < window;
 
     /// <summary>
     /// The timer runs only while there is something to count. With the feature switched off,

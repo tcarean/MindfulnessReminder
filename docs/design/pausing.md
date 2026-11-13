@@ -57,7 +57,9 @@ Rules that are easy to break:
   decoration -- without it `Suppression` only becomes non-None at the moment a reminder is
   held back, so hovering the tray during a call would count down to a reminder that is not
   going to arrive, and the whole feature would be invisible until the interval happened to
-  elapse. That is exactly how it was first written, and it was wrong.
+  elapse. That is exactly how it was first written, and it was wrong. A reading stamped ahead
+  of the clock, after the clock moved back, counts as old, so the next idle tick reads again
+  (`periodic-reminder.md` has the rule and its tests).
 - **No cap on how long a reminder is held back.** That is the requirement, and the tooltip
   carries the reason so a quiet tray icon can be told from a broken one.
 

@@ -6,6 +6,12 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
 
 ## [Unreleased]
 
+### Fixed
+
+- After the clock is set back (by hand, or by a time sync), the unlock reminder appears again
+  at the next unlock, and the tray tooltip goes on following a call or full screen. Both
+  stopped until the clock had caught up with the time it was moved back from (R-011, R-034).
+
 ## [1.5.1] - 2026-11-12
 
 ### Fixed
