@@ -75,12 +75,12 @@ See ADR 0058.
 
 `--preview "some text"` shows a message without saving it, through the same normalization
 the saved one gets. It is the way to see what a candidate message looks like at the cap.
-Which argument is the text is Core's to say (`CommandLineSwitches.PreviewText`), so that a
+Which argument is the text is Core's to say (`CommandLineSwitches.TryGetPreviewText`), so that a
 test reaches it: the first one after the switch that is not a switch of the application's
 own, nor the argument after a bare `--detect`, which App reads as that switch's number of
 seconds. A switch is passed over, not read as "no text", because ignoring `--restarted` (R-102)
 means the command line reads as it would without it: `--preview --restarted "Breathe"` shows
-`Breathe`. `App.PreviewMessage` only asks whether the switch is there and normalizes the
-answer.
+`Breathe`. The one call answers both whether the switch was given and what its text is, so
+`App.PreviewMessage` only normalizes the answer.
 
 See ADR 0057.

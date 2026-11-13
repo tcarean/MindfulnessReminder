@@ -54,7 +54,10 @@
     refusal rather than an error.
   - `CommandLineSwitches.cs` — the three switches (`--preview`, `--detect`, `--restarted`) and
     the two ways of finding one in the arguments, so App parses and Core decides on the same
-    strings; and `PreviewText`, which picks the text `--preview` shows.
+    strings; `TryGetPreviewText`, which says whether `--preview` was given and picks the text
+    it shows; and `TryGetDetectDuration`, which reads how long `--detect` watches for, with
+    its fallback to one reading and its ten-minute cap (`MaxDetectDuration`). App asks these
+    two and parses nothing itself.
   - `ApplicationRestart.cs` — the values handed to `RegisterApplicationRestart` (the command
     line `--restarted`, `RESTART_NO_REBOOT`) and the two decisions around them: which start
     registers (the tray copy, never `--preview` or `--detect`) and which start is a restart,
