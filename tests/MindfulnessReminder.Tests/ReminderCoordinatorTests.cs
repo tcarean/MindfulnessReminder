@@ -52,6 +52,12 @@ public class ReminderCoordinatorTests
         Assert.True(_monitor.Started);
     }
 
+    /// <summary>
+    /// The number of windows cannot tell one subscription from two: a second handler finds the
+    /// first one's window open and raises it. So the raise and the log lines are counted too
+    /// (CR-12 of the review of 2026-11-13), and each of the three events is raised once: a
+    /// tick heard twice raises the countdown event twice, a lock heard twice writes two lines.
+    /// </summary>
     [Fact]
     public void R010_Start_twice_subscribes_only_once()
     {
@@ -59,9 +65,20 @@ public class ReminderCoordinatorTests
         coordinator.Start();
         coordinator.Start();
 
+        var changes = 0;
+        coordinator.CountdownChanged += (_, _) => changes++;
+
+        _timer.RaiseTick();
+        Assert.Equal(1, changes);
+
+        _monitor.RaiseLocked();
         _monitor.RaiseUnlocked();
 
         Assert.Equal(1, _presenter.ShowCount);
+        Assert.Equal(0, _presenter.BringToFrontCount);
+        Assert.Equal(
+            ["Workstation locked", "Workstation unlocked", "Unlock reminder shown: Ground yourself"],
+            _log.Lines);
     }
 
     [Fact]
@@ -148,6 +165,10 @@ public class ReminderCoordinatorTests
         Assert.Equal(0, _presenter.ShowCount);
     }
 
+    /// <summary>
+    /// Both session events are raised after Dispose, and the log is the witness for the lock,
+    /// which shows no window whether it is heard or not.
+    /// </summary>
     [Fact]
     public void R010_Dispose_unsubscribes_and_disposes_the_monitor()
     {
@@ -156,11 +177,18 @@ public class ReminderCoordinatorTests
         coordinator.Dispose();
 
         _monitor.RaiseUnlocked();
+        _monitor.RaiseLocked();
 
         Assert.Equal(0, _presenter.ShowCount);
+        Assert.Empty(_log.Lines);
         Assert.True(_monitor.Disposed);
     }
 
+    /// <summary>
+    /// The tick after Dispose comes with the interval gone, so a coordinator still subscribed
+    /// to the timer would show a reminder: a tick before the deadline shows nothing either
+    /// way and proves no unsubscription (CR-14 of the review of 2026-11-13).
+    /// </summary>
     [Fact]
     public void R021_Dispose_stops_and_disposes_the_timer()
     {
@@ -168,6 +196,7 @@ public class ReminderCoordinatorTests
         coordinator.Start();
         coordinator.Dispose();
 
+        _clock.Advance(TimeSpan.FromMinutes(ReminderSettings.DefaultIntervalMinutes));
         _timer.RaiseTick();
 
         Assert.True(_timer.Disposed);
@@ -424,6 +453,26 @@ public class ReminderCoordinatorTests
         _monitor.RaiseUnlocked();     // 4
 
         Assert.Equal(4, changes);
+    }
+
+    /// <summary>
+    /// A save that switches the periodic reminder off stops the timer, so no later tick
+    /// repairs the tooltip: the save itself has to say that the countdown is gone, or the
+    /// tray goes on showing minutes to a reminder that will not come (CR-15 of the review of
+    /// 2026-11-13).
+    /// </summary>
+    [Fact]
+    public void R021_A_save_that_switches_the_periodic_reminder_off_raises_the_countdown_change_event()
+    {
+        using var coordinator = CreateCoordinator();
+        coordinator.Start();
+
+        var remainingWhenRaised = new List<TimeSpan?>();
+        coordinator.CountdownChanged += (_, _) => remainingWhenRaised.Add(coordinator.Remaining);
+
+        coordinator.ApplySettings(new ReminderSettings(false, 30));
+
+        Assert.Equal([null], remainingWhenRaised);
     }
 
     /// <summary>A periodic reminder counts as shown, so an unlock right after it does not stack.</summary>
@@ -1017,27 +1066,61 @@ public class ReminderCoordinatorTests
         Assert.Equal(ReminderSuppression.MicrophoneInUse, coordinator.Suppression);
     }
 
-    /// <summary>Switching a pause on has to show in the tooltip at once, not a refresh later.</summary>
+    /// <summary>
+    /// Switching a pause on has to show in the tooltip at once, not a refresh later. The
+    /// full-screen pause is on from the start, so that the tick before the save takes a
+    /// reading and stamps it: with both pauses off nothing is ever stamped, and the save would
+    /// have no stamp to forget (CR-13 of the review of 2026-11-13).
+    /// </summary>
     [Fact]
     public void R035_Applying_settings_takes_a_fresh_reading_on_the_next_tick()
     {
-        var off = ReminderSettings.Default with
+        var microphoneOff = ReminderSettings.Default with
         {
             PauseWhileMicrophoneInUse = false,
-            PauseWhileFullScreen = false,
+            PauseWhileFullScreen = true,
         };
 
-        using var coordinator = CreateCoordinator(settings: off);
+        using var coordinator = CreateCoordinator(settings: microphoneOff);
         coordinator.Start();
 
         _activity.Snapshot = ActivitySnapshot.Idle with { MicrophoneInUse = true };
 
         _clock.Advance(TimeSpan.FromSeconds(1));
         _timer.RaiseTick();
+        Assert.Equal(1, _activity.ReadCount);
         Assert.Equal(ReminderSuppression.None, coordinator.Suppression);
 
         coordinator.ApplySettings(ReminderSettings.Default);
 
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        _timer.RaiseTick();
+
+        Assert.Equal(ReminderSuppression.MicrophoneInUse, coordinator.Suppression);
+    }
+
+    /// <summary>
+    /// Nothing is read behind a lock, so a reading from before it is not trusted after the
+    /// unlock: the first tick reads again, however recent the old stamp. The unlock reminder
+    /// is off so that the unlock itself reads nothing and the tick is the one that has to
+    /// (CR-13 of the review of 2026-11-13).
+    /// </summary>
+    [Fact]
+    public void R035_A_lock_takes_a_fresh_reading_on_the_first_tick_after_the_unlock()
+    {
+        using var coordinator = CreateCoordinator(
+            settings: ReminderSettings.Default with { UnlockEnabled = false });
+        coordinator.Start();
+
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        _timer.RaiseTick();
+        Assert.Equal(1, _activity.ReadCount);
+
+        _monitor.RaiseLocked();
+        _monitor.RaiseUnlocked();
+        Assert.Equal(1, _activity.ReadCount);
+
+        _activity.Snapshot = ActivitySnapshot.Idle with { MicrophoneInUse = true };
         _clock.Advance(TimeSpan.FromSeconds(1));
         _timer.RaiseTick();
 
