@@ -6,6 +6,24 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
 
 ## [Unreleased]
 
+### Fixed
+
+- After the clock is set back (by hand, or by a time sync), the unlock reminder appears again
+  at the next unlock, and the tray tooltip goes on following a call or full screen. Both
+  stopped until the clock had caught up with the time it was moved back from (R-011, R-034).
+- A Save in Settings that Windows refuses to store (a policy, security software) no longer
+  ends the application through the crash dialog. The window stays open and says
+  `The settings could not be saved: Windows refused the change.`, and nothing is applied
+  (R-046; ADR 0085).
+- A reminder left open under another always-on-top window is now raised above it when the next
+  reminder falls due or the computer is unlocked; raising it used to do nothing (R-012, R-023;
+  ADR 0087). Measured with two test windows; not yet seen against another program's window.
+  Task Manager set to "Always on top" is expected to go on covering a reminder.
+- The application is now per-monitor DPI aware, which it was meant to be and was not: on
+  monitors set to different scales Windows no longer stretches its windows from another
+  scale. The reminder stays centred on the primary monitor, at that monitor's scale. The tray
+  menu, Settings and About have not yet been looked at on such monitors (R-077; ADR 0086).
+
 ## [1.5.1] - 2026-11-12
 
 ### Fixed

@@ -47,6 +47,15 @@ out than a whole interval could put it (the span it was armed with, since 89de6c
 and starts over. The other direction needs no guard
 and must not get one — see the sleep case above.
 
+The coordinator keeps two times of its own, the last reminder shown (`_lastShownAt`, for the
+unlock debounce) and the last reading of the activity monitor (`_lastActivityReadAt`, for the
+idle refresh), and compares both with the clock through one function, `IsWithin`: a stamp
+ahead of the clock is stale, not fresh. Subtracting alone would give a negative age after the
+clock moved back, which is below any window, so every unlock would be skipped as a duplicate
+and no idle reading taken until the clock caught up with the stamp
+(`R011_An_unlock_after_the_clock_moved_back_shows_the_reminder_again`,
+`R034_The_tooltip_follows_a_call_after_the_clock_moved_back`).
+
 See ADR 0047.
 
 Two smaller rules that are easy to break:

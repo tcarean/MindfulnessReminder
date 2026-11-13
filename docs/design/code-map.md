@@ -29,6 +29,9 @@
     always meant.
   - `ISettingsStore.cs` / `RegistrySettingsStore.cs` — settings persistence over
     `IRegistryStore`, under the key the auto-start marker already uses.
+  - `SettingsCommit.cs` — what Save in the Settings window does once the boxes read: write,
+    then apply, and report a write the registry refused instead of throwing. See "Settings
+    storage".
   - `TrayTooltip.cs` — the hover text, as a pure function. It is a separate type because of
     the 63-character limit; see "The tray tooltip".
   - `SuppressionPolicy.cs` — `ReminderSuppression` and the pure rule behind the two pause

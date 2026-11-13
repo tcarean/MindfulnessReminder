@@ -103,6 +103,27 @@ public class ReminderCoordinatorTests
         Assert.Equal(2, _presenter.ShowCount);
     }
 
+    /// <summary>
+    /// A reminder shown "in the future" is not a recent one. Without that, a clock set back an
+    /// hour makes every unlock look like a duplicate of the last reminder until the clock has
+    /// caught up with it (CR-02 of the review of 2026-11-13).
+    /// </summary>
+    [Fact]
+    public void R011_An_unlock_after_the_clock_moved_back_shows_the_reminder_again()
+    {
+        using var coordinator = CreateCoordinator();
+        coordinator.Start();
+
+        _monitor.RaiseUnlocked();
+        _presenter.SimulateClosed();
+        _clock.Advance(TimeSpan.FromHours(-1));
+        _monitor.RaiseLocked();
+        _monitor.RaiseUnlocked();
+
+        Assert.Equal(2, _presenter.ShowCount);
+        Assert.DoesNotContain(_log.Lines, line => line.Contains("one shown", StringComparison.Ordinal));
+    }
+
     [Fact]
     public void R012_An_unlock_while_a_reminder_is_open_raises_it_instead_of_opening_a_second()
     {
@@ -970,6 +991,30 @@ public class ReminderCoordinatorTests
         _timer.RaiseTick();
 
         Assert.Equal(ReminderSuppression.None, coordinator.Suppression);
+    }
+
+    /// <summary>
+    /// A reading stamped "in the future" is not a fresh one. Without that, a clock set back an
+    /// hour stops the idle readings until the clock has caught up with the stamp, and a call
+    /// that starts in that hour is not named in the tooltip (CR-03 of the review of
+    /// 2026-11-13).
+    /// </summary>
+    [Fact]
+    public void R034_The_tooltip_follows_a_call_after_the_clock_moved_back()
+    {
+        using var coordinator = CreateCoordinator();
+        coordinator.Start();
+
+        _clock.Advance(TimeSpan.FromSeconds(1));
+        _timer.RaiseTick();
+        _clock.Advance(TimeSpan.FromHours(-1));
+        _timer.RaiseTick();
+
+        _activity.Snapshot = ActivitySnapshot.Idle with { MicrophoneInUse = true };
+        _clock.Advance(ReminderCoordinator.DefaultActivityRefresh);
+        _timer.RaiseTick();
+
+        Assert.Equal(ReminderSuppression.MicrophoneInUse, coordinator.Suppression);
     }
 
     /// <summary>Switching a pause on has to show in the tooltip at once, not a refresh later.</summary>

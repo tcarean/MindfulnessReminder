@@ -44,7 +44,9 @@ which `BreakWindow` asks for a monitor's work area, as it has since the base ver
 
 - Two UI frameworks share one process. `App.OnStartup` sets the one process-wide DPI mode,
   `PerMonitorV2`, before any window exists, and calls `EnableVisualStyles`, without which the
-  Windows Forms menu "renders unthemed". No WPF resource reaches that menu, so the dark palette
+  Windows Forms menu "renders unthemed". (Corrected 2026-11-13: that call never took effect,
+  the process was system-aware, and the mode is now declared in the manifest; the measurement
+  and the choice are ADR 0086.) No WPF resource reaches that menu, so the dark palette
   is repeated in `DarkMenuRenderer` (ADR 0064): "That duplication is the price of the hybrid
   design" (`CLAUDE.md`, "The dark theme").
 - The features after the base version kept to the rule: the full-screen check is "One P/Invoke,

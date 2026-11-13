@@ -1,7 +1,7 @@
 # 0060. The reminder is topmost, shown after 600 ms on the primary monitor and deaf to Enter; Settings and About are modeless and single-instance
 
 Date: 2026-10-09
-Status: accepted 2026-10-09; Space closing the reminder superseded by 0081
+Status: accepted 2026-10-09; Space closing the reminder superseded by 0081; Settings handing its result back through its Accepted event superseded by 0085; OnSourceInitialized re-asserting Topmost superseded by 0087
 
 ## Context
 

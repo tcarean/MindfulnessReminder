@@ -50,7 +50,7 @@ public partial class BreakWindow : Window
 
     /// <summary>
     /// Once the window has a handle and before it is first drawn: puts it on the primary
-    /// monitor, brings it to the front and gives the focus to Close.
+    /// monitor, asks for the foreground and gives the focus to Close.
     /// </summary>
     /// <param name="e">Passed on to the base class.</param>
     protected override void OnSourceInitialized(EventArgs e)
@@ -60,11 +60,37 @@ public partial class BreakWindow : Window
         MoveToPrimaryScreen();
 
         // Windows only grants foreground activation to a process with recent input, and a
-        // freshly unlocked desktop has none. Re-asserting Topmost after the handle exists is
-        // what reliably puts the window in front of whatever was left open before the lock.
-        Topmost = true;
+        // freshly unlocked desktop has none, so Activate may be refused. What puts the window
+        // in front of whatever was left open before the lock is Topmost in the XAML: the
+        // handle is created always-on-top, at the top of that band.
         Activate();
         CloseButton.Focus();
+    }
+
+    /// <summary>
+    /// Centres the reminder again when the scale it is drawn at changes (R-070, R-077).
+    ///
+    /// The process is per-monitor DPI aware, so a window is measured at the scale of the
+    /// monitor it is on. The handle can be created on another monitor than the primary one
+    /// (Windows picks where a new window starts), and the first placement is then worked out
+    /// at that monitor's scale; moving onto the primary monitor changes the scale, and with it
+    /// the window's size in pixels and what its coordinates mean. The same is expected when
+    /// the user changes the primary monitor's scale while a reminder is open; that case was
+    /// not measured.
+    ///
+    /// The placement is queued, not made here. The change of scale arrives in the middle of
+    /// the first placement, as it assigns <c>Left</c> and before it assigns <c>Top</c>, and a
+    /// placement made from inside it is overwritten when the first one resumes: measured on
+    /// 2026-11-13, the window ended at 685, 286 instead of 740, 390. Queued, it runs once the
+    /// change is over.
+    /// </summary>
+    /// <param name="oldDpi">The scale before the change; not read.</param>
+    /// <param name="newDpi">The scale now in force; not read, the window's source has it.</param>
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi);
+
+        Dispatcher.BeginInvoke(MoveToPrimaryScreen);
     }
 
     /// <summary>

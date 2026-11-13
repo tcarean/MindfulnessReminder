@@ -139,9 +139,10 @@ public partial class App : WpfApplication
         // action and would show its own dialog; this sends it to the same one as the rest.
         WinFormsApplication.ThreadException += (_, e) => ReportCrash(e.Exception);
 
-        // Both stacks share one process-wide DPI mode; setting it before any window exists
-        // keeps the tray menu and the reminder crisp on mixed-DPI setups.
-        WinFormsApplication.SetHighDpiMode(System.Windows.Forms.HighDpiMode.PerMonitorV2);
+        // Both stacks share one process-wide DPI mode, PerMonitorV2, and it is not set here:
+        // app.manifest declares it, so it is in force before any code runs (R-077, ADR 0086).
+        // A call here has no effect: measured on 2026-11-13, the process stayed system-aware
+        // with one, WPF having declared a mode of its own by the time this method runs.
 
         // NotifyIcon menu is a Windows Forms control and renders unthemed without this.
         WinFormsApplication.EnableVisualStyles();
@@ -353,15 +354,16 @@ public partial class App : WpfApplication
             return;
         }
 
-        var window = new SettingsWindow(coordinator.Settings);
-
-        window.Accepted += (_, settings) =>
+        if (_settingsStore is not { } store)
         {
-            // Saved first: if the write fails, the app has not started behaving in a way the
-            // next launch will contradict.
-            _settingsStore?.Save(settings);
-            coordinator.ApplySettings(settings);
-        };
+            return;
+        }
+
+        // The rule is Core's: written, then applied, and a write the registry refuses leaves
+        // the window open to say so instead of ending the application (R-046).
+        var window = new SettingsWindow(
+            coordinator.Settings,
+            settings => SettingsCommit.TrySaveAndApply(store, settings, coordinator.ApplySettings, _log));
 
         window.Closed += (_, _) => _settingsWindow = null;
 
