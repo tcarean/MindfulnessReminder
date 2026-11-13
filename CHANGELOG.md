@@ -15,6 +15,9 @@ versions follow [SemVer](https://semver.org/). The version number itself lives i
   ends the application through the crash dialog. The window stays open and says
   `The settings could not be saved: Windows refused the change.`, and nothing is applied
   (R-046; ADR 0085).
+- A reminder left open under another always-on-top window (Task Manager set to "Always on
+  top", a picture-in-picture player) is raised above it when the next reminder falls due or
+  the computer is unlocked; it used to stay covered (R-012, R-023).
 
 ## [1.5.1] - 2026-11-12
 

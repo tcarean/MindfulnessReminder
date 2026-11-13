@@ -50,7 +50,7 @@ public partial class BreakWindow : Window
 
     /// <summary>
     /// Once the window has a handle and before it is first drawn: puts it on the primary
-    /// monitor, brings it to the front and gives the focus to Close.
+    /// monitor, asks for the foreground and gives the focus to Close.
     /// </summary>
     /// <param name="e">Passed on to the base class.</param>
     protected override void OnSourceInitialized(EventArgs e)
@@ -60,9 +60,9 @@ public partial class BreakWindow : Window
         MoveToPrimaryScreen();
 
         // Windows only grants foreground activation to a process with recent input, and a
-        // freshly unlocked desktop has none. Re-asserting Topmost after the handle exists is
-        // what reliably puts the window in front of whatever was left open before the lock.
-        Topmost = true;
+        // freshly unlocked desktop has none, so Activate may be refused. What puts the window
+        // in front of whatever was left open before the lock is Topmost in the XAML: the
+        // handle is created always-on-top, at the top of that band.
         Activate();
         CloseButton.Focus();
     }

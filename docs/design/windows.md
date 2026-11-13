@@ -28,3 +28,15 @@ nobody presses mid-sentence, close it as they close any window. If another key e
 to be likely mid-sentence, the same handler is the place.
 
 See ADR 0060 and ADR 0081; About's own reasons are ADR 0066.
+
+**Raising a reminder that is already open.** `BreakWindow` is `Topmost` from its XAML, so its
+handle is created always-on-top, above everything open at that moment. A reminder left open
+can still end up under another always-on-top window opened later (Task Manager set to "Always
+on top", a picture-in-picture player). `WpfReminderPresenter.BringToFront` therefore sets
+`Topmost` to false and then to true before it calls `Activate()`. Setting it to true alone
+does nothing: the property already holds that value, WPF sees no change and makes no call to
+Windows. And `Activate()` alone is not enough, since Windows grants the foreground only to a
+process with recent input. Measured on 2026-11-13 with two always-on-top WPF windows, the
+second covering the first: after `Topmost = true` on the first it was still under the second;
+after `false` then `true` it was above. Neither assignment takes the keyboard focus;
+`Activate()` asks for it, as it did before.
