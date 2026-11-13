@@ -439,6 +439,26 @@ public class ReminderCoordinatorTests
         Assert.Equal(4, changes);
     }
 
+    /// <summary>
+    /// A save that switches the periodic reminder off stops the timer, so no later tick
+    /// repairs the tooltip: the save itself has to say that the countdown is gone, or the
+    /// tray goes on showing minutes to a reminder that will not come (CR-15 of the review of
+    /// 2026-11-13).
+    /// </summary>
+    [Fact]
+    public void R021_A_save_that_switches_the_periodic_reminder_off_raises_the_countdown_change_event()
+    {
+        using var coordinator = CreateCoordinator();
+        coordinator.Start();
+
+        var remainingWhenRaised = new List<TimeSpan?>();
+        coordinator.CountdownChanged += (_, _) => remainingWhenRaised.Add(coordinator.Remaining);
+
+        coordinator.ApplySettings(new ReminderSettings(false, 30));
+
+        Assert.Equal([null], remainingWhenRaised);
+    }
+
     /// <summary>A periodic reminder counts as shown, so an unlock right after it does not stack.</summary>
     [Fact]
     public void R011_An_unlock_just_after_a_periodic_reminder_is_debounced()
