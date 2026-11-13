@@ -39,7 +39,7 @@ public sealed class FileDecisionLog : IDecisionLog
     /// UTF-8 form, half a surrogate pair. The encoding <c>File.AppendAllText</c> uses when none
     /// is named throws on that instead, and the line would be lost (R-110, ADR 0088).
     /// </summary>
-    private static readonly UTF8Encoding Encoding = new(encoderShouldEmitUTF8Identifier: false);
+    private static readonly UTF8Encoding Utf8WithReplacement = new(encoderShouldEmitUTF8Identifier: false);
 
     private readonly string _folder;
     private readonly string _path;
@@ -79,7 +79,7 @@ public sealed class FileDecisionLog : IDecisionLog
             File.AppendAllText(
                 _path,
                 DecisionLog.FormatLine(DateTimeOffset.Now, text) + Environment.NewLine,
-                Encoding);
+                Utf8WithReplacement);
         }
         catch (Exception)
         {
