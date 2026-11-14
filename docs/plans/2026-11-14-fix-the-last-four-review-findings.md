@@ -107,3 +107,22 @@ at wrap-up.
 - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1` green before each
   commit; `scripts/check-design.ps1 -Since main` at the end.
 - `/wrap-up`; then the merge is proposed, not run.
+
+## What happened (2026-11-14)
+
+- Done as planned, one commit per finding: CR-17 in `6cd52f7`, CR-18 in `482328e`, CR-19 in
+  `421d82e`, CR-20 in `5e4b28b`; the review file was marked in the commit after them. The only
+  change under `src/` is the comment of CR-20: every new or strengthened test was green
+  against the code as it is.
+- Each test was red against each of its faults, five runs in all, and the failures are quoted
+  in the entries of the review file.
+- One deviation, in CR-18: the test first compared the list of lines, and its failure showed
+  only the start of the line, the same on both sides. It now compares the one line as a
+  string, so a failure points at the suffix that differs; the two faults were run again with
+  that assertion, and those are the failures quoted.
+- CR-20's comment also stopped saying that the writer "never throws": it refuses a null text,
+  and what it swallows is every failure of the write.
+- The suite went from 394 to 396 tests: two new facts. CR-19 strengthened a test that was
+  there.
+- CR-05 was passed over a fourth time and is the only finding left open; it waits for the
+  owner's observation in their own copy.
