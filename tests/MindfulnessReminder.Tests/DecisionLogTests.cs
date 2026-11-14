@@ -172,6 +172,33 @@ public class DecisionLogTests
             _log.Lines);
     }
 
+    /// <summary>
+    /// The suffixes together (CR-18): the value that fell back comes first although it is read
+    /// after the interval, and each number out of range gets a suffix of its own, in the order
+    /// the two are read.
+    /// </summary>
+    [Fact]
+    public void R113_A_missing_value_and_two_clamped_numbers_share_one_line()
+    {
+        var store = new RegistrySettingsStore(_registry, _log);
+        store.Save(ReminderSettings.Default);
+        _log.Clear();
+        _registry.DeleteValue(RegistrySettingsStore.KeyPath, RegistrySettingsStore.PauseFullScreenValueName);
+        _registry.SetString(RegistrySettingsStore.KeyPath, RegistrySettingsStore.IntervalValueName, "0");
+        _registry.SetString(RegistrySettingsStore.KeyPath, RegistrySettingsStore.RetryValueName, "9999");
+
+        store.Load();
+
+        // One string against one string: a failure then points at the suffix that differs,
+        // where a comparison of lists would show only the start of the line.
+        Assert.Equal(
+            "Settings loaded: "
+            + DefaultSummary.Replace("every 30 min", "every 1 min").Replace("retry 20 s", "retry 300 s")
+            + "; defaults used for PauseWhileFullScreen"
+            + "; clamped PeriodicIntervalMinutes 0 -> 1; clamped PauseRetrySeconds 9999 -> 300",
+            Assert.Single(_log.Lines));
+    }
+
     [Fact]
     public void R113_Loading_a_complete_registry_writes_the_summary_alone()
     {
