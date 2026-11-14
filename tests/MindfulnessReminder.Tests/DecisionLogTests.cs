@@ -286,10 +286,6 @@ public class DecisionLogTests
     public void R113_A_path_repaired_before_a_refusal_keeps_its_line_ahead_of_the_refusal()
     {
         _registry.SetString(RegistryAutoStartManager.RunKeyPath, ValueName, "\"D:\\Old\\App.exe\"");
-        _registry.SetBinary(
-            RegistryAutoStartManager.StartupApprovedKeyPath,
-            ValueName,
-            [0x03, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
         _registry.WriteRefusal = new UnauthorizedAccessException();
         _registry.RefusedKeyPath = StartupRegistrar.SettingsKeyPath;
         var autoStart = new RegistryAutoStartManager(_registry, ValueName, ExePath);
