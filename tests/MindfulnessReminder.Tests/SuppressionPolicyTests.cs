@@ -102,13 +102,21 @@ public class SuppressionPolicyTests
         Assert.Equal(ReminderSuppression.FullScreen, SuppressionPolicy.Evaluate(settings, activity));
     }
 
+    /// <summary>
+    /// Full screen alone shows the switch turning its check off: with a microphone live as
+    /// well, the answer would be the microphone's whether the switch were obeyed or not, since
+    /// the microphone is asked first (CR-19). The second half is the "only": the microphone
+    /// check still holds.
+    /// </summary>
     [Fact]
     public void R032_The_full_screen_switch_turns_off_only_the_full_screen_check()
     {
         var settings = Settings(microphone: true, fullScreen: false);
-        var activity = new ActivitySnapshot(true, false, ForegroundState.FullScreen);
+        var fullScreenAlone = new ActivitySnapshot(false, false, ForegroundState.FullScreen);
+        var callInFullScreen = new ActivitySnapshot(true, false, ForegroundState.FullScreen);
 
-        Assert.Equal(ReminderSuppression.MicrophoneInUse, SuppressionPolicy.Evaluate(settings, activity));
+        Assert.Equal(ReminderSuppression.None, SuppressionPolicy.Evaluate(settings, fullScreenAlone));
+        Assert.Equal(ReminderSuppression.MicrophoneInUse, SuppressionPolicy.Evaluate(settings, callInFullScreen));
     }
 
     [Fact]
