@@ -7,7 +7,8 @@ they stood at commit `17cc429` (version 1.5.1). The process (`scripts/`, the hoo
 kept and closed is ADR 0084; the plan of this review is
 `docs/plans/2026-11-13-review-the-application-code.md`.
 
-Nothing was fixed. Each entry is meant to be enough for a session that has not read the rest:
+The review itself fixed nothing; what was fixed since is in each entry's status and in the
+Summary table. Each entry is meant to be enough for a session that has not read the rest:
 it starts with the failing test (the rule "Test before fix"), and sets the entry's status to
 `fixed` with its commit.
 
@@ -49,8 +50,14 @@ fixes land.
 | CR-20 | S4 | `IDecisionLog`'s comment places its implementation in App | fixed in `5e4b28b` |
 
 A status of `fixed in` names the commit of the fix, on `main` once its branch is merged; the
-entry below says what was done and what is left for the owner to look at. The entries not
-marked are open, and the next fix session takes the first of them in "Suggested order".
+entry below says what was done and what is left for the owner to look at. An entry not marked
+is open, and a fix session takes the first open one in "Suggested order".
+
+**Since 2026-11-14 no entry is left for a fix session.** The only one open, CR-05, waits for
+the owner to observe it in their own copy, and nothing in it is started before that, the log
+line its direction mentions included. What else is left is not a fix task either: Q2 to Q9
+wait for the owner's answers ("Questions for the owner"), and U1 to U6 for someone to observe
+them ("Unverified claims").
 
 No S1 was found: for a clock that only moves forward, with a registry that accepts writes, the
 reviewers and the probes found the reminders appearing and being held back as
@@ -381,10 +388,11 @@ No tray start was made from the worktree: it would repair the auto-start entry t
 
 ## S4
 
-The tests named here pass today and would go on passing with the code they claim to guard
-removed. Strengthening one is a change to a test, not a test edited to pass (the rule "No test
-edited to pass"): each fix first shows the strengthened test red against the mutation named,
-then green against the code as it is.
+At `17cc429` the tests named here passed and would have gone on passing with the code they
+claim to guard removed. All ten entries are fixed since 2026-11-14, and each status says which
+fault its test now fails against. Strengthening one is a change to a test, not a test edited to
+pass (the rule "No test edited to pass"): each fix first shows the strengthened test red
+against the mutation named, then green against the code as it is.
 
 ### CR-11. `R062_The_longest_tooltip_the_app_can_produce_fits_the_tray_limit` cannot fail
 
@@ -516,7 +524,12 @@ then green against the code as it is.
   `StartupRegistrar.EnsureRegisteredOnFirstRun`, one at a time. Red with the repair's line
   removed (`Assert.Equal() Failure: Collections differ`, the refusal's line alone) and with it
   written after the refusal's (the two lines in the other order), green against the code as
-  it is.
+  it is. The branch review, and a second reviewer who ran it, found that the Task Manager veto
+  copied from the R-003 test was needed by no assertion: the registrar asks only whether there
+  is an entry (a status other than `Disabled`), so the two lines are the same with the veto
+  and without.
+  Since `63207f5` the test builds only the entry at an old path and the refusing marker key;
+  red against the same two faults again, with the same two failures.
 
 ### CR-18. R-113's combined suffixes are not pinned
 
@@ -564,7 +577,12 @@ then green against the code as it is.
 - Direction: correct the sentence, with the next change to that file.
 - Status: fixed in `5e4b28b`, 2026-11-14, in a change of its own, since no other change to
   the file was coming: the comment names `FileDecisionLog`, in Core, and says that App only
-  names the folder. A comment, so no test came first.
+  names the folder. A comment, so no test came first. The branch review found that the new
+  summary described one implementation where the rule "Documentation comments" asks for what
+  a caller needs, that "only" was too much (App also writes the start and the crash lines
+  itself), and that nothing said whether `text` may be null. Since `28f31e5` the interface
+  says what a write owes its caller: it does not throw for a text that is not null, and a
+  line that cannot be kept is dropped.
 
 ## Questions for the owner
 
@@ -717,7 +735,7 @@ By severity, then by what unblocks what. Each line is one task.
 2. CR-02 with CR-03: one cause, one guard, two tests. Done.
 3. CR-12, CR-13, CR-14 and CR-15 together: four tests of `ReminderCoordinatorTests`, no code.
    Doing them before any further change to the coordinator makes that change safer. Done.
-4. CR-05: observe it first; then a decision.
+4. CR-05: observe it first; then a decision. Open, and the owner's: not a fix session's.
 5. CR-04: a design choice to measure; recheck the reminder's placement afterwards. Done.
 6. CR-06. Done.
 7. CR-07. Done.

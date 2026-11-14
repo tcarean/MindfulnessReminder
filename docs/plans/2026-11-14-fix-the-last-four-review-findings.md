@@ -23,7 +23,9 @@ Only five are still open, and one of them is not a session's to fix. Assumptions
   only edit under `src/` is that comment. No requirement row changes (R-113 and R-032 already
   say what the tests will pin), no CHANGELOG line (test-only and a comment), no ADR, no
   version.
-- One commit per finding, as in the earlier rounds (ADR 0084).
+- One commit per finding, as in the earlier rounds. ADR 0084 asks for a task per finding, or
+  per group the file marks as one fix; the owner asked for the open ones together, as in the
+  three rounds before, so the four share this task and each keeps a commit of its own.
 
 ## How each is shown
 
@@ -126,3 +128,28 @@ at wrap-up.
   there.
 - CR-05 was passed over a fourth time and is the only finding left open; it waits for the
   owner's observation in their own copy.
+- The owner then ran `/code-review` on the branch and had a second reviewer, with no knowledge
+  of the first one's findings, review it as well. Neither found a fault in the application's
+  behaviour; the second put the five faults of the review file back into Core and saw each
+  test red. The owner had four findings fixed:
+  - The review file still sent the next fix session to the first open entry, which is CR-05,
+    not a session's. It now says, under the Summary table and in "Suggested order", that no
+    entry is left for a fix session and what waits for the owner.
+  - Two of its sentences had become false: "Nothing was fixed" and the opening of the S4
+    section, which said of every test it names that it cannot fail. The second was left as
+    minor in the round before; with all ten S4 entries fixed it is now corrected.
+  - CR-20's new comment described one implementation, said that App "only" names the folder
+    though App writes two lines itself, and did not say whether `text` may be null. Since
+    `28f31e5` the interface says what a write owes its caller. This puts back, with its
+    condition, the promise the bullet above says was dropped: no throw for a text that is not
+    null.
+  - The Task Manager veto in the CR-17 test was needed by no assertion; the second reviewer
+    showed the test green with the veto check forced off. Removed in `63207f5`, and the test
+    shown red against its two faults again.
+  The review file says so in the entries of CR-17 and CR-20.
+- Also corrected, in "Context" above: the plan cited ADR 0084 for one commit per finding. The
+  ADR asks for a task per finding or group; four findings in one task is the owner's request.
+  Whether ADR 0084 gets a dated note saying so is the owner's to decide.
+- Not fixed, the one the owner was told was minor: the CR-18 test pins the lower clamp of the
+  interval and the upper clamp of the retry gap only, and builds its expected summary by
+  replacing two parts of the default one. The second reviewer did not raise it.
