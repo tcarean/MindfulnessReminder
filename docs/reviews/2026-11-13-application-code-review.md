@@ -7,7 +7,8 @@ they stood at commit `17cc429` (version 1.5.1). The process (`scripts/`, the hoo
 kept and closed is ADR 0084; the plan of this review is
 `docs/plans/2026-11-13-review-the-application-code.md`.
 
-Nothing was fixed. Each entry is meant to be enough for a session that has not read the rest:
+The review itself fixed nothing; what was fixed since is in each entry's status and in the
+Summary table. Each entry is meant to be enough for a session that has not read the rest:
 it starts with the failing test (the rule "Test before fix"), and sets the entry's status to
 `fixed` with its commit.
 
@@ -43,14 +44,20 @@ fixes land.
 | CR-14 | S4 | `R021_Dispose_stops_and_disposes_the_timer` does not pin the tick's unsubscription | fixed in `7858357` |
 | CR-15 | S4 | `CountdownChanged` on `ApplySettings` is not pinned | fixed in `a839b6d` |
 | CR-16 | S4 | `IsRetryInRange` has no test, though R-043 names it | fixed in `da8c69f` |
-| CR-17 | S4 | R-113's order of lines after a refused registration is not pinned | open |
-| CR-18 | S4 | R-113's combined suffixes are not pinned | open |
-| CR-19 | S4 | `R032_The_full_screen_switch...` does not show the switch turning anything off | open |
-| CR-20 | S4 | `IDecisionLog`'s comment places its implementation in App | open |
+| CR-17 | S4 | R-113's order of lines after a refused registration is not pinned | fixed in `6cd52f7` |
+| CR-18 | S4 | R-113's combined suffixes are not pinned | fixed in `482328e` |
+| CR-19 | S4 | `R032_The_full_screen_switch...` does not show the switch turning anything off | fixed in `421d82e` |
+| CR-20 | S4 | `IDecisionLog`'s comment places its implementation in App | fixed in `5e4b28b` |
 
 A status of `fixed in` names the commit of the fix, on `main` once its branch is merged; the
-entry below says what was done and what is left for the owner to look at. The entries not
-marked are open, and the next fix session takes the first of them in "Suggested order".
+entry below says what was done and what is left for the owner to look at. An entry not marked
+is open, and a fix session takes the first open one in "Suggested order".
+
+**Since 2026-11-14 no entry is left for a fix session.** The only one open, CR-05, waits for
+the owner to observe it in their own copy, and nothing in it is started before that, the log
+line its direction mentions included. What else is left is not a fix task either: Q2 to Q9
+wait for the owner's answers ("Questions for the owner"), and U1 to U6 for someone to observe
+them ("Unverified claims").
 
 No S1 was found: for a clock that only moves forward, with a registry that accepts writes, the
 reviewers and the probes found the reminders appearing and being held back as
@@ -235,8 +242,10 @@ No tray start was made from the worktree: it would repair the auto-start entry t
   CR-06 was taken in its place: the scenario has to be observed in the owner's copy before
   anything is decided, and the Restart it needs may close other programs. Passed over again
   the same day, for the same reason, when the owner had the next five fixed (CR-07 to CR-11),
-  and a third time when the five after those were fixed (CR-12 to CR-16). It is the one S3
-  finding left, and it waits for the owner's observation, not for a session.
+  and a third time when the five after those were fixed (CR-12 to CR-16). Passed over a fourth
+  time on 2026-11-14, when the owner asked for the next five and the four others still open
+  were fixed (CR-17 to CR-20). It is the only finding left open, and it waits for the owner's
+  observation, not for a session.
 
 ### CR-06. Assigning `Topmost = true` again does nothing, so an open reminder is raised by `Activate()` alone
 
@@ -379,10 +388,11 @@ No tray start was made from the worktree: it would repair the auto-start entry t
 
 ## S4
 
-The tests named here pass today and would go on passing with the code they claim to guard
-removed. Strengthening one is a change to a test, not a test edited to pass (the rule "No test
-edited to pass"): each fix first shows the strengthened test red against the mutation named,
-then green against the code as it is.
+At `17cc429` the tests named here passed and would have gone on passing with the code they
+claim to guard removed. All ten entries are fixed since 2026-11-14, and each status says which
+fault its test now fails against. Strengthening one is a change to a test, not a test edited to
+pass (the rule "No test edited to pass"): each fix first shows the strengthened test red
+against the mutation named, then green against the code as it is.
 
 ### CR-11. `R062_The_longest_tooltip_the_app_can_produce_fits_the_tray_limit` cannot fail
 
@@ -506,7 +516,20 @@ then green against the code as it is.
 - Confirmed by: reading the two tests. No mutation was run.
 - Direction: the first test's state with a `FakeDecisionLog`, asserting the two lines in order.
   One fix task with CR-18.
-- Status: open
+- Status: fixed in `6cd52f7`, 2026-11-14, as the direction says: the new
+  `R113_A_path_repaired_before_a_refusal_keeps_its_line_ahead_of_the_refusal` in
+  `DecisionLogTests` builds the state of the R-003 test (an entry at an old path, switched off
+  in Task Manager, the marker's key refusing writes) and expects the two lines, the repair's
+  first. The review had run no mutation, so two faults were put into
+  `StartupRegistrar.EnsureRegisteredOnFirstRun`, one at a time. Red with the repair's line
+  removed (`Assert.Equal() Failure: Collections differ`, the refusal's line alone) and with it
+  written after the refusal's (the two lines in the other order), green against the code as
+  it is. The branch review, and a second reviewer who ran it, found that the Task Manager veto
+  copied from the R-003 test was needed by no assertion: the registrar asks only whether there
+  is an entry (a status other than `Disabled`), so the two lines are the same with the veto
+  and without.
+  Since `63207f5` the test builds only the entry at an old path and the refusing marker key;
+  red against the same two faults again, with the same two failures.
 
 ### CR-18. R-113's combined suffixes are not pinned
 
@@ -517,7 +540,17 @@ then green against the code as it is.
 - Confirmed by: reading: the only expected text with `clamped` is at line 157. No mutation was
   run.
 - Direction: one test with a missing value, an interval of `0` and a retry of `9999`.
-- Status: open
+- Status: fixed in `482328e`, 2026-11-14, as the direction says: the new
+  `R113_A_missing_value_and_two_clamped_numbers_share_one_line` in `DecisionLogTests`. The
+  missing value is `PauseWhileFullScreen`, which is read after the interval, so the line also
+  shows the fallbacks standing first whatever the reading order: `...; defaults used for
+  PauseWhileFullScreen; clamped PeriodicIntervalMinutes 0 -> 1; clamped PauseRetrySeconds 9999
+  -> 300`. Red with the retry gap's `AddClamp` removed from `RegistrySettingsStore.Read`
+  (`Assert.Equal() Failure: Strings differ`, at position 236, where the second suffix is
+  missing) and with `DecisionLog.SettingsLoaded` writing the clamps before the fallbacks (at
+  position 158, `; clamped PeriodicInter` where `; defaults used for Pau` was expected),
+  green against the code as it is. Not pinned: two missing values together with a clamp; the
+  comma between names is pinned by the test of the empty registry alone.
 
 ### CR-19. `R032_The_full_screen_switch_turns_off_only_the_full_screen_check` does not show the switch turning anything off
 
@@ -529,7 +562,12 @@ then green against the code as it is.
 - Confirmed by: reading.
 - Direction: `new ActivitySnapshot(false, false, ForegroundState.FullScreen)` with the switch
   off, expecting `None`.
-- Status: open
+- Status: fixed in `421d82e`, 2026-11-14. The test asks about full screen alone, as the
+  direction says, and expects `None`; the assertion it had, a call in full screen giving
+  `MicrophoneInUse`, stays beside it as the "only" of its name. Red with
+  `settings.PauseWhileFullScreen &&` removed from `SuppressionPolicy.Evaluate`
+  (`Assert.Equal() Failure: Values differ. Expected: None, Actual: FullScreen`, at the new
+  assertion), green against the code as it is.
 
 ### CR-20. `IDecisionLog`'s comment places its implementation in App
 
@@ -537,7 +575,14 @@ then green against the code as it is.
 - What is wrong: `FileDecisionLog` is in Core (ADR 0073); App only names the folder.
 - Confirmed by: reading.
 - Direction: correct the sentence, with the next change to that file.
-- Status: open
+- Status: fixed in `5e4b28b`, 2026-11-14, in a change of its own, since no other change to
+  the file was coming: the comment names `FileDecisionLog`, in Core, and says that App only
+  names the folder. A comment, so no test came first. The branch review found that the new
+  summary described one implementation where the rule "Documentation comments" asks for what
+  a caller needs, that "only" was too much (App also writes the start and the crash lines
+  itself), and that nothing said whether `text` may be null. Since `28f31e5` the interface
+  says what a write owes its caller: it does not throw for a text that is not null, and a
+  line that cannot be kept is dropped.
 
 ## Questions for the owner
 
@@ -690,12 +735,11 @@ By severity, then by what unblocks what. Each line is one task.
 2. CR-02 with CR-03: one cause, one guard, two tests. Done.
 3. CR-12, CR-13, CR-14 and CR-15 together: four tests of `ReminderCoordinatorTests`, no code.
    Doing them before any further change to the coordinator makes that change safer. Done.
-4. CR-05: observe it first; then a decision.
+4. CR-05: observe it first; then a decision. Open, and the owner's: not a fix session's.
 5. CR-04: a design choice to measure; recheck the reminder's placement afterwards. Done.
 6. CR-06. Done.
 7. CR-07. Done.
-8. CR-11, CR-16 and CR-19 together: three small tests, no code. CR-11 and CR-16 are done;
-   CR-19 remains.
-9. CR-17 with CR-18: the tests of R-113.
-10. CR-09, CR-10, CR-08, CR-20: small, any order. The first three are done; CR-20 remains.
+8. CR-11, CR-16 and CR-19 together: three small tests, no code. Done.
+9. CR-17 with CR-18: the tests of R-113. Done.
+10. CR-09, CR-10, CR-08, CR-20: small, any order. Done.
 11. Q2 to Q9 as the owner answers them; U1 to U6 as someone observes them.

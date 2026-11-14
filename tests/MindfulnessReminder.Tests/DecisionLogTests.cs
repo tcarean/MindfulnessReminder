@@ -172,6 +172,33 @@ public class DecisionLogTests
             _log.Lines);
     }
 
+    /// <summary>
+    /// The suffixes together (CR-18): the value that fell back comes first although it is read
+    /// after the interval, and each number out of range gets a suffix of its own, in the order
+    /// the two are read.
+    /// </summary>
+    [Fact]
+    public void R113_A_missing_value_and_two_clamped_numbers_share_one_line()
+    {
+        var store = new RegistrySettingsStore(_registry, _log);
+        store.Save(ReminderSettings.Default);
+        _log.Clear();
+        _registry.DeleteValue(RegistrySettingsStore.KeyPath, RegistrySettingsStore.PauseFullScreenValueName);
+        _registry.SetString(RegistrySettingsStore.KeyPath, RegistrySettingsStore.IntervalValueName, "0");
+        _registry.SetString(RegistrySettingsStore.KeyPath, RegistrySettingsStore.RetryValueName, "9999");
+
+        store.Load();
+
+        // One string against one string: a failure then points at the suffix that differs,
+        // where a comparison of lists would show only the start of the line.
+        Assert.Equal(
+            "Settings loaded: "
+            + DefaultSummary.Replace("every 30 min", "every 1 min").Replace("retry 20 s", "retry 300 s")
+            + "; defaults used for PauseWhileFullScreen"
+            + "; clamped PeriodicIntervalMinutes 0 -> 1; clamped PauseRetrySeconds 9999 -> 300",
+            Assert.Single(_log.Lines));
+    }
+
     [Fact]
     public void R113_Loading_a_complete_registry_writes_the_summary_alone()
     {
@@ -249,6 +276,28 @@ public class DecisionLogTests
         new StartupRegistrar(_registry, autoStart, _log).EnsureRegisteredOnFirstRun();
 
         Assert.Equal(["Auto-start: the registry refused (UnauthorizedAccessException), no registration made"], _log.Lines);
+    }
+
+    /// <summary>
+    /// A first run that finds an entry repairs its path, and only then is refused the marker.
+    /// The repair stays (R-003), so its line stays too, ahead of the refusal's (CR-17).
+    /// </summary>
+    [Fact]
+    public void R113_A_path_repaired_before_a_refusal_keeps_its_line_ahead_of_the_refusal()
+    {
+        _registry.SetString(RegistryAutoStartManager.RunKeyPath, ValueName, "\"D:\\Old\\App.exe\"");
+        _registry.WriteRefusal = new UnauthorizedAccessException();
+        _registry.RefusedKeyPath = StartupRegistrar.SettingsKeyPath;
+        var autoStart = new RegistryAutoStartManager(_registry, ValueName, ExePath);
+
+        new StartupRegistrar(_registry, autoStart, _log).EnsureRegisteredOnFirstRun();
+
+        Assert.Equal(
+            [
+                "Auto-start entry repaired to \"" + ExePath + "\"",
+                "Auto-start: the registry refused (UnauthorizedAccessException), no registration made",
+            ],
+            _log.Lines);
     }
 
     // ----- R-114: the crash line -----
