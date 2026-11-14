@@ -18,17 +18,21 @@
 namespace MindfulnessReminder.Core;
 
 /// <summary>
-/// Where the application's decisions are written, one text per event (R-110; ADR 0073). Core
-/// composes the texts (<see cref="DecisionLog"/>) and writes them too: the one implementation
-/// that keeps anything, <see cref="FileDecisionLog"/>, stamps the time, appends to a file and
-/// swallows every failure of the write. App only names the folder of that file.
+/// Where the application's decisions are written, one text per event (R-110; ADR 0073).
+/// <see cref="DecisionLog"/> composes the texts; <see cref="FileDecisionLog"/> keeps them in a
+/// file and <see cref="NullDecisionLog"/> keeps none. A write never fails its caller: the
+/// callers include catch blocks and the crash handler, so an implementation that cannot keep a
+/// line drops it and does not throw.
 /// </summary>
 public interface IDecisionLog
 {
-    /// <summary>Records one event.</summary>
+    /// <summary>
+    /// Records one event, or drops it when it cannot be kept. Does not throw for a text that is
+    /// not null.
+    /// </summary>
     /// <param name="text">
-    /// What happened, as <see cref="DecisionLog"/> renders it; line breaks are allowed and are
-    /// folded into one line by the writer.
+    /// What happened, as <see cref="DecisionLog"/> renders it; not null. Line breaks are allowed
+    /// and are folded into one line by the writer.
     /// </param>
     void Write(string text);
 }
