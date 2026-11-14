@@ -251,6 +251,32 @@ public class DecisionLogTests
         Assert.Equal(["Auto-start: the registry refused (UnauthorizedAccessException), no registration made"], _log.Lines);
     }
 
+    /// <summary>
+    /// A first run that finds an entry repairs its path, and only then is refused the marker.
+    /// The repair stays (R-003), so its line stays too, ahead of the refusal's (CR-17).
+    /// </summary>
+    [Fact]
+    public void R113_A_path_repaired_before_a_refusal_keeps_its_line_ahead_of_the_refusal()
+    {
+        _registry.SetString(RegistryAutoStartManager.RunKeyPath, ValueName, "\"D:\\Old\\App.exe\"");
+        _registry.SetBinary(
+            RegistryAutoStartManager.StartupApprovedKeyPath,
+            ValueName,
+            [0x03, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        _registry.WriteRefusal = new UnauthorizedAccessException();
+        _registry.RefusedKeyPath = StartupRegistrar.SettingsKeyPath;
+        var autoStart = new RegistryAutoStartManager(_registry, ValueName, ExePath);
+
+        new StartupRegistrar(_registry, autoStart, _log).EnsureRegisteredOnFirstRun();
+
+        Assert.Equal(
+            [
+                "Auto-start entry repaired to \"" + ExePath + "\"",
+                "Auto-start: the registry refused (UnauthorizedAccessException), no registration made",
+            ],
+            _log.Lines);
+    }
+
     // ----- R-114: the crash line -----
 
     [Fact]
