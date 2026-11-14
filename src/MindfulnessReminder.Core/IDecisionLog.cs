@@ -19,8 +19,9 @@ namespace MindfulnessReminder.Core;
 
 /// <summary>
 /// Where the application's decisions are written, one text per event (R-110; ADR 0073). Core
-/// composes the texts (<see cref="DecisionLog"/>); the one implementation, in App, stamps the
-/// time and appends to a file, and never throws.
+/// composes the texts (<see cref="DecisionLog"/>) and writes them too: the one implementation
+/// that keeps anything, <see cref="FileDecisionLog"/>, stamps the time, appends to a file and
+/// swallows every failure of the write. App only names the folder of that file.
 /// </summary>
 public interface IDecisionLog
 {
